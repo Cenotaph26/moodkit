@@ -1603,10 +1603,7 @@ async function openCal(fid,bid){
     Array.from({length:monthDays},(_,i)=>{
       const day=i+1;const ps=byDay[day]||[];
       const isToday=day===today;const isPast=day<today;
-      return '<div class="cal-cell '+(isToday?'today':isPast?'past'+'": "')+'">'+
-        '<div class="cal-dn">'+day+'</div>'+
-        ps.map(p=>'<div class="cal-pill" style="background:'+f.color+'22;color:'+f.color+'">'+(p.type==='reels'?'▶':p.type==='carousel'?'⧉':'○')+' '+(p.cap?.slice(0,10)||'—')+'</div>').join('')+
-        '</div>';
+      return '<div class="cal-cell '+(isToday?'today':isPast?'past':'')+'"><div class="cal-dn">'+day+'</div>'+ps.map(p=>'<div class="cal-pill" style="background:'+f.color+'22;color:'+f.color+'">'+(p.type==="reels"?'▶':p.type==="carousel"?'⧉':'○')+' '+(p.cap?.slice(0,10)||'—')+'</div>').join('')+'</div>';
     }).join('')+
     '</div>'+
     '<div class="card cp"><div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">Planlı Gönderiler</div>'+
