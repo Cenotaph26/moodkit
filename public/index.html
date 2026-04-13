@@ -245,6 +245,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="toast"></div>
 <script>
 
+
 // ── API LAYER ─────────────────────────────────────────────
 const API = '';
 let _token = localStorage.getItem('mk_token') || '';
@@ -792,8 +793,8 @@ function goHome(){
     '<div style="font-size:12px">Firma ekle</div></div></div>';
   showV('home');renderSB();renderN();
 }
-</script>
-<script>
+
+
 // ── Brief ─────────────────────────────────────────────────
 function openBrief(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='brief';
@@ -866,9 +867,10 @@ async function saveBrief(fid,bid){
   toast('Brief kaydedildi ✓');
 }
 
-function delBrief(fid,bid){
+async function delBrief(fid,bid){
   const f=gF(fid);
   if(f.briefs.length<=1){toast('En az 1 brief olmalı');return;}
+  try { await apiFetch('/api/firms/'+fid+'/briefs/'+bid,{method:'DELETE'}); } catch(e){}
   f.briefs=f.briefs.filter(x=>x.id!==bid);
   toast('Brief silindi');renderSB();goHome();
 }
@@ -886,9 +888,12 @@ async function addBrief(fid){
 }
 
 // ── MB IG ─────────────────────────────────────────────────
-function openMbIG(fid,bid){
+async function openMbIG(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='mbig';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'IG Moodboard'}]);
   const ap=b.mbIG.filter(k=>k.status==='approved').length;
   const prog=b.mbIG.length?Math.round(ap/b.mbIG.length*100):0;
@@ -907,9 +912,12 @@ function openMbIG(fid,bid){
 }
 
 // ── MB Kamp ───────────────────────────────────────────────
-function openMbK(fid,bid){
+async function openMbK(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='mbk';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Kampanya Moodboard'}]);
   const ap=b.mbKamp.filter(k=>k.status==='approved').length;
   const prog=b.mbKamp.length?Math.round(ap/b.mbKamp.length*100):0;
@@ -1074,12 +1082,15 @@ async function setMBS(fid,bid,which,cid,status){
   }
   openMBDet(fid,bid,which,cid);
 }
-</script>
-<script>
+
+
 // ── Görevler ──────────────────────────────────────────────
-function openTasks(fid,bid){
+async function openTasks(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='tasks';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Görevler'}]);
   const cols=[{id:'todo',label:'Bekliyor',badge:'bam'},{id:'doing',label:'Üretimde',badge:'bpu'},{id:'done',label:'Tamamlandı',badge:'bgn'}];
   document.getElementById('v-tasks').innerHTML=
@@ -1154,9 +1165,12 @@ async function dropTask(e,ns,fid,bid){
 }
 
 // ── IG Grid ───────────────────────────────────────────────
-function openIG(fid,bid){
+async function openIG(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='ig';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'IG Grid'}]);
   document.getElementById('v-ig').innerHTML=
@@ -1366,12 +1380,15 @@ function openReels(fid,bid,startIdx){
   }
   render();showV('ig');
 }
-</script>
-<script>
+
+
 // ── Müşteri MB ────────────────────────────────────────────
-function openCustMB(fid,bid,which){
+async function openCustMB(fid,bid,which){
   cFid=fid;cBid=bid;
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const title=which==='ig'?'IG Moodboard Onayı':'Kampanya Moodboard Onayı';
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:title}]);
@@ -1482,9 +1499,12 @@ function sendCardCmt(fid,bid,which,cid){const v=document.getElementById('card-cm
 function sendCmt(fid,bid){const v=document.getElementById('cust-cmt')?.value.trim();if(!v)return;addN('Müşteri genel yorum',gF(fid)?.name,fid);toast('Gönderildi ✓');}
 
 // ── Müşteri IG Onay ───────────────────────────────────────
-function openCustIG(fid,bid){
+async function openCustIG(fid,bid){
   cFid=fid;cBid=bid;
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:'IG Grid Onayı'}]);
   document.getElementById('v-cust').innerHTML=
@@ -1531,9 +1551,12 @@ function custCellTap(fid,bid,idx){
 async function approveAllIG(fid,bid){const b=gB(fid,bid);try{await apiApproveAllIG(fid,bid);}catch(e){console.error(e);}b.igCells.forEach(c=>c.approved=true);toast('Tümü onaylandı ✓');openCustIG(fid,bid);}
 
 // ── Yayın ─────────────────────────────────────────────────
-function openYayin(fid,bid){
+async function openYayin(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='yayin';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Yayın'}]);
   const igAp=b.igCells.filter(x=>x.approved===true).length;
   const mbAp=b.mbIG.filter(k=>k.status==='approved').length+b.mbKamp.filter(k=>k.status==='approved').length;
@@ -1559,9 +1582,12 @@ function openYayin(fid,bid){
 }
 
 // ── Takvim ────────────────────────────────────────────────
-function openCal(fid,bid){
+async function openCal(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='cal';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
+  const b=gB(fid,bid)||f.briefs[0];
+  if(!b)return;bid=b.id;cBid=bid;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Takvim'}]);
   const today=13;const monthDays=30;
   const posts=b.igCells.filter(c=>c.date);
@@ -1879,6 +1905,7 @@ function addMember(){
     showLogin();
   }
 })();
+
 </script>
 </body>
 </html>
