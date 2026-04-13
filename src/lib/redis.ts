@@ -3,16 +3,20 @@ import Redis from 'ioredis'
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
 
+// Railway'de Redis URL'si rediss:// (TLS) olarak gelir
+// ioredis bunu otomatik algılaması için tls seçeneği ekliyoruz
+const isTLS = redisUrl.startsWith('rediss://')
+
 export const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: 3,
   lazyConnect: true,
+  tls: isTLS ? { rejectUnauthorized: false } : undefined,
 })
 
 redis.on('connect', () => console.log('✅ Redis bağlandı'))
 redis.on('error', (err) => console.error('❌ Redis hata:', err.message))
 
 // ── SESSION ───────────────────────────────────────────────
-// JWT token'ı blacklist'e alır (logout)
 export const SESSION_PREFIX = 'session:'
 export const BLACKLIST_PREFIX = 'blacklist:'
 
@@ -38,7 +42,6 @@ export async function isBlacklisted(token: string): Promise<boolean> {
 }
 
 // ── CACHE ─────────────────────────────────────────────────
-// Sık okunan verileri cache'ler (firmalar, briefler)
 export const CACHE_PREFIX = 'cache:'
 const DEFAULT_TTL = 300 // 5 dakika
 
@@ -63,7 +66,6 @@ export async function cacheDeletePattern(pattern: string) {
 }
 
 // ── NOTIFICATION QUEUE ────────────────────────────────────
-// Bildirimleri Redis list'e push eder, işlenince PostgreSQL'e kaydeder
 export const NOTIF_QUEUE = 'queue:notifications'
 
 export interface NotifPayload {
@@ -92,7 +94,7 @@ export async function rateLimit(key: string, max: number, windowSec: number): Pr
   return current <= max
 }
 
-// ── ONLINE USERS (real-time için) ─────────────────────────
+// ── ONLINE USERS ──────────────────────────────────────────
 export async function setOnline(userId: string) {
   await redis.setex(`online:${userId}`, 30, '1')
 }
