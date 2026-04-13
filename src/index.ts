@@ -20,13 +20,16 @@ import { startNotifWorker } from './lib/notifWorker'
 const app = express()
 const PORT = parseInt(process.env.PORT || '3000')
 
+// ── HEALTH CHECK — en üstte, her şeyden önce ─────────────
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
 // ── MIDDLEWARE ────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false,
-}))
+app.use(helmet({ contentSecurityPolicy: false }))
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -36,16 +39,7 @@ app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(cookieParser())
 
-// ── HEALTH CHECK (middleware'den önce, wildcard'dan önce) ──
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV
-  })
-})
-
-// Statik dosyalar (frontend HTML)
+// Statik dosyalar
 app.use(express.static(path.join(__dirname, '../public')))
 
 // ── API ROUTES ────────────────────────────────────────────
@@ -71,10 +65,22 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 })
 
 // ── START ─────────────────────────────────────────────────
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 MoodKit server: http://localhost:${PORT}`)
-  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}\n`)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 MoodKit server: http://0.0.0.0:${PORT}`)
+  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`🔑 JWT_SECRET set: ${!!process.env.JWT_SECRET}`)
+  console.log(`🗄️  DATABASE_URL set: ${!!process.env.DATABASE_URL}`)
+  console.log(`🟥 REDIS_URL set: ${!!process.env.REDIS_URL}\n`)
   startNotifWorker()
+})
+
+server.on('error', (err) => {
+  console.error('❌ Server başlatma hatası:', err)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled rejection:', reason)
 })
 
 export default app
