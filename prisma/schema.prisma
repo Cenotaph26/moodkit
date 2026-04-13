@@ -1,0 +1,246 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── KULLANICI & YETKİ ─────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(PROD)
+  prodRole  String?  // Videograf, Grafiker, Fotoğrafçı vb.
+  title     String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // İlişkiler
+  firmMembers FirmMember[]
+  tasks       Task[]       @relation("AssignedTasks")
+  createdTasks Task[]      @relation("CreatedTasks")
+  notifications Notification[]
+  sessions    Session[]
+}
+
+enum Role {
+  ADMIN   // Ajans admin - her şeyi görür
+  EDITOR  // Kreatif ekip - atanan kampanyalar
+  PROD    // Prodüksiyon - atanan görevler
+  CLIENT  // Müşteri - sadece kendi workspace
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── FİRMA ─────────────────────────────────────────────────
+
+model Firm {
+  id        String   @id @default(cuid())
+  name      String
+  sector    String?
+  color     String   @default("#534AB7")
+  contact   String?  // müşteri email
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   FirmMember[]
+  briefs    Brief[]
+}
+
+model FirmMember {
+  id     String @id @default(cuid())
+  firmId String
+  userId String
+  firm   Firm   @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([firmId, userId])
+}
+
+// ── BRIEF ─────────────────────────────────────────────────
+
+model Brief {
+  id        String      @id @default(cuid())
+  firmId    String
+  month     String      // "Nisan"
+  year      Int         // 2026
+  stage     BriefStage  @default(BRIEF)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Brief cevapları
+  products        String?
+  newProduct      Boolean @default(false)
+  newProductDesc  String?
+  featured        String?
+  tone            String?
+  colorDir        String?
+  avoid           String?
+  refs            String?
+  hasAd           Boolean @default(false)
+  budget          String?
+  platforms       String[] // ["Meta","Google","YouTube"]
+  targetAudience  String?
+  adAreas         String?
+  specialDay      String?
+  specialContent  String?
+  notes           String?
+
+  firm            Firm           @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  moodboardCards  MoodboardCard[]
+  tasks           Task[]
+  igCells         IGCell[]
+  notifications   Notification[]
+}
+
+enum BriefStage {
+  BRIEF
+  MB_IG
+  MB_KAMP
+  TASKS
+  YAYIN
+}
+
+// ── MOODBOARD ─────────────────────────────────────────────
+
+model MoodboardCard {
+  id        String        @id @default(cuid())
+  briefId   String
+  which     MBWhich       // IG veya KAMP
+  type      String        // "Video Referansı", "Ürün Kartı" vb.
+  label     String
+  status    CardStatus    @default(PENDING)
+  order     Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Görev tanımı
+  taskType      String?   // Video, Grafik, Fotoğraf
+  taskDesc      String?
+  taskFormat    String?
+  taskDeadline  String?
+  taskAssigneeId String?
+  taskIGCell    Int?      // 0-8
+
+  brief     Brief         @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  versions  CardVersion[]
+  tasks     Task[]
+}
+
+enum MBWhich {
+  IG
+  KAMP
+}
+
+enum CardStatus {
+  PENDING
+  REVIEW
+  APPROVED
+  REJECTED
+}
+
+model CardVersion {
+  id        String        @id @default(cuid())
+  cardId    String
+  vNum      Int           // 1, 2, 3
+  note      String
+  desc      String?
+  mediaUrl  String?       // görsel/video URL
+  videoUrl  String?       // YouTube embed URL
+  createdBy String?
+  createdAt DateTime      @default(now())
+
+  card      MoodboardCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+// ── GÖREVLER ──────────────────────────────────────────────
+
+model Task {
+  id          String     @id @default(cuid())
+  briefId     String
+  cardRef     String     // moodboard kart başlığı
+  cardId      String?    // opsiyonel doğrudan ilişki
+  type        String     // Video, Grafik, Fotoğraf, Metin
+  desc        String
+  format      String?
+  source      String?    // "IG Moodboard" veya "Kampanya MB"
+  status      TaskStatus @default(TODO)
+  deadline    String?
+  assigneeId  String?
+  createdById String?
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  brief       Brief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  card        MoodboardCard? @relation(fields: [cardId], references: [id])
+  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdBy   User?      @relation("CreatedTasks", fields: [createdById], references: [id])
+}
+
+enum TaskStatus {
+  TODO
+  DOING
+  DONE
+}
+
+// ── IG GRID ───────────────────────────────────────────────
+
+model IGCell {
+  id          String     @id @default(cuid())
+  briefId     String
+  cellIndex   Int        // 0-8
+  type        CellType   @default(POST)
+  mediaUrl    String?
+  videoUrl    String?
+  caption     String?
+  hashtags    String?
+  publishDate String?
+  approved    Boolean?
+  likes       String?
+  comments    String?
+  slides      String[]   // carousel için URL array
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  brief       Brief      @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  @@unique([briefId, cellIndex])
+}
+
+enum CellType {
+  POST
+  REELS
+  CAROUSEL
+}
+
+// ── BİLDİRİMLER ───────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  briefId   String?
+  title     String
+  sub       String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brief     Brief?   @relation(fields: [briefId], references: [id])
+}
