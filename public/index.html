@@ -244,6 +244,292 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <div id="toast"></div>
 <script>
+
+// ── API LAYER ─────────────────────────────────────────────
+const API = '';
+let _token = localStorage.getItem('mk_token') || '';
+let _me = JSON.parse(localStorage.getItem('mk_me') || 'null');
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...((_token) ? { 'Authorization': 'Bearer ' + _token } : {})
+    },
+    credentials: 'include',
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+async function apiLogin(email, password) {
+  const data = await apiFetch('/api/auth/login', { method: 'POST', body: { email, password } });
+  _token = data.token;
+  _me = data.user;
+  localStorage.setItem('mk_token', _token);
+  localStorage.setItem('mk_me', JSON.stringify(_me));
+  return data;
+}
+
+async function apiLogout() {
+  try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+  _token = ''; _me = null;
+  localStorage.removeItem('mk_token');
+  localStorage.removeItem('mk_me');
+}
+
+// ── AUTH SCREEN ───────────────────────────────────────────
+function showLogin() {
+  document.querySelector('.app').style.display = 'none';
+  let ld = document.getElementById('login-screen');
+  if (!ld) { ld = document.createElement('div'); ld.id = 'login-screen'; document.body.appendChild(ld); }
+  ld.style.cssText = 'position:fixed;inset:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;z-index:9999';
+  ld.innerHTML =
+    '<div style="background:var(--bg);border:.5px solid var(--bdr);border-radius:var(--r16);padding:28px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)">' +
+    '<div style="font-size:20px;font-weight:700;color:var(--txt);margin-bottom:4px">mood<em style="color:var(--acc);font-style:normal">kit</em></div>' +
+    '<div style="font-size:12px;color:var(--txt3);margin-bottom:24px">Kreatif Ajans Platformu</div>' +
+    '<div class="fg"><label class="fl">E-posta</label><input class="inp" id="li-email" type="email" placeholder="ad@firma.com" autocomplete="email"></div>' +
+    '<div class="fg"><label class="fl">Şifre</label><input class="inp" id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>' +
+    '<div id="li-err" style="display:none;font-size:11px;color:var(--red);margin-bottom:8px;padding:6px 10px;background:var(--rbg);border-radius:var(--r8)"></div>' +
+    '<button class="btn bp" style="width:100%;justify-content:center;padding:9px" onclick="doLogin()" id="li-btn">Giriş Yap</button>' +
+    '<div style="text-align:center;margin-top:12px;font-size:11px;color:var(--txt3)">Hesabın yok mu? <span style="color:var(--acc);cursor:pointer" onclick="showRegister()">Kayıt Ol</span></div>' +
+    '</div>';
+  document.getElementById('li-email').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+  document.getElementById('li-pass').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+}
+
+function showRegister() {
+  const ld = document.getElementById('login-screen');
+  ld.innerHTML =
+    '<div style="background:var(--bg);border:.5px solid var(--bdr);border-radius:var(--r16);padding:28px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)">' +
+    '<div style="font-size:20px;font-weight:700;color:var(--txt);margin-bottom:4px">mood<em style="color:var(--acc);font-style:normal">kit</em></div>' +
+    '<div style="font-size:12px;color:var(--txt3);margin-bottom:20px">Yeni Hesap Oluştur</div>' +
+    '<div class="fr2 fg"><div><label class="fl">Ad Soyad *</label><input class="inp" id="rg-n" placeholder="Ahmet Yılmaz"></div>' +
+    '<div><label class="fl">E-posta *</label><input class="inp" id="rg-e" type="email" placeholder="ad@firma.com"></div></div>' +
+    '<div class="fg"><label class="fl">Şifre *</label><input class="inp" id="rg-p" type="password" placeholder="En az 8 karakter"></div>' +
+    '<div class="fg"><label class="fl">Rol</label><select class="inp sel" id="rg-r"><option value="ADMIN">Admin</option><option value="EDITOR">Kreatif</option><option value="PROD" selected>Prodüksiyon</option></select></div>' +
+    '<div id="rg-err" style="display:none;font-size:11px;color:var(--red);margin-bottom:8px;padding:6px 10px;background:var(--rbg);border-radius:var(--r8)"></div>' +
+    '<button class="btn bp" style="width:100%;justify-content:center;padding:9px" onclick="doRegister()">Kayıt Ol</button>' +
+    '<div style="text-align:center;margin-top:12px;font-size:11px;color:var(--txt3)">Zaten hesabın var mı? <span style="color:var(--acc);cursor:pointer" onclick="showLogin()">Giriş Yap</span></div>' +
+    '</div>';
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email')?.value.trim();
+  const pass = document.getElementById('li-pass')?.value;
+  if (!email || !pass) { showLoginErr('li-err', 'Email ve şifre zorunlu'); return; }
+  const btn = document.getElementById('li-btn');
+  btn.textContent = 'Giriş yapılıyor...'; btn.disabled = true;
+  try {
+    await apiLogin(email, pass);
+    document.getElementById('login-screen').remove();
+    document.querySelector('.app').style.display = 'flex';
+    await initApp();
+  } catch(e) {
+    showLoginErr('li-err', e.message || 'Giriş başarısız');
+    btn.textContent = 'Giriş Yap'; btn.disabled = false;
+  }
+}
+
+async function doRegister() {
+  const name = document.getElementById('rg-n')?.value.trim();
+  const email = document.getElementById('rg-e')?.value.trim();
+  const pass = document.getElementById('rg-p')?.value;
+  const role = document.getElementById('rg-r')?.value;
+  if (!name || !email || !pass) { showLoginErr('rg-err', 'Tüm alanlar zorunlu'); return; }
+  try {
+    const data = await apiFetch('/api/auth/register', { method: 'POST', body: { name, email, password: pass, role } });
+    _token = data.token; _me = data.user;
+    localStorage.setItem('mk_token', _token);
+    localStorage.setItem('mk_me', JSON.stringify(_me));
+    document.getElementById('login-screen').remove();
+    document.querySelector('.app').style.display = 'flex';
+    await initApp();
+  } catch(e) {
+    showLoginErr('rg-err', e.message || 'Kayıt başarısız');
+  }
+}
+
+function showLoginErr(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+// ── DATA LOADING ──────────────────────────────────────────
+async function loadFirms() {
+  try {
+    const data = await apiFetch('/api/firms');
+    firms = data.map(f => ({
+      id: f.id, name: f.name, sector: f.sector || '', color: f.color || '#3d2d12',
+      briefs: []
+    }));
+  } catch(e) { console.error('Firmalar yüklenemedi:', e); }
+}
+
+async function loadBriefs(fid) {
+  try {
+    const data = await apiFetch('/api/firms/' + fid + '/briefs');
+    const f = gF(fid); if (!f) return;
+    f.briefs = data.map(b => ({
+      id: b.id, month: b.month, year: b.year, stage: (b.stage || 'BRIEF').toLowerCase(),
+      answers: b.answers || {},
+      mbIG: [], mbKamp: [], tasks: [],
+      igCells: Array.from({length: 9}, (_, i) => ({id: i, type: 'post', src: null, cap: '', hash: '', date: '', videoUrl: '', blob: null, slides: [], approved: null, likes: '0', cmts: '0'}))
+    }));
+  } catch(e) { console.error('Briefler yüklenemedi:', e); }
+}
+
+async function loadCards(fid, bid, which) {
+  try {
+    const data = await apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/cards?which=' + which.toUpperCase());
+    const b = gB(fid, bid); if (!b) return;
+    const mapped = data.map(c => ({
+      id: c.id, type: c.type, label: c.label,
+      desc: c.versions?.[c.versions.length-1]?.desc || '',
+      url: c.versions?.[c.versions.length-1]?.videoUrl || '',
+      img: c.versions?.[c.versions.length-1]?.mediaUrl || aS(0),
+      isVid: c.versions?.[c.versions.length-1]?.videoUrl ? true : false,
+      status: (c.status || 'PENDING').toLowerCase(),
+      versions: (c.versions || []).map(v => ({
+        v: v.vNum, date: new Date(v.createdAt).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),
+        by: v.createdBy?.name || 'Bilinmiyor', note: v.note,
+        img: v.mediaUrl || null, url: v.videoUrl || '', desc: v.desc || ''
+      })),
+      task: c.taskType ? {
+        type: c.taskType, desc: c.taskDesc || '', format: c.taskFormat || '',
+        assignee: c.taskAssigneeId, dl: c.taskDeadline || '',
+        igCell: c.taskIGCell
+      } : null
+    }));
+    if (which === 'ig') b.mbIG = mapped;
+    else b.mbKamp = mapped;
+  } catch(e) { console.error('Kartlar yüklenemedi:', e); }
+}
+
+async function loadTasks(fid, bid) {
+  try {
+    const data = await apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/tasks');
+    const b = gB(fid, bid); if (!b) return;
+    b.tasks = data.map(t => ({
+      id: t.id, cardRef: t.cardRef, type: t.type,
+      desc: t.desc, format: t.format || '', source: t.source || '',
+      assignee: t.assigneeId, deadline: t.deadline || '',
+      status: (t.status || 'TODO').toLowerCase()
+    }));
+  } catch(e) { console.error('Görevler yüklenemedi:', e); }
+}
+
+async function loadIGCells(fid, bid) {
+  try {
+    const data = await apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/ig');
+    const b = gB(fid, bid); if (!b) return;
+    // Reset
+    b.igCells = Array.from({length: 9}, (_, i) => ({id: i, type: 'post', src: null, cap: '', hash: '', date: '', videoUrl: '', blob: null, slides: [], approved: null, likes: '0', cmts: '0'}));
+    data.forEach(cell => {
+      if (cell.cellIndex >= 0 && cell.cellIndex < 9) {
+        b.igCells[cell.cellIndex] = {
+          id: cell.cellIndex, type: (cell.type || 'POST').toLowerCase(),
+          src: cell.mediaUrl || null, cap: cell.caption || '', hash: cell.hashtags || '',
+          date: cell.publishDate || '', videoUrl: cell.videoUrl || '',
+          blob: null, slides: cell.slides || [],
+          approved: cell.approved, likes: '0', cmts: '0'
+        };
+      }
+    });
+  } catch(e) { console.error('IG cells yüklenemedi:', e); }
+}
+
+async function loadMembers() {
+  try {
+    const data = await apiFetch('/api/users');
+    members = data.map(u => ({
+      id: u.id, name: u.name, role: u.role.toLowerCase(),
+      title: u.title || '', prodRole: u.prodRole || null
+    }));
+  } catch(e) { /* admin değilse 403 gelir, sorun yok */ }
+}
+
+// ── API SAVE HELPERS ──────────────────────────────────────
+async function apiSaveBrief(fid, bid, payload) {
+  try {
+    await apiFetch('/api/firms/' + fid + '/briefs/' + bid, { method: 'PUT', body: payload });
+  } catch(e) { toast('Kayıt hatası: ' + e.message); }
+}
+
+async function apiAddFirmAPI(payload) {
+  return apiFetch('/api/firms', { method: 'POST', body: payload });
+}
+
+async function apiAddBriefAPI(fid, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs', { method: 'POST', body: payload });
+}
+
+async function apiAddCard(fid, bid, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/cards', { method: 'POST', body: payload });
+}
+
+async function apiAddVersion(fid, bid, cid, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/cards/' + cid + '/versions', { method: 'POST', body: payload });
+}
+
+async function apiSetCardStatus(fid, bid, cid, status) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/cards/' + cid, { method: 'PUT', body: { status: status.toUpperCase() } });
+}
+
+async function apiAddTask(fid, bid, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/tasks', { method: 'POST', body: payload });
+}
+
+async function apiUpdateTask(fid, bid, tid, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/tasks/' + tid, { method: 'PUT', body: payload });
+}
+
+async function apiUpdateIGCell(fid, bid, idx, payload) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/ig/' + idx, { method: 'PUT', body: payload });
+}
+
+async function apiApproveAllIG(fid, bid) {
+  return apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/ig/approve-all', { method: 'POST' });
+}
+
+// ── APP INIT ──────────────────────────────────────────────
+async function initApp() {
+  // Update topbar user info
+  if (_me) {
+    const ini = _me.name.split(' ').map(w => w[0]).join('').slice(0, 2);
+    const roleBadge = {ADMIN: 'bpu', EDITOR: 'bgn', PROD: 'bcor', CLIENT: 'bgr'};
+    const roleLabel = {ADMIN: 'Admin', EDITOR: 'Kreatif', PROD: 'Prod', CLIENT: 'Müşteri'};
+    document.querySelector('.uav').textContent = ini;
+    document.querySelector('span[style*="Ahmet"]') && (document.querySelectorAll('.tb span')[0] ? null : null);
+    // Update name and badge in topbar
+    const tbRight = document.querySelector('.tb > div:last-child');
+    if (tbRight) {
+      const spans = tbRight.querySelectorAll('span');
+      if (spans[0]) spans[0].textContent = _me.name;
+      if (spans[1]) { spans[1].className = 'badge ' + (roleBadge[_me.role] || 'bgr'); spans[1].textContent = roleLabel[_me.role] || _me.role; }
+    }
+    // Add logout button
+    if (!document.getElementById('logout-btn')) {
+      const lb = document.createElement('div');
+      lb.id = 'logout-btn';
+      lb.className = 'btn bg0 bs';
+      lb.textContent = 'Çıkış';
+      lb.onclick = async () => { await apiLogout(); showLogin(); };
+      document.querySelector('.tb > div:last-child').appendChild(lb);
+    }
+  }
+  await loadMembers();
+  await loadFirms();
+  // Load briefs for each firm
+  for (const f of firms) {
+    await loadBriefs(f.id);
+  }
+  renderSB(); renderN(); goHome();
+}
+
 // ── SVG helpers ───────────────────────────────────────────
 function mkSVG(c1,c2,t){
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
@@ -558,7 +844,7 @@ function openBrief(fid,bid){
   showV('brief');
 }
 
-function saveBrief(fid,bid){
+async function saveBrief(fid,bid){
   const b=gB(fid,bid);if(!b)return;
   b.month=document.getElementById('bf-m')?.value||b.month;
   b.year=parseInt(document.getElementById('bf-y')?.value)||b.year;
@@ -576,6 +862,7 @@ function saveBrief(fid,bid){
     specialContent:document.getElementById('bf-sc')?.value||'',
     notes:document.getElementById('bf-notes')?.value||''
   };
+  await apiSaveBrief(fid, bid, { month: b.month, year: b.year, answers: b.answers });
   toast('Brief kaydedildi ✓');
 }
 
@@ -586,14 +873,16 @@ function delBrief(fid,bid){
   toast('Brief silindi');renderSB();goHome();
 }
 
-function addBrief(fid){
-  const f=gF(fid);const nid=Date.now();
-  f.briefs.push({id:nid,month:MONTHS[NM-1],year:NY,stage:'brief',
-    answers:{products:'',newProduct:false,newProductDesc:'',featured:'',tone:'',colorDir:'',avoid:'',refs:'',hasAd:false,budget:'',platforms:[],targetAudience:'',adAreas:'',specialDay:'',specialContent:'',notes:''},
-    mbIG:[],mbKamp:[],tasks:[],
-    igCells:Array.from({length:9},(_,i)=>({id:i,type:'post',src:null,cap:'',hash:'',date:'',videoUrl:'',blob:null,slides:[],approved:null,likes:'0',cmts:'0'}))
-  });
-  renderSB();openBrief(fid,nid);
+async function addBrief(fid){
+  try {
+    const b = await apiAddBriefAPI(fid, {month:MONTHS[NM-1], year:NY});
+    const f=gF(fid);
+    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',
+      answers:{},mbIG:[],mbKamp:[],tasks:[],
+      igCells:Array.from({length:9},(_,i)=>({id:i,type:'post',src:null,cap:'',hash:'',date:'',videoUrl:'',blob:null,slides:[],approved:null,likes:'0',cmts:'0'}))
+    });
+    renderSB();openBrief(fid,b.id);
+  } catch(e) { toast('Hata: '+e.message); }
 }
 
 // ── MB IG ─────────────────────────────────────────────────
@@ -613,7 +902,7 @@ function openMbIG(fid,bid){
     (b.mbIG.length?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="prog" style="flex:1"><div class="prog-f" style="width:'+prog+'%"></div></div><span style="font-size:11px;color:var(--txt3)">'+ap+'/'+b.mbIG.length+' onaylı</span></div>':'')+
     '<div class="mbg" id="mbig-grid"></div>'+
     (b.mbIG.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px;text-align:center">Henüz kart yok.</p><div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'ig\')">+ İlk Kartı Ekle</div></div>');
-  renderMBG('mbig-grid',fid,bid,'ig');
+  loadCards(fid, bid, 'ig').then(() => renderMBG('mbig-grid',fid,bid,'ig'));
   showV('mbig');
 }
 
@@ -634,7 +923,7 @@ function openMbK(fid,bid){
     (b.mbKamp.length?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="prog" style="flex:1"><div class="prog-f" style="width:'+prog+'%"></div></div><span style="font-size:11px;color:var(--txt3)">'+ap+'/'+b.mbKamp.length+' onaylı</span></div>':'')+
     '<div class="mbg" id="mbk-grid"></div>'+
     (b.mbKamp.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px">Kampanya kartı yok.</p><div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'kamp\')">+ Kart Ekle</div></div>');
-  renderMBG('mbk-grid',fid,bid,'kamp');
+  loadCards(fid, bid, 'kamp').then(() => renderMBG('mbk-grid',fid,bid,'kamp'));
   showV('mbk');
 }
 
@@ -749,7 +1038,8 @@ function openMBDet(fid,bid,which,cid){
   showV('det');
 }
 
-function setMBS(fid,bid,which,cid,status){
+async function setMBS(fid,bid,which,cid,status){
+  try { await apiSetCardStatus(fid, bid, cid, status); } catch(e) { console.error(e); }
   const b=gB(fid,bid);
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const c=cards.find(x=>x.id===cid);
@@ -810,7 +1100,7 @@ function openTasks(fid,bid){
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2"/></svg>'+
       '<span style="font-size:10px">Kart sürükle</span></div></div>'
     ).join('')+'</div>';
-  renderTC(fid,bid);
+  loadTasks(fid, bid).then(() => renderTC(fid,bid));
   showV('tasks');
 }
 
@@ -851,7 +1141,7 @@ function endDT(e){
   document.querySelectorAll('.kcol').forEach(c=>c.classList.remove('dov'));
   _dTid=null;
 }
-function dropTask(e,ns,fid,bid){
+async function dropTask(e,ns,fid,bid){
   e.preventDefault();
   document.getElementById('kcol-'+ns)?.classList.remove('dov');
   if(!_dTid)return;
@@ -859,6 +1149,7 @@ function dropTask(e,ns,fid,bid){
   if(t&&t.status!==ns){
     t.status=ns;renderTC(fid,bid);
     toast('→ '+(ns==='todo'?'Bekliyor':ns==='doing'?'Üretimde':'Tamamlandı'));
+    try { await apiUpdateTask(fid, bid, t.id, { status: ns.toUpperCase() }); } catch(e2) { console.error(e2); }
   }
 }
 
@@ -901,8 +1192,7 @@ function openIG(fid,bid){
     '<div style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto" id="iglist-'+bid+'"></div></div>'+
     '</div>';
   showV('ig');
-  renderIGCells(fid,bid);
-  renderIGList(fid,bid);
+  loadIGCells(fid, bid).then(() => { renderIGCells(fid,bid); renderIGList(fid,bid); });
 }
 
 function renderIGCells(fid,bid){
@@ -1000,8 +1290,9 @@ function viewCell(fid,bid,idx){
   renderPV();
 }
 
-function setIGAp(fid,bid,idx,v){
+async function setIGAp(fid,bid,idx,v){
   const b=gB(fid,bid);b.igCells[idx].approved=v;
+  try { await apiUpdateIGCell(fid, bid, idx, { approved: v }); } catch(e) { console.error(e); }
   toast(v?'✓ Onaylandı':'✗ Reddedildi');
   viewCell(fid,bid,idx);
 }
@@ -1237,7 +1528,7 @@ function custCellTap(fid,bid,idx){
   if(isR){openIG(fid,bid);setTimeout(()=>openReels(fid,bid,idx),50);return;}
   openIG(fid,bid);setTimeout(()=>viewCell(fid,bid,idx),50);
 }
-function approveAllIG(fid,bid){const b=gB(fid,bid);b.igCells.forEach(c=>c.approved=true);toast('Tümü onaylandı ✓');openCustIG(fid,bid);}
+async function approveAllIG(fid,bid){const b=gB(fid,bid);try{await apiApproveAllIG(fid,bid);}catch(e){console.error(e);}b.igCells.forEach(c=>c.approved=true);toast('Tümü onaylandı ✓');openCustIG(fid,bid);}
 
 // ── Yayın ─────────────────────────────────────────────────
 function openYayin(fid,bid){
@@ -1451,74 +1742,95 @@ function prevFile(fpId,input,key){
 }
 
 // ── Add Actions ───────────────────────────────────────────
-function addFirm(){
+async function addFirm(){
   const name=document.getElementById('nf-n')?.value.trim();if(!name){toast('İsim zorunlu');return;}
-  const nid=Date.now();
-  firms.push({id:nid,name,sector:document.getElementById('nf-s').value,color:window._nfc||'#3d2d12',
-    briefs:[{id:nid+1,month:MONTHS[NM-1],year:NY,stage:'brief',
-      answers:{products:'',newProduct:false,newProductDesc:'',featured:'',tone:'',colorDir:'',avoid:'',refs:'',hasAd:false,budget:'',platforms:[],targetAudience:'',adAreas:'',specialDay:'',specialContent:'',notes:''},
-      mbIG:[],mbKamp:[],tasks:[],
-      igCells:Array.from({length:9},(_,i)=>({id:i,type:'post',src:null,cap:'',hash:'',date:'',videoUrl:'',blob:null,slides:[],approved:null,likes:'0',cmts:'0'}))
-    }]
-  });
-  toast('Firma eklendi ✓');goHome();
+  try {
+    const f = await apiAddFirmAPI({name, sector: document.getElementById('nf-s').value, color: window._nfc||'#3d2d12'});
+    firms.push({id:f.id,name:f.name,sector:f.sector||'',color:f.color||'#3d2d12',briefs:[]});
+    await loadBriefs(f.id);
+    toast('Firma eklendi ✓');renderSB();goHome();
+  } catch(e) { toast('Hata: '+e.message); }
 }
 
-function addMbCard(fid,bid,which){
-  const b=gB(fid,bid);
+async function addMbCard(fid,bid,which){
   const label=document.getElementById('mbc-label')?.value.trim();if(!label){toast('Başlık zorunlu');return;}
   const url=document.getElementById('mbc-url')?.value.trim()||'';
   const mbc=window._mbc||{img:null,isVid:false};
-  const isV=mbc.isVid||isVU(url);
   const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
-  const newCard={
-    id:Date.now(),type:document.getElementById('mbc-type').value,
-    label,desc:document.getElementById('mbc-desc')?.value||'',url,
-    img:mbc.img||gS(Math.floor(Math.random()*9)),isVid:isV,status:'pending',
-    versions:[{v:1,date:'Bugün',by:'Ahmet Y.',note:'İlk taslak',img:mbc.img||null,url,desc:document.getElementById('mbc-desc')?.value||''}],
-    task:{type:document.getElementById('mbc-tt')?.value||'Grafik',desc:document.getElementById('mbc-tdesc')?.value||'',format:document.getElementById('mbc-fmt')?.value||'',assignee:parseInt(document.getElementById('mbc-ass')?.value)||members[1].id,dl:document.getElementById('mbc-dl')?.value||'',igCell:which==='ig'?cellNum:undefined}
-  };
-  if(which==='ig')b.mbIG.push(newCard);else b.mbKamp.push(newCard);
-  toast('Kart eklendi ✓');
-  if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
+  try {
+    await apiAddCard(fid, bid, {
+      which: which.toUpperCase()==='IG'?'IG':'KAMP',
+      type: document.getElementById('mbc-type').value,
+      label,
+      taskType: document.getElementById('mbc-tt')?.value||'Grafik',
+      taskDesc: document.getElementById('mbc-tdesc')?.value||'',
+      taskFormat: document.getElementById('mbc-fmt')?.value||'',
+      taskDeadline: document.getElementById('mbc-dl')?.value||'',
+      taskAssigneeId: document.getElementById('mbc-ass')?.value||null,
+      taskIGCell: which==='ig'?cellNum:undefined,
+      versionNote: 'İlk taslak',
+      versionDesc: document.getElementById('mbc-desc')?.value||'',
+      versionMediaUrl: mbc.img||null,
+      versionVideoUrl: url||null
+    });
+    toast('Kart eklendi ✓');
+    await loadCards(fid, bid, which);
+    if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
+  } catch(e) { toast('Hata: '+e.message); }
 }
 
-function saveVer(fid,bid,which,cid){
-  const b=gB(fid,bid);const cards=which==='ig'?b.mbIG:b.mbKamp;
-  const c=cards.find(x=>x.id===cid);
+async function saveVer(fid,bid,which,cid){
   const note=document.getElementById('ver-note')?.value.trim();if(!note){toast('Not zorunlu');return;}
   const ver=window._ver||{img:null,isVid:false};
   const url=document.getElementById('ver-url')?.value.trim()||'';
   const desc=document.getElementById('ver-desc')?.value||'';
-  const nv={v:c.versions.length+1,date:'Bugün',by:'Ahmet Y.',note,img:ver.img||null,url,desc};
-  c.versions.push(nv);
-  if(nv.img)c.img=nv.img;
-  if(nv.url)c.url=nv.url;
-  c.status='review';
-  toast('v'+nv.v+' eklendi ✓');
-  addN('v'+nv.v+' yüklendi',c.label+' · Az önce',fid);
-  openMBDet(fid,bid,which,cid);
+  try {
+    await apiAddVersion(fid, bid, cid, { note, desc, mediaUrl: ver.img||null, videoUrl: url||null });
+    toast('Versiyon eklendi ✓');
+    addN('Yeni versiyon yüklendi', gF(fid)?.name+' · Az önce', fid);
+    await loadCards(fid, bid, which);
+    openMBDet(fid,bid,which,cid);
+  } catch(e) { toast('Hata: '+e.message); }
 }
 
-function addTask(fid,bid){
-  const b=gB(fid,bid);
-  b.tasks.push({id:Date.now(),cardRef:document.getElementById('nt-ref')?.value||'Görev',type:document.getElementById('nt-type').value,desc:document.getElementById('nt-desc')?.value||'',format:document.getElementById('nt-fmt')?.value||'',source:'Manuel',assignee:parseInt(document.getElementById('nt-ass')?.value)||members[1].id,deadline:document.getElementById('nt-dl')?.value||'',status:'todo'});
-  toast('Görev eklendi ✓');openTasks(fid,bid);
+async function addTask(fid,bid){
+  try {
+    await apiAddTask(fid, bid, {
+      cardRef: document.getElementById('nt-ref')?.value||'Görev',
+      type: document.getElementById('nt-type').value,
+      desc: document.getElementById('nt-desc')?.value||'',
+      format: document.getElementById('nt-fmt')?.value||'',
+      source: 'Manuel',
+      assigneeId: document.getElementById('nt-ass')?.value||null,
+      deadline: document.getElementById('nt-dl')?.value||''
+    });
+    await loadTasks(fid, bid);
+    toast('Görev eklendi ✓'); openTasks(fid,bid);
+  } catch(e) { toast('Hata: '+e.message); }
 }
 
-function addIGCell(fid,bid){
-  const b=gB(fid,bid);const empty=b.igCells.findIndex(x=>!x.src);
+async function addIGCell(fid,bid){
+  const b=gB(fid,bid);const empty=b.igCells.findIndex(x=>!x.src);const idx=empty>=0?empty:0;
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
   let type=document.getElementById('nic-t').value;
   if(isVU(urlVal)||nic.isVid)type='reels';
-  const src=nic.blob||nic.img||gS(empty>=0?empty:0);
-  const nc={id:Date.now(),type,src,cap:document.getElementById('nic-cap')?.value||'',hash:document.getElementById('nic-hash')?.value||'',date:document.getElementById('nic-d')?.value||'',videoUrl:urlVal,blob:nic.blob,slides:[],approved:null,likes:'0',cmts:'0'};
-  if(empty>=0)b.igCells[empty]=nc;else b.igCells.push(nc);
-  toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓');openIG(fid,bid);
+  const src=nic.blob||nic.img||null;
+  b.igCells[idx]={id:idx,type,src,cap:document.getElementById('nic-cap')?.value||'',hash:document.getElementById('nic-hash')?.value||'',date:document.getElementById('nic-d')?.value||'',videoUrl:urlVal,blob:nic.blob,slides:[],approved:null,likes:'0',cmts:'0'};
+  try {
+    await apiUpdateIGCell(fid, bid, idx, {
+      type: type.toUpperCase(),
+      mediaUrl: src||null,
+      videoUrl: urlVal||null,
+      caption: b.igCells[idx].cap,
+      hashtags: b.igCells[idx].hash,
+      publishDate: b.igCells[idx].date
+    });
+  } catch(e) { console.error(e); }
+  toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓'); openIG(fid,bid);
 }
 
-function saveIGCell(fid,bid,idx){
+async function saveIGCell(fid,bid,idx){
   const b=gB(fid,bid);const cell=b.igCells[idx];
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
@@ -1529,7 +1841,17 @@ function saveIGCell(fid,bid,idx){
   cell.cap=document.getElementById('nic-cap')?.value||cell.cap;
   cell.hash=document.getElementById('nic-hash')?.value||cell.hash;
   cell.date=document.getElementById('nic-d')?.value||cell.date;
-  toast('Kaydedildi ✓');openIG(fid,bid);
+  try {
+    await apiUpdateIGCell(fid, bid, idx, {
+      type: cell.type.toUpperCase(),
+      mediaUrl: cell.src||null,
+      videoUrl: cell.videoUrl||null,
+      caption: cell.cap,
+      hashtags: cell.hash,
+      publishDate: cell.date
+    });
+  } catch(e) { console.error(e); }
+  toast('Kaydedildi ✓'); openIG(fid,bid);
 }
 
 function addMember(){
@@ -1539,7 +1861,24 @@ function addMember(){
 }
 
 // ── Init ──────────────────────────────────────────────────
-renderSB();renderN();goHome();
+// Check auth on load
+(async function() {
+  if (_token && _me) {
+    try {
+      const me = await apiFetch('/api/auth/me');
+      _me = me;
+      localStorage.setItem('mk_me', JSON.stringify(_me));
+      await initApp();
+    } catch(e) {
+      localStorage.removeItem('mk_token');
+      localStorage.removeItem('mk_me');
+      _token = ''; _me = null;
+      showLogin();
+    }
+  } else {
+    showLogin();
+  }
+})();
 </script>
 </body>
 </html>
