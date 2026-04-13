@@ -106,9 +106,9 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
 })
 
 function generateToken(userId: string): string {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  })
+  const secret = process.env.JWT_SECRET as string
+  const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn']
+  return jwt.sign({ userId }, secret, { expiresIn })
 }
 
 function cookieOptions() {
