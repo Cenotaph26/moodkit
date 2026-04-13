@@ -246,6 +246,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 
 
+
 // ── API LAYER ─────────────────────────────────────────────
 const API = '';
 let _token = localStorage.getItem('mk_token') || '';
@@ -531,6 +532,8 @@ async function initApp() {
   renderSB(); renderN(); goHome();
 }
 
+
+
 // ── SVG helpers ───────────────────────────────────────────
 function mkSVG(c1,c2,t){
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
@@ -734,20 +737,20 @@ document.addEventListener('click',e=>{const nw=document.getElementById('nbw');co
 function renderSB(){
   document.getElementById('flist').innerHTML=firms.map(f=>{
     const briefs=f.briefs.map(b=>
-      '<div class="asub" onclick="openBrief('+f.id+','+b.id+')"><svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor" opacity=".5"><path d="M2 1h8a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/></svg>'+b.month+' '+b.year+'</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openMbIG('+f.id+','+b.id+')">· IG Moodboard</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openMbK('+f.id+','+b.id+')">· Kampanya MB</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openTasks('+f.id+','+b.id+')">· Görevler</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openIG('+f.id+','+b.id+')">· IG Grid</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openYayin('+f.id+','+b.id+')">· Yayın</div>'+
-      '<div class="asub" style="padding-left:14px" onclick="openCal('+f.id+','+b.id+')">· Takvim</div>'
+      '<div class="asub" onclick="openBrief(\''+f.id+'\',\''+b.id+'\')"><svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor" opacity=".5"><path d="M2 1h8a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z"/></svg>'+b.month+' '+b.year+'</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openMbIG(\''+f.id+'\',\''+b.id+'\')">· IG Moodboard</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openMbK(\''+f.id+'\',\''+b.id+'\')">· Kampanya MB</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openTasks(\''+f.id+'\',\''+b.id+'\')">· Görevler</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openIG(\''+f.id+'\',\''+b.id+'\')">· IG Grid</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openYayin(\''+f.id+'\',\''+b.id+'\')">· Yayın</div>'+
+      '<div class="asub" style="padding-left:14px" onclick="openCal(\''+f.id+'\',\''+b.id+'\')">· Takvim</div>'
     ).join('');
     return '<div class="aw" id="aw-'+f.id+'">'+
       '<div class="ah" onclick="document.getElementById(\'aw-'+f.id+'\').classList.toggle(\'open\')">'+
       '<div class="adot" style="background:'+f.color+'"></div>'+
       '<span class="albl">'+f.name+'</span><span class="aarr">›</span></div>'+
       '<div class="abody">'+briefs+
-      '<div class="asub" style="color:var(--acc)" onclick="addBrief('+f.id+')">+ Yeni Brief</div>'+
+      '<div class="asub" style="color:var(--acc)" onclick="addBrief(\''+f.id+'\')">+ Yeni Brief</div>'+
       '</div></div>';
   }).join('');
 }
@@ -762,7 +765,7 @@ function goHome(){
     const lb=f.briefs[f.briefs.length-1];
     const ap=lb?(lb.mbIG.filter(k=>k.status==='approved').length+lb.mbKamp.filter(k=>k.status==='approved').length):0;
     const tot=lb?(lb.mbIG.length+lb.mbKamp.length):0;
-    return '<div class="card" style="cursor:pointer;overflow:hidden;transition:transform .15s" onclick="openBrief('+f.id+','+(f.briefs[0]?.id||0)+')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">'+
+    return '<div class="card" style="cursor:pointer;overflow:hidden;transition:transform .15s" onclick="openBrief(\''+f.id+'\','+(f.briefs[0]?.id||0)+')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">'+
       '<div style="height:72px;position:relative;overflow:hidden">'+
       '<img src="'+(lb?.igCells[0]?.src||gS(0))+'" style="width:100%;height:100%;object-fit:cover">'+
       '<div style="position:absolute;inset:0;background:'+f.color+'cc"></div>'+
@@ -796,8 +799,9 @@ function goHome(){
 
 
 // ── Brief ─────────────────────────────────────────────────
-function openBrief(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='brief';
+async function openBrief(fid,bid){
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='brief';
   const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year+' Brief'}]);
   const a=b.answers||{};
@@ -811,9 +815,9 @@ function openBrief(fid,bid){
     '<div><div style="font-size:16px;font-weight:600;color:var(--txt)">'+b.month+' '+b.year+' — Brief</div>'+
     '<div style="display:flex;gap:6px;margin-top:5px"><span class="badge '+SC[b.stage]+'">'+SL[b.stage]+'</span><span class="badge bgr">'+f.name+'</span></div></div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
-    '<div class="btn brd-btn bs" onclick="delBrief('+fid+','+bid+')">Brief Sil</div>'+
-    '<div class="btn bg0" onclick="openMbIG('+fid+','+bid+')">IG Moodboard →</div>'+
-    '<div class="btn bp" onclick="saveBrief('+fid+','+bid+')">Kaydet</div></div></div>'+
+    '<div class="btn brd-btn bs" onclick="delBrief(\''+fid+'\',\''+bid+'\')">Brief Sil</div>'+
+    '<div class="btn bg0" onclick="openMbIG(\''+fid+'\',\''+bid+'\')">IG Moodboard →</div>'+
+    '<div class="btn bp" onclick="saveBrief(\''+fid+'\',\''+bid+'\')">Kaydet</div></div></div>'+
     // Dönem
     '<div class="bsec"><div class="bsec-hd"><div class="bsec-ic" style="background:var(--abg)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" stroke="var(--atxt)" stroke-width="1.3"/><line x1="1" y1="7" x2="15" y2="7" stroke="var(--atxt)" stroke-width="1.3"/></svg></div><div style="font-size:13px;font-weight:600;color:var(--txt)">Brief Dönemi</div></div>'+
     '<div class="fr2"><div class="fg"><label class="fl">Ay</label><select class="inp sel" id="bf-m">'+mOpts+'</select></div>'+
@@ -839,9 +843,9 @@ function openBrief(fid,bid){
     '<div class="fg"><label class="fl">Özel içerik talebi</label><input class="inp" id="bf-sc" value="'+a.specialContent+'"></div></div>'+
     '<div class="fg"><label class="fl">Ek notlar</label><textarea class="inp ta" id="bf-notes">'+a.notes+'</textarea></div></div>'+
     '<div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:20px">'+
-    '<div class="btn brd-btn" onclick="delBrief('+fid+','+bid+')">Brief Sil</div>'+
-    '<div class="btn bg0" onclick="openMbIG('+fid+','+bid+')">IG Moodboard →</div>'+
-    '<div class="btn bp" style="padding:7px 18px" onclick="saveBrief('+fid+','+bid+')">Kaydet</div></div>';
+    '<div class="btn brd-btn" onclick="delBrief(\''+fid+'\',\''+bid+'\')">Brief Sil</div>'+
+    '<div class="btn bg0" onclick="openMbIG(\''+fid+'\',\''+bid+'\')">IG Moodboard →</div>'+
+    '<div class="btn bp" style="padding:7px 18px" onclick="saveBrief(\''+fid+'\',\''+bid+'\')">Kaydet</div></div>';
   showV('brief');
 }
 
@@ -863,37 +867,33 @@ async function saveBrief(fid,bid){
     specialContent:document.getElementById('bf-sc')?.value||'',
     notes:document.getElementById('bf-notes')?.value||''
   };
-  await apiSaveBrief(fid, bid, { month: b.month, year: b.year, answers: b.answers });
+  try { await apiFetch('/api/firms/'+fid+'/briefs/'+bid, {method:'PUT', body:{month:b.month,year:b.year,answers:b.answers}}); } catch(e){}
   toast('Brief kaydedildi ✓');
 }
 
-async function delBrief(fid,bid){
+function delBrief(fid,bid){
   const f=gF(fid);
   if(f.briefs.length<=1){toast('En az 1 brief olmalı');return;}
-  try { await apiFetch('/api/firms/'+fid+'/briefs/'+bid,{method:'DELETE'}); } catch(e){}
   f.briefs=f.briefs.filter(x=>x.id!==bid);
   toast('Brief silindi');renderSB();goHome();
 }
 
 async function addBrief(fid){
   try {
-    const b = await apiAddBriefAPI(fid, {month:MONTHS[NM-1], year:NY});
+    const b=await apiFetch('/api/firms/'+fid+'/briefs',{method:'POST',body:{month:MONTHS[NM-1],year:NY}});
     const f=gF(fid);
-    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',
-      answers:{},mbIG:[],mbKamp:[],tasks:[],
+    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',answers:{},mbIG:[],mbKamp:[],tasks:[],
       igCells:Array.from({length:9},(_,i)=>({id:i,type:'post',src:null,cap:'',hash:'',date:'',videoUrl:'',blob:null,slides:[],approved:null,likes:'0',cmts:'0'}))
     });
     renderSB();openBrief(fid,b.id);
-  } catch(e) { toast('Hata: '+e.message); }
+  } catch(e){toast('Hata: '+e.message);}
 }
 
 // ── MB IG ─────────────────────────────────────────────────
 async function openMbIG(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='mbig';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='mbig';
+  const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'IG Moodboard'}]);
   const ap=b.mbIG.filter(k=>k.status==='approved').length;
   const prog=b.mbIG.length?Math.round(ap/b.mbIG.length*100):0;
@@ -902,22 +902,20 @@ async function openMbIG(fid,bid){
     '<div><div style="font-size:16px;font-weight:600;color:var(--txt)">IG Moodboard</div>'+
     '<div style="font-size:11px;color:var(--txt3);margin-top:3px">Her kart bir IG hücresini temsil eder · Onaylanınca IG Grid\'e aktarılır</div></div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
-    '<div class="btn bpu-btn" onclick="openCustMB('+fid+','+bid+',\'ig\')">Müşteri Görünümü</div>'+
-    '<div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'ig\')">+ Kart Ekle</div></div></div>'+
+    '<div class="btn bpu-btn" onclick="openCustMB(\''+fid+'\',\''+bid+'\',\'ig\')">Müşteri Görünümü</div>'+
+    '<div class="btn bp" onclick="showMod(\'add-mb\',\''+fid+'\',\''+bid+'\',\'ig\')">+ Kart Ekle</div></div></div>'+
     (b.mbIG.length?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="prog" style="flex:1"><div class="prog-f" style="width:'+prog+'%"></div></div><span style="font-size:11px;color:var(--txt3)">'+ap+'/'+b.mbIG.length+' onaylı</span></div>':'')+
     '<div class="mbg" id="mbig-grid"></div>'+
-    (b.mbIG.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px;text-align:center">Henüz kart yok.</p><div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'ig\')">+ İlk Kartı Ekle</div></div>');
-  loadCards(fid, bid, 'ig').then(() => renderMBG('mbig-grid',fid,bid,'ig'));
+    (b.mbIG.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px;text-align:center">Henüz kart yok.</p><div class="btn bp" onclick="showMod(\'add-mb\',\''+fid+'\',\''+bid+'\',\'ig\')">+ İlk Kartı Ekle</div></div>');
+  renderMBG('mbig-grid',fid,bid,'ig');
   showV('mbig');
 }
 
 // ── MB Kamp ───────────────────────────────────────────────
 async function openMbK(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='mbk';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='mbk';
+  const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Kampanya Moodboard'}]);
   const ap=b.mbKamp.filter(k=>k.status==='approved').length;
   const prog=b.mbKamp.length?Math.round(ap/b.mbKamp.length*100):0;
@@ -926,12 +924,12 @@ async function openMbK(fid,bid){
     '<div><div style="font-size:16px;font-weight:600;color:var(--txt)">Kampanya Moodboard</div>'+
     '<div style="font-size:11px;color:var(--txt3);margin-top:3px">Afiş · Story Seti · Reklam · Kampanya Filmi</div></div>'+
     '<div style="display:flex;gap:6px">'+
-    '<div class="btn bpu-btn" onclick="openCustMB('+fid+','+bid+',\'kamp\')">Müşteri Görünümü</div>'+
-    '<div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'kamp\')">+ Kart Ekle</div></div></div>'+
+    '<div class="btn bpu-btn" onclick="openCustMB(\''+fid+'\',\''+bid+'\',\'kamp\')">Müşteri Görünümü</div>'+
+    '<div class="btn bp" onclick="showMod(\'add-mb\',\''+fid+'\',\''+bid+'\',\'kamp\')">+ Kart Ekle</div></div></div>'+
     (b.mbKamp.length?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="prog" style="flex:1"><div class="prog-f" style="width:'+prog+'%"></div></div><span style="font-size:11px;color:var(--txt3)">'+ap+'/'+b.mbKamp.length+' onaylı</span></div>':'')+
     '<div class="mbg" id="mbk-grid"></div>'+
-    (b.mbKamp.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px">Kampanya kartı yok.</p><div class="btn bp" onclick="showMod(\'add-mb\','+fid+','+bid+',\'kamp\')">+ Kart Ekle</div></div>');
-  loadCards(fid, bid, 'kamp').then(() => renderMBG('mbk-grid',fid,bid,'kamp'));
+    (b.mbKamp.length?'':'<div style="display:flex;flex-direction:column;align-items:center;padding:32px 16px;gap:10px;color:var(--txt3)"><p style="font-size:12px">Kampanya kartı yok.</p><div class="btn bp" onclick="showMod(\'add-mb\',\''+fid+'\',\''+bid+'\',\'kamp\')">+ Kart Ekle</div></div>');
+  renderMBG('mbk-grid',fid,bid,'kamp');
   showV('mbk');
 }
 
@@ -946,7 +944,7 @@ function renderMBG(gid,fid,bid,which){
     const cv=c.versions[c.versions.length-1];
     const isYT=isVU(cv?.url||c.url||'');
     const img=cv?.img||c.img;
-    return '<div class="mbc" onclick="openMBDet('+fid+','+bid+',\''+which+'\','+c.id+')">'+
+    return '<div class="mbc" onclick="openMBDet(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+c.id+'\')">'+
       '<div class="mbth">'+
       (isYT?
         '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
@@ -954,7 +952,7 @@ function renderMBG(gid,fid,bid,which){
         '<div style="position:relative;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:14px">▶</div></div>':
         img?'<img src="'+img+'" loading="lazy">':
         '<div style="position:absolute;inset:0;background:'+GR[0][0]+'"></div>')+
-      '<div class="mbov"><div class="ovb">↗</div><div class="ovb" onclick="event.stopPropagation();delMBC('+fid+','+bid+',\''+which+'\','+c.id+')" style="color:var(--red)">✕</div></div>'+
+      '<div class="mbov"><div class="ovb">↗</div><div class="ovb" onclick="event.stopPropagation();delMBC(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+c.id+'\')" style="color:var(--red)">✕</div></div>'+
       '<div style="position:absolute;top:8px;right:8px;z-index:3"><span class="badge bpu" style="font-size:9px">v'+c.versions.length+'</span></div>'+
       (isYT?'<div style="position:absolute;top:8px;left:8px;z-index:3"><span class="badge brd" style="font-size:9px">VİDEO</span></div>':'')+
       '</div><div class="mbb">'+
@@ -1033,21 +1031,20 @@ function openMBDet(fid,bid,which,cid){
     '<div style="background:var(--bg2);border-radius:var(--r8);padding:11px 13px;margin-bottom:12px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap">'+(cv?.desc||c.desc||'Açıklama yok.')+'</div>'+
     (url?'<div style="margin-bottom:12px"><a href="'+url+'" target="_blank" style="font-size:11px;color:var(--acc)">'+url.replace('https://','').slice(0,55)+'↗</a></div>':'')+
     '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
-    '<div class="btn bgn-btn" onclick="setMBS('+fid+','+bid+',\''+which+'\','+cid+',\'approved\')">✓ Onayla</div>'+
-    '<div class="btn brd-btn" onclick="setMBS('+fid+','+bid+',\''+which+'\','+cid+',\'rejected\')">✗ Reddet</div>'+
-    '<div class="btn bam-btn" onclick="setMBS('+fid+','+bid+',\''+which+'\','+cid+',\'review\')">● İncele</div>'+
+    '<div class="btn bgn-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'approved\')">✓ Onayla</div>'+
+    '<div class="btn brd-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'rejected\')">✗ Reddet</div>'+
+    '<div class="btn bam-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'review\')">● İncele</div>'+
     '</div></div>'+
     '<div style="display:flex;flex-direction:column;gap:10px">'+
     '<div class="card cp">'+
     '<div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">Versiyon Geçmişi</div>'+
     verHtml+
-    '<div class="btn bg0" style="width:100%;justify-content:center;margin-top:8px;font-size:11px" onclick="showMod(\'add-ver\','+fid+','+bid+',\''+which+'\','+cid+')">+ Yeni Versiyon</div>'+
+    '<div class="btn bg0" style="width:100%;justify-content:center;margin-top:8px;font-size:11px" onclick="showMod(\'add-ver\',\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+')">+ Yeni Versiyon</div>'+
     '</div>'+taskHtml+'</div></div>';
   showV('det');
 }
 
-async function setMBS(fid,bid,which,cid,status){
-  try { await apiSetCardStatus(fid, bid, cid, status); } catch(e) { console.error(e); }
+function setMBS(fid,bid,which,cid,status){
   const b=gB(fid,bid);
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const c=cards.find(x=>x.id===cid);
@@ -1086,18 +1083,16 @@ async function setMBS(fid,bid,which,cid,status){
 
 // ── Görevler ──────────────────────────────────────────────
 async function openTasks(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='tasks';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='tasks';
+  const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Görevler'}]);
   const cols=[{id:'todo',label:'Bekliyor',badge:'bam'},{id:'doing',label:'Üretimde',badge:'bpu'},{id:'done',label:'Tamamlandı',badge:'bgn'}];
   document.getElementById('v-tasks').innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
     '<div><div style="font-size:16px;font-weight:600;color:var(--txt)">Görevler</div>'+
     '<div style="font-size:11px;color:var(--txt3);margin-top:3px">'+b.tasks.length+' görev · Kartları sürükle ile sütun değiştir</div></div>'+
-    '<div class="btn bp" onclick="showMod(\'add-task\','+fid+','+bid+')">+ Görev Ekle</div></div>'+
+    '<div class="btn bp" onclick="showMod(\'add-task\',\''+fid+'\',\''+bid+'\')">+ Görev Ekle</div></div>'+
     '<div class="kb">'+
     cols.map(col=>'<div class="kcol" id="kcol-'+col.id+'" '+
       'ondragover="event.preventDefault();this.classList.add(\'dov\')" '+
@@ -1111,7 +1106,7 @@ async function openTasks(fid,bid){
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2"/></svg>'+
       '<span style="font-size:10px">Kart sürükle</span></div></div>'
     ).join('')+'</div>';
-  loadTasks(fid, bid).then(() => renderTC(fid,bid));
+  renderTC(fid,bid);
   showV('tasks');
 }
 
@@ -1160,17 +1155,15 @@ async function dropTask(e,ns,fid,bid){
   if(t&&t.status!==ns){
     t.status=ns;renderTC(fid,bid);
     toast('→ '+(ns==='todo'?'Bekliyor':ns==='doing'?'Üretimde':'Tamamlandı'));
-    try { await apiUpdateTask(fid, bid, t.id, { status: ns.toUpperCase() }); } catch(e2) { console.error(e2); }
+    try{await apiFetch('/api/firms/'+fid+'/briefs/'+bid+'/tasks/'+t.id,{method:'PUT',body:{status:ns.toUpperCase()}});}catch(e2){}
   }
 }
 
 // ── IG Grid ───────────────────────────────────────────────
 async function openIG(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='ig';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='ig';
+  const f=gF(fid),b=gB(fid,bid);
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'IG Grid'}]);
   document.getElementById('v-ig').innerHTML=
@@ -1178,8 +1171,8 @@ async function openIG(fid,bid){
     '<div><div style="font-size:16px;font-weight:600;color:var(--txt)">IG Grid</div>'+
     '<div style="font-size:11px;color:var(--txt3);margin-top:3px">'+b.igCells.filter(x=>x.src).length+'/9 dolu · Sürükle ile sırala</div></div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
-    '<div class="btn bpu-btn" onclick="openCustIG('+fid+','+bid+')">Müşteri Onayı</div>'+
-    '<div class="btn bp" onclick="showMod(\'add-ig\','+fid+','+bid+')">+ İçerik Ekle</div></div></div>'+
+    '<div class="btn bpu-btn" onclick="openCustIG(\''+fid+'\',\''+bid+'\')">Müşteri Onayı</div>'+
+    '<div class="btn bp" onclick="showMod(\'add-ig\',\''+fid+'\',\''+bid+'\')">+ İçerik Ekle</div></div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:start">'+
     '<div>'+
     '<div class="iph"><div class="igph">'+
@@ -1196,7 +1189,7 @@ async function openIG(fid,bid){
     '<div style="flex:1;text-align:center;padding:4px;background:#efefef;border-radius:4px;font-size:10px;font-weight:600;color:#1a1a1a">Mesaj</div></div>'+
     '<div class="igtabs">'+
     '<div class="igtab act">⊞</div>'+
-    '<div class="igtab" onclick="openReels('+fid+','+bid+')">▶</div>'+
+    '<div class="igtab" onclick="openReels(\''+fid+'\',\''+bid+'\')">▶</div>'+
     '<div class="igtab">♡</div></div>'+
     '<div class="iggr" id="igcells-'+bid+'"></div>'+
     '</div></div>'+
@@ -1206,7 +1199,8 @@ async function openIG(fid,bid){
     '<div style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto" id="iglist-'+bid+'"></div></div>'+
     '</div>';
   showV('ig');
-  loadIGCells(fid, bid).then(() => { renderIGCells(fid,bid); renderIGList(fid,bid); });
+  renderIGCells(fid,bid);
+  renderIGList(fid,bid);
 }
 
 function renderIGCells(fid,bid){
@@ -1253,7 +1247,7 @@ function renderIGCells(fid,bid){
 function renderIGList(fid,bid){
   const b=gB(fid,bid);const el=document.getElementById('iglist-'+bid);if(!el)return;
   el.innerHTML=b.igCells.map((c,i)=>
-    '<div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:var(--r8);border:.5px solid var(--bdr);background:var(--bg2);cursor:pointer" onclick="viewCell('+fid+','+bid+','+i+')">'+
+    '<div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:var(--r8);border:.5px solid var(--bdr);background:var(--bg2);cursor:pointer" onclick="viewCell(\''+fid+'\',\''+bid+'\','+i+')">'+
     '<div style="width:30px;height:30px;border-radius:5px;overflow:hidden;flex-shrink:0;background:'+GR[i%9][0]+';position:relative">'+
     (c.src?'<img src="'+c.src+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" loading="lazy">':'')+
     '</div><div style="flex:1;min-width:0">'+
@@ -1276,7 +1270,7 @@ function viewCell(fid,bid,idx){
     const sl=slides[cs];
     el.innerHTML=
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'+
-      '<div class="btn bg0" onclick="openIG('+fid+','+bid+')">← Grid</div>'+
+      '<div class="btn bg0" onclick="openIG(\''+fid+'\',\''+bid+'\')">← Grid</div>'+
       '<span style="font-size:11px;color:var(--txt2)">'+(cell.type==='carousel'?'Carousel':'Post')+' · '+(cell.date||'')+'</span>'+
       '<span class="badge '+(cell.approved===true?'bgn':cell.approved===false?'brd':'bam')+'" style="margin-left:auto">'+(cell.approved===true?'✓ Onaylı':cell.approved===false?'✗ Red':'Bekliyor')+'</span></div>'+
       '<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">'+
@@ -1296,17 +1290,16 @@ function viewCell(fid,bid,idx){
       '<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:8px">'+
       '<div class="card cp">'+
       '<div style="display:flex;gap:6px;margin-bottom:6px">'+
-      '<div class="btn bgn-btn bs" onclick="setIGAp('+fid+','+bid+','+idx+',true)">✓ Onayla</div>'+
-      '<div class="btn brd-btn bs" onclick="setIGAp('+fid+','+bid+','+idx+',false)">✗ Reddet</div></div>'+
-      '<div class="btn bg0 bs" style="width:100%;justify-content:center" onclick="showMod(\'edit-ig\','+fid+','+bid+','+idx+')">Düzenle</div>'+
+      '<div class="btn bgn-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',true)">✓ Onayla</div>'+
+      '<div class="btn brd-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',false)">✗ Reddet</div></div>'+
+      '<div class="btn bg0 bs" style="width:100%;justify-content:center" onclick="showMod(\'edit-ig\',\''+fid+'\',\''+bid+'\','+idx+')">Düzenle</div>'+
       '</div></div></div>';
   }
   renderPV();
 }
 
-async function setIGAp(fid,bid,idx,v){
+function setIGAp(fid,bid,idx,v){
   const b=gB(fid,bid);b.igCells[idx].approved=v;
-  try { await apiUpdateIGCell(fid, bid, idx, { approved: v }); } catch(e) { console.error(e); }
   toast(v?'✓ Onaylandı':'✗ Reddedildi');
   viewCell(fid,bid,idx);
 }
@@ -1333,7 +1326,7 @@ function openReels(fid,bid,startIdx){
       mh='<div style="position:absolute;inset:0;background:'+GR[ri%9][0]+'"></div>';
     el.innerHTML=
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'+
-      '<div class="btn bg0" onclick="openIG('+fid+','+bid+')">← Grid</div>'+
+      '<div class="btn bg0" onclick="openIG(\''+fid+'\',\''+bid+'\')">← Grid</div>'+
       '<span style="font-size:11px;color:var(--txt2)">Reels · '+(ri+1)+'/'+rs.length+'</span></div>'+
       '<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">'+
       '<div><div class="rframe" style="width:260px;height:462px">'+
@@ -1363,8 +1356,8 @@ function openReels(fid,bid,startIdx){
       '<div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:6px">'+(cell.cap||'')+'</div>'+
       '<div style="font-size:11px;color:#0095f6;margin-bottom:8px">'+(cell.hash||'')+'</div>'+
       '<div style="display:flex;gap:5px">'+
-      '<div class="btn bgn-btn bs" onclick="setIGAp('+fid+','+bid+','+b.igCells.indexOf(cell)+',true)">✓ Onayla</div>'+
-      '<div class="btn brd-btn bs" onclick="setIGAp('+fid+','+bid+','+b.igCells.indexOf(cell)+',false)">✗ Reddet</div>'+
+      '<div class="btn bgn-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+b.igCells.indexOf(cell)+',true)">✓ Onayla</div>'+
+      '<div class="btn brd-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+b.igCells.indexOf(cell)+',false)">✗ Reddet</div>'+
       '</div></div>'+
       '<div class="card cp"><div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:7px">Tüm Reels</div>'+
       '<div style="display:flex;flex-direction:column;gap:4px">'+
@@ -1385,10 +1378,7 @@ function openReels(fid,bid,startIdx){
 // ── Müşteri MB ────────────────────────────────────────────
 async function openCustMB(fid,bid,which){
   cFid=fid;cBid=bid;
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  const f=gF(fid),b=gB(fid,bid);
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const title=which==='ig'?'IG Moodboard Onayı':'Kampanya Moodboard Onayı';
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:title}]);
@@ -1401,7 +1391,7 @@ async function openCustMB(fid,bid,which){
     '<div style="width:38px;height:38px;border-radius:var(--r8);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">'+f.name.slice(0,2)+'</div>'+
     '<div><div style="color:#fff;font-size:14px;font-weight:600">'+title+'</div>'+
     '<div style="color:rgba(255,255,255,.7);font-size:11px">'+f.name+' · '+b.month+' '+b.year+'</div></div>'+
-    '<div style="margin-left:auto"><div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:11px" onclick="'+(which==='ig'?'openMbIG':'openMbK')+'('+fid+','+bid+')">← Editör</div></div></div>'+
+    '<div style="margin-left:auto"><div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:11px" onclick="'+(which==='ig'?'openMbIG':'openMbK')+'(\''+fid+'\',\''+bid+'\')">← Editör</div></div></div>'+
     (b.answers?.tone?'<div style="background:var(--bg2);border-radius:var(--r8);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--txt2);line-height:1.6"><strong>Brief tonu:</strong> '+b.answers.tone+'</div>':'')+
     (cards.length?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="prog" style="flex:1"><div class="prog-f" style="width:'+Math.round(ap/cards.length*100)+'%"></div></div><span style="font-size:11px;color:var(--txt3)">'+ap+'/'+cards.length+' onaylı</span></div>':'')+
     '<div class="mbg" style="margin-bottom:14px">'+
@@ -1409,7 +1399,7 @@ async function openCustMB(fid,bid,which){
       const cv=c.versions[c.versions.length-1];
       const img=cv?.img||c.img;
       const isYT=isVU(cv?.url||c.url||'');
-      return '<div class="mbc" onclick="openCustCard('+fid+','+bid+',\''+which+'\','+c.id+')">'+
+      return '<div class="mbc" onclick="openCustCard(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+c.id+'\')">'+
         '<div class="mbth">'+
         (isYT?'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
         (img?'<img src="'+img+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65">':'')+
@@ -1421,15 +1411,15 @@ async function openCustMB(fid,bid,which){
         '<div class="mbft" style="justify-content:space-between">'+
         '<span class="badge '+(sv[c.status]||'bgr')+'" style="font-size:9px">'+(sl[c.status]||'Bekliyor')+'</span>'+
         '<div style="display:flex;gap:4px">'+
-        '<div class="btn bgn-btn" style="font-size:9px;padding:2px 6px" onclick="event.stopPropagation();custAp('+fid+','+bid+',\''+which+'\','+c.id+',true)">Onayla</div>'+
-        '<div class="btn brd-btn" style="font-size:9px;padding:2px 6px" onclick="event.stopPropagation();custAp('+fid+','+bid+',\''+which+'\','+c.id+',false)">Revize</div>'+
+        '<div class="btn bgn-btn" style="font-size:9px;padding:2px 6px" onclick="event.stopPropagation();custAp(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+c.id+'\',true)">Onayla</div>'+
+        '<div class="btn brd-btn" style="font-size:9px;padding:2px 6px" onclick="event.stopPropagation();custAp(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+c.id+'\',false)">Revize</div>'+
         '</div></div></div></div>';
     }).join('')+
     '</div>'+
     (cards.length?'':'<div style="text-align:center;padding:20px;font-size:12px;color:var(--txt3)">Henüz kart eklenmedi.</div>')+
     '<div class="card cp"><div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:8px">Genel Yorum</div>'+
     '<textarea class="inp ta" id="cust-cmt" placeholder="Görüşlerinizi yazın..." style="margin-bottom:8px"></textarea>'+
-    '<div class="btn bp" onclick="sendCmt('+fid+','+bid+')">Gönder</div></div></div>';
+    '<div class="btn bp" onclick="sendCmt(\''+fid+'\',\''+bid+'\')">Gönder</div></div></div>';
   showV('cust');
 }
 
@@ -1453,7 +1443,7 @@ function openCustCard(fid,bid,which,cid){
   document.getElementById('v-cust').innerHTML=
     '<div style="max-width:560px;margin:0 auto">'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">'+
-    '<div class="btn bg0" onclick="openCustMB('+fid+','+bid+',\''+which+'\')">← Geri</div>'+
+    '<div class="btn bg0" onclick="openCustMB(\''+fid+'\',\''+bid+'\',\''+which+'\')">← Geri</div>'+
     '<span style="font-size:13px;font-weight:600;color:var(--txt)">'+c.label+'</span>'+
     '<span class="badge bgr">'+c.type+'</span>'+
     '<span class="badge bpu" style="font-size:9px">v'+c.versions.length+'</span></div>'+
@@ -1467,12 +1457,12 @@ function openCustCard(fid,bid,which,cid){
     '<span style="font-size:10px;color:var(--txt3)">'+v.note+' · '+v.date+'</span></div>').join('')+
     '</div>':'')+
     '<div style="display:flex;gap:8px;margin-bottom:14px">'+
-    '<div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="custAp('+fid+','+bid+',\''+which+'\','+cid+',true)">✓ Onayla</div>'+
-    '<div class="btn brd-btn" style="flex:1;justify-content:center" onclick="custAp('+fid+','+bid+',\''+which+'\','+cid+',false)">✗ Revize İste</div>'+
+    '<div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="custAp(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',true)">✓ Onayla</div>'+
+    '<div class="btn brd-btn" style="flex:1;justify-content:center" onclick="custAp(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',false)">✗ Revize İste</div>'+
     '</div>'+
     '<div class="card cp"><div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:8px">Yorum</div>'+
     '<textarea class="inp ta" id="card-cmt" placeholder="Bu kart hakkında..." style="margin-bottom:8px"></textarea>'+
-    '<div class="btn bp bs" onclick="sendCardCmt('+fid+','+bid+',\''+which+'\','+cid+')">Gönder</div></div></div>';
+    '<div class="btn bp bs" onclick="sendCardCmt(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+')">Gönder</div></div></div>';
 }
 
 function custAp(fid,bid,which,cid,v){
@@ -1501,10 +1491,7 @@ function sendCmt(fid,bid){const v=document.getElementById('cust-cmt')?.value.tri
 // ── Müşteri IG Onay ───────────────────────────────────────
 async function openCustIG(fid,bid){
   cFid=fid;cBid=bid;
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  const f=gF(fid),b=gB(fid,bid);
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:'IG Grid Onayı'}]);
   document.getElementById('v-cust').innerHTML=
@@ -1512,7 +1499,7 @@ async function openCustIG(fid,bid){
     '<div style="background:'+f.color+';border-radius:var(--r12);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">'+
     '<div><div style="color:#fff;font-size:13px;font-weight:600">IG Grid Onayı — '+b.month+' '+b.year+'</div>'+
     '<div style="color:rgba(255,255,255,.7);font-size:10px">'+f.name+'</div></div>'+
-    '<div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:11px" onclick="openIG('+fid+','+bid+')">← Editör</div></div>'+
+    '<div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:11px" onclick="openIG(\''+fid+'\',\''+bid+'\')">← Editör</div></div>'+
     '<div class="cust-phone" style="margin-bottom:14px">'+
     '<div style="background:#fff;padding:3px 14px 0;display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#1a1a1a"><span>9:41</span><span>●●●</span></div>'+
     '<div class="ighd"><div class="igav" style="background:'+f.color+'">'+un.slice(0,2).toUpperCase()+'</div>'+
@@ -1525,7 +1512,7 @@ async function openCustIG(fid,bid){
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px">'+
     b.igCells.map((cell,idx)=>{
       const isR=cell.type==='reels'||isVU(cell.videoUrl||'');
-      return '<div class="igc" onclick="custCellTap('+fid+','+bid+','+idx+')" style="cursor:pointer">'+
+      return '<div class="igc" onclick="custCellTap(\''+fid+'\',\''+bid+'\','+idx+')" style="cursor:pointer">'+
         '<div style="position:absolute;inset:0;background:'+GR[idx%9][0]+'"></div>'+
         (cell.src?'<img src="'+cell.src+'" loading="lazy">':'')+
         (isR?'<svg class="ct" width="11" height="11" viewBox="0 0 16 16" fill="white"><polygon points="3,2 14,8 3,14"/></svg>':'')+
@@ -1536,7 +1523,7 @@ async function openCustIG(fid,bid){
     '</div></div>'+
     '<div style="font-size:10px;color:var(--txt3);text-align:center;margin-bottom:10px">Hücreye tıkla → detay ve onay/red</div>'+
     '<div style="display:flex;gap:6px;margin-bottom:12px">'+
-    '<div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="approveAllIG('+fid+','+bid+')">Tümünü Onayla</div>'+
+    '<div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="approveAllIG(\''+fid+'\',\''+bid+'\')">Tümünü Onayla</div>'+
     '<div class="btn bp" style="flex:1;justify-content:center" onclick="toast(\'Onay gönderildi ✓\')">Onayla & Gönder</div></div></div>';
   showV('cust');
 }
@@ -1548,15 +1535,13 @@ function custCellTap(fid,bid,idx){
   if(isR){openIG(fid,bid);setTimeout(()=>openReels(fid,bid,idx),50);return;}
   openIG(fid,bid);setTimeout(()=>viewCell(fid,bid,idx),50);
 }
-async function approveAllIG(fid,bid){const b=gB(fid,bid);try{await apiApproveAllIG(fid,bid);}catch(e){console.error(e);}b.igCells.forEach(c=>c.approved=true);toast('Tümü onaylandı ✓');openCustIG(fid,bid);}
+function approveAllIG(fid,bid){const b=gB(fid,bid);b.igCells.forEach(c=>c.approved=true);toast('Tümü onaylandı ✓');openCustIG(fid,bid);}
 
 // ── Yayın ─────────────────────────────────────────────────
 async function openYayin(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='yayin';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='yayin';
+  const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Yayın'}]);
   const igAp=b.igCells.filter(x=>x.approved===true).length;
   const mbAp=b.mbIG.filter(k=>k.status==='approved').length+b.mbKamp.filter(k=>k.status==='approved').length;
@@ -1583,11 +1568,9 @@ async function openYayin(fid,bid){
 
 // ── Takvim ────────────────────────────────────────────────
 async function openCal(fid,bid){
-  cFid=fid;cBid=bid;openAcc(fid);lv='cal';
-  const f=gF(fid);if(!f)return;
-  if(!f.briefs||!f.briefs.length)await loadBriefs(fid);
-  const b=gB(fid,bid)||f.briefs[0];
-  if(!b)return;bid=b.id;cBid=bid;
+  cFid=fid;cBid=bid;openAcc(fid);
+  { const _f=gF(fid);if(!_f)return;if(!_f.briefs||!_f.briefs.length)await loadBriefs(fid);if(!gB(fid,bid)&&_f.briefs.length){bid=_f.briefs[0].id;cBid=bid;} }lv='cal';
+  const f=gF(fid),b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:'Takvim'}]);
   const today=13;const monthDays=30;
   const posts=b.igCells.filter(c=>c.date);
@@ -1603,7 +1586,10 @@ async function openCal(fid,bid){
     Array.from({length:monthDays},(_,i)=>{
       const day=i+1;const ps=byDay[day]||[];
       const isToday=day===today;const isPast=day<today;
-      return '<div class="cal-cell '+(isToday?'today':isPast?'past':'')+'"><div class="cal-dn">'+day+'</div>'+ps.map(p=>'<div class="cal-pill" style="background:'+f.color+'22;color:'+f.color+'">'+(p.type==="reels"?'▶':p.type==="carousel"?'⧉':'○')+' '+(p.cap?.slice(0,10)||'—')+'</div>').join('')+'</div>';
+      return '<div class="cal-cell '+(isToday?'today':isPast?'past':'')+'">'+
+        '<div class="cal-dn">'+day+'</div>'+
+        ps.map(p=>'<div class="cal-pill" style="background:'+f.color+'22;color:'+f.color+'">'+(p.type==='reels'?'▶':p.type==='carousel'?'⧉':'○')+' '+(p.cap?.slice(0,10)||'—')+'</div>').join('')+
+        '</div>';
     }).join('')+
     '</div>'+
     '<div class="card cp"><div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">Planlı Gönderiler</div>'+
@@ -1687,7 +1673,7 @@ function showMod(type,...args){
       '<div><label class="fl">Deadline</label><input class="inp" id="mbc-dl" placeholder="20 Nisan"></div></div>'+
       (which==='ig'?'<div class="fg" style="margin:0"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" placeholder="1"></div>':'')+
       '</div>'+
-      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addMbCard('+fid+','+bid+',\''+which+'\')">Ekle</div></div>';
+      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addMbCard(\''+fid+'\',\''+bid+'\',\''+which+'\')">Ekle</div></div>';
   } else if(type==='add-ver'){
     const [fid,bid,which,cid]=args;
     window._ver={img:null,isVid:false};
@@ -1700,7 +1686,7 @@ function showMod(type,...args){
       '<input type="file" id="ver-f" accept="image/*,video/*" style="display:none" onchange="prevFile(\'ver-fp\',this,\'_ver\')">'+
       '</div></div>'+
       '<div class="fg"><label class="fl">Video / URL</label><input class="inp" id="ver-url" placeholder="https://..."></div>'+
-      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="saveVer('+fid+','+bid+',\''+which+'\','+cid+')">Kaydet</div></div>';
+      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="saveVer(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+')">Kaydet</div></div>';
   } else if(type==='add-task'){
     const [fid,bid]=args;
     html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Görev Ekle</div>'+
@@ -1710,7 +1696,7 @@ function showMod(type,...args){
       '<div class="fg"><label class="fl">Açıklama</label><textarea class="inp ta" id="nt-desc"></textarea></div>'+
       '<div class="fr2 fg"><div><label class="fl">Format</label><input class="inp" id="nt-fmt"></div>'+
       '<div><label class="fl">Deadline</label><input class="inp" id="nt-dl"></div></div>'+
-      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addTask('+fid+','+bid+')">Ekle</div></div>';
+      '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addTask(\''+fid+'\',\''+bid+'\')">Ekle</div></div>';
   } else if(type==='add-ig'||type==='edit-ig'){
     const [fid,bid,idx]=args;
     const b=gB(fid,bid);const cell=idx!==undefined?b.igCells[idx]:null;
@@ -1728,7 +1714,7 @@ function showMod(type,...args){
       '<div class="fg"><label class="fl">Caption</label><textarea class="inp ta" id="nic-cap">'+(cell?.cap||'')+'</textarea></div>'+
       '<div class="fg"><label class="fl">Hashtags</label><input class="inp" id="nic-hash" value="'+(cell?.hash||'')+'" placeholder="#marka #kampanya"></div>'+
       '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div>'+
-      '<div class="btn bp" onclick="'+(type==='edit-ig'?'saveIGCell('+fid+','+bid+','+idx+')':'addIGCell('+fid+','+bid+')')+'">Kaydet</div></div>';
+      '<div class="btn bp" onclick="'+(type==='edit-ig'?'saveIGCell(\''+fid+'\',\''+bid+'\','+idx+')':'addIGCell(\''+fid+'\',\''+bid+'\')')+'">Kaydet</div></div>';
   } else if(type==='add-member'){
     html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Üye Ekle</div>'+
       '<div class="fr2 fg"><div><label class="fl">Ad Soyad</label><input class="inp" id="nm-n"></div><div><label class="fl">Ünvan</label><input class="inp" id="nm-t"></div></div>'+
@@ -1768,92 +1754,67 @@ function prevFile(fpId,input,key){
 async function addFirm(){
   const name=document.getElementById('nf-n')?.value.trim();if(!name){toast('İsim zorunlu');return;}
   try {
-    const f = await apiAddFirmAPI({name, sector: document.getElementById('nf-s').value, color: window._nfc||'#3d2d12'});
+    const f=await apiFetch('/api/firms',{method:'POST',body:{name,sector:document.getElementById('nf-s').value,color:window._nfc||'#3d2d12'}});
     firms.push({id:f.id,name:f.name,sector:f.sector||'',color:f.color||'#3d2d12',briefs:[]});
-    await loadBriefs(f.id);
     toast('Firma eklendi ✓');renderSB();goHome();
-  } catch(e) { toast('Hata: '+e.message); }
+  } catch(e){toast('Hata: '+e.message);}
 }
 
-async function addMbCard(fid,bid,which){
+function addMbCard(fid,bid,which){
+  const b=gB(fid,bid);
   const label=document.getElementById('mbc-label')?.value.trim();if(!label){toast('Başlık zorunlu');return;}
   const url=document.getElementById('mbc-url')?.value.trim()||'';
   const mbc=window._mbc||{img:null,isVid:false};
+  const isV=mbc.isVid||isVU(url);
   const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
-  try {
-    await apiAddCard(fid, bid, {
-      which: which.toUpperCase()==='IG'?'IG':'KAMP',
-      type: document.getElementById('mbc-type').value,
-      label,
-      taskType: document.getElementById('mbc-tt')?.value||'Grafik',
-      taskDesc: document.getElementById('mbc-tdesc')?.value||'',
-      taskFormat: document.getElementById('mbc-fmt')?.value||'',
-      taskDeadline: document.getElementById('mbc-dl')?.value||'',
-      taskAssigneeId: document.getElementById('mbc-ass')?.value||null,
-      taskIGCell: which==='ig'?cellNum:undefined,
-      versionNote: 'İlk taslak',
-      versionDesc: document.getElementById('mbc-desc')?.value||'',
-      versionMediaUrl: mbc.img||null,
-      versionVideoUrl: url||null
-    });
-    toast('Kart eklendi ✓');
-    await loadCards(fid, bid, which);
-    if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
-  } catch(e) { toast('Hata: '+e.message); }
+  const newCard={
+    id:Date.now(),type:document.getElementById('mbc-type').value,
+    label,desc:document.getElementById('mbc-desc')?.value||'',url,
+    img:mbc.img||gS(Math.floor(Math.random()*9)),isVid:isV,status:'pending',
+    versions:[{v:1,date:'Bugün',by:'Ahmet Y.',note:'İlk taslak',img:mbc.img||null,url,desc:document.getElementById('mbc-desc')?.value||''}],
+    task:{type:document.getElementById('mbc-tt')?.value||'Grafik',desc:document.getElementById('mbc-tdesc')?.value||'',format:document.getElementById('mbc-fmt')?.value||'',assignee:parseInt(document.getElementById('mbc-ass')?.value)||members[1].id,dl:document.getElementById('mbc-dl')?.value||'',igCell:which==='ig'?cellNum:undefined}
+  };
+  if(which==='ig')b.mbIG.push(newCard);else b.mbKamp.push(newCard);
+  toast('Kart eklendi ✓');
+  if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
 }
 
-async function saveVer(fid,bid,which,cid){
+function saveVer(fid,bid,which,cid){
+  const b=gB(fid,bid);const cards=which==='ig'?b.mbIG:b.mbKamp;
+  const c=cards.find(x=>x.id===cid);
   const note=document.getElementById('ver-note')?.value.trim();if(!note){toast('Not zorunlu');return;}
   const ver=window._ver||{img:null,isVid:false};
   const url=document.getElementById('ver-url')?.value.trim()||'';
   const desc=document.getElementById('ver-desc')?.value||'';
-  try {
-    await apiAddVersion(fid, bid, cid, { note, desc, mediaUrl: ver.img||null, videoUrl: url||null });
-    toast('Versiyon eklendi ✓');
-    addN('Yeni versiyon yüklendi', gF(fid)?.name+' · Az önce', fid);
-    await loadCards(fid, bid, which);
-    openMBDet(fid,bid,which,cid);
-  } catch(e) { toast('Hata: '+e.message); }
+  const nv={v:c.versions.length+1,date:'Bugün',by:'Ahmet Y.',note,img:ver.img||null,url,desc};
+  c.versions.push(nv);
+  if(nv.img)c.img=nv.img;
+  if(nv.url)c.url=nv.url;
+  c.status='review';
+  toast('v'+nv.v+' eklendi ✓');
+  addN('v'+nv.v+' yüklendi',c.label+' · Az önce',fid);
+  openMBDet(fid,bid,which,cid);
 }
 
-async function addTask(fid,bid){
-  try {
-    await apiAddTask(fid, bid, {
-      cardRef: document.getElementById('nt-ref')?.value||'Görev',
-      type: document.getElementById('nt-type').value,
-      desc: document.getElementById('nt-desc')?.value||'',
-      format: document.getElementById('nt-fmt')?.value||'',
-      source: 'Manuel',
-      assigneeId: document.getElementById('nt-ass')?.value||null,
-      deadline: document.getElementById('nt-dl')?.value||''
-    });
-    await loadTasks(fid, bid);
-    toast('Görev eklendi ✓'); openTasks(fid,bid);
-  } catch(e) { toast('Hata: '+e.message); }
+function addTask(fid,bid){
+  const b=gB(fid,bid);
+  b.tasks.push({id:Date.now(),cardRef:document.getElementById('nt-ref')?.value||'Görev',type:document.getElementById('nt-type').value,desc:document.getElementById('nt-desc')?.value||'',format:document.getElementById('nt-fmt')?.value||'',source:'Manuel',assignee:parseInt(document.getElementById('nt-ass')?.value)||members[1].id,deadline:document.getElementById('nt-dl')?.value||'',status:'todo'});
+  toast('Görev eklendi ✓');openTasks(fid,bid);
 }
 
-async function addIGCell(fid,bid){
-  const b=gB(fid,bid);const empty=b.igCells.findIndex(x=>!x.src);const idx=empty>=0?empty:0;
+function addIGCell(fid,bid){
+  const b=gB(fid,bid);const empty=b.igCells.findIndex(x=>!x.src);
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
   let type=document.getElementById('nic-t').value;
   if(isVU(urlVal)||nic.isVid)type='reels';
-  const src=nic.blob||nic.img||null;
-  b.igCells[idx]={id:idx,type,src,cap:document.getElementById('nic-cap')?.value||'',hash:document.getElementById('nic-hash')?.value||'',date:document.getElementById('nic-d')?.value||'',videoUrl:urlVal,blob:nic.blob,slides:[],approved:null,likes:'0',cmts:'0'};
-  try {
-    await apiUpdateIGCell(fid, bid, idx, {
-      type: type.toUpperCase(),
-      mediaUrl: src||null,
-      videoUrl: urlVal||null,
-      caption: b.igCells[idx].cap,
-      hashtags: b.igCells[idx].hash,
-      publishDate: b.igCells[idx].date
-    });
-  } catch(e) { console.error(e); }
-  toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓'); openIG(fid,bid);
+  const src=nic.blob||nic.img||gS(empty>=0?empty:0);
+  const nc={id:Date.now(),type,src,cap:document.getElementById('nic-cap')?.value||'',hash:document.getElementById('nic-hash')?.value||'',date:document.getElementById('nic-d')?.value||'',videoUrl:urlVal,blob:nic.blob,slides:[],approved:null,likes:'0',cmts:'0'};
+  if(empty>=0)b.igCells[empty]=nc;else b.igCells.push(nc);
+  toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓');openIG(fid,bid);
 }
 
-async function saveIGCell(fid,bid,idx){
+function saveIGCell(fid,bid,idx){
   const b=gB(fid,bid);const cell=b.igCells[idx];
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
@@ -1864,17 +1825,7 @@ async function saveIGCell(fid,bid,idx){
   cell.cap=document.getElementById('nic-cap')?.value||cell.cap;
   cell.hash=document.getElementById('nic-hash')?.value||cell.hash;
   cell.date=document.getElementById('nic-d')?.value||cell.date;
-  try {
-    await apiUpdateIGCell(fid, bid, idx, {
-      type: cell.type.toUpperCase(),
-      mediaUrl: cell.src||null,
-      videoUrl: cell.videoUrl||null,
-      caption: cell.cap,
-      hashtags: cell.hash,
-      publishDate: cell.date
-    });
-  } catch(e) { console.error(e); }
-  toast('Kaydedildi ✓'); openIG(fid,bid);
+  toast('Kaydedildi ✓');openIG(fid,bid);
 }
 
 function addMember(){
@@ -1884,25 +1835,20 @@ function addMember(){
 }
 
 // ── Init ──────────────────────────────────────────────────
-// Check auth on load
-(async function() {
-  if (_token && _me) {
-    try {
-      const me = await apiFetch('/api/auth/me');
-      _me = me;
-      localStorage.setItem('mk_me', JSON.stringify(_me));
+(async function(){
+  if(_token&&_me){
+    try{
+      const me=await apiFetch('/api/auth/me');
+      _me=me;localStorage.setItem('mk_me',JSON.stringify(_me));
       await initApp();
-    } catch(e) {
-      localStorage.removeItem('mk_token');
-      localStorage.removeItem('mk_me');
-      _token = ''; _me = null;
-      showLogin();
+    }catch(e){
+      localStorage.removeItem('mk_token');localStorage.removeItem('mk_me');
+      _token='';_me=null;showLogin();
     }
-  } else {
-    showLogin();
-  }
+  }else{showLogin();}
 })();
 
 </script>
+
 </body>
 </html>
