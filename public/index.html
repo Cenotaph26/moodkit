@@ -575,11 +575,13 @@ function tbadge(t){return '<span class="badge '+(TBADGE[t]||'bgr')+'">'+t+'</spa
 function mname(id){return members.find(m=>m.id===id)?.name||'Atanmadı';}
 function isVU(u){return u&&(u.includes('youtube')||u.includes('youtu.be')||u.includes('vimeo')||/\.(mp4|mov|webm)$/.test(u));}
 function toEmbed(u){
-  if(!u) return '';
-  if(u.includes('embed')) return u;
-  if(u.includes('watch?v=')) return 'https://www.youtube.com/embed/'+u.split('watch?v=')[1].split('&')[0];
-  if(u.includes('youtu.be/')) return 'https://www.youtube.com/embed/'+u.split('youtu.be/')[1].split('?')[0];
-  return null;
+  if(!u) return null;
+  if(u.includes('/embed/')) return u;
+  if(u.includes('watch?v=')) return 'https://www.youtube.com/embed/'+u.split('watch?v=')[1].split('&')[0]+'?rel=0&modestbranding=1';
+  if(u.includes('youtu.be/')) return 'https://www.youtube.com/embed/'+u.split('youtu.be/')[1].split('?')[0]+'?rel=0&modestbranding=1';
+  if(u.includes('vimeo.com/')) return 'https://player.vimeo.com/video/'+u.split('vimeo.com/')[1].split('?')[0];
+  if(u.match(/\.(mp4|mov|webm)$/i)) return u; // direct video URL
+  return null; // not embeddable - show as link
 }
 function isVFile(f){return f&&f.type&&f.type.startsWith('video/');}
 
@@ -764,6 +766,12 @@ function renderSB(){
 }
 
 // ── Dashboard ─────────────────────────────────────────────
+function _navBrief(el){
+  const fid=el.dataset.fid||el.closest('[data-fid]')?.dataset.fid;
+  const bid=el.dataset.bid||el.closest('[data-bid]')?.dataset.bid;
+  if(fid&&bid)openBrief(fid,bid);
+  else if(fid){const f=gF(fid);if(f?.briefs?.length)openBrief(fid,f.briefs[0].id);}
+}
 function goHome(){
   cFid=null;cBid=null;setSBI('home');setBC([{label:'Dashboard'}]);
   const totT=firms.reduce((a,f)=>a+f.briefs.reduce((b,br)=>b+br.tasks.length,0),0);
@@ -807,9 +815,16 @@ function goHome(){
 
 
 // ── Brief ─────────────────────────────────────────────────
-function openBrief(fid,bid){
+async function openBrief(fid,bid){
   cFid=fid;cBid=bid;openAcc(fid);lv='brief';
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);
+  if(!f){toast('Firma bulunamadı');return;}
+  // Load briefs if not loaded
+  if(!f.briefs||!f.briefs.length) await loadBriefs(fid);
+  // If bid is empty or brief not found, use first brief
+  let b=gB(fid,bid);
+  if(!b&&f.briefs.length){bid=f.briefs[0].id;cBid=bid;b=f.briefs[0];}
+  if(!b){toast('Brief bulunamadı');return;}
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year+' Brief'}]);
   const a=b.answers||{};
   const mOpts=MONTHS.map((m,i)=>{
@@ -1002,12 +1017,15 @@ function openMBDet(fid,bid,which,cid){
   const img=cv?.img||c.img;
   const emb=toEmbed(url);
   let mh='';
-  if(emb&&emb.includes('youtube'))
-    mh='<div style="position:relative;padding-bottom:75%;height:0;overflow:hidden"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="'+emb+'?rel=0&modestbranding=1" allowfullscreen></iframe></div>';
+  const emb2=toEmbed(url);
+  if(emb2&&(emb2.includes('youtube')||emb2.includes('vimeo')))
+    mh='<div style="position:relative;padding-bottom:75%;height:0;overflow:hidden;border-radius:8px"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="'+emb2+'" allowfullscreen allow="autoplay"></iframe></div>';
+  else if(emb2&&emb2.match(/\.(mp4|mov|webm)$/i))
+    mh='<video src="'+emb2+'" style="width:100%;max-height:260px;border-radius:8px" controls></video>';
   else if(img)
-    mh='<img src="'+img+'" style="width:100%;display:block;max-height:260px;object-fit:cover">';
+    mh='<img src="'+img+'" style="width:100%;display:block;max-height:260px;object-fit:cover;border-radius:8px">';
   else if(url)
-    mh='<div style="padding:20px;text-align:center;background:#1a1209"><a href="'+url+'" target="_blank" style="color:#a78bfa;font-size:11px">'+url.replace('https://','').slice(0,50)+' ↗</a></div>';
+    mh='<div style="padding:10px;background:#1a1209;border-radius:4px"><div style="color:rgba(255,255,255,.7);font-size:10px;margin-bottom:6px">Referans Link:</div><a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-size:12px;word-break:break-all">'+url+'</a></div>';
   else
     mh='<div style="height:180px;background:'+GR[0][0]+'"></div>';
 
@@ -1138,7 +1156,7 @@ function renderTC(fid,bid){
       const ini=m?m.name.split(' ').map(w=>w[0]).join('').slice(0,2):'?';
       const acc=TACCENTS[t.type]||'#534AB7';
       return '<div class="tc '+(st==='done'?'done':'')+'" draggable="true" data-tid="'+t.id+'" '+
-        'ondragstart="startDT(event,'+t.id+')" ondragend="endDT(event)">'+
+        'ondragstart="startDT(event,\''+t.id+'\')" ondragend="endDT(event)">'+
         '<div class="tca" style="background:'+acc+'"></div>'+
         '<div class="tch"><div class="tct">'+t.cardRef+'</div>'+tbadge(t.type)+'</div>'+
         '<div class="tcd">'+t.desc+'</div>'+
