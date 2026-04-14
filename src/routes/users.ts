@@ -60,3 +60,30 @@ router.put('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
 })
 
 export default router
+
+// DELETE /api/users/:id - üye sil (sadece admin)
+router.delete('/:id', requireAuth, requireRole('ADMIN'), async (req: AuthRequest, res: Response) => {
+  try {
+    await db.user.delete({ where: { id: req.params.id } })
+    res.json({ message: 'Kullanıcı silindi' })
+  } catch (err) {
+    res.status(500).json({ error: 'Silme başarısız' })
+  }
+})
+
+// PATCH /api/users/:id/password - şifre değiştir
+router.patch('/:id/password', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.id !== req.params.id && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Yetki yok' })
+    }
+    const { password } = z.object({ password: z.string().min(8) }).parse(req.body)
+    const bcrypt = require('bcryptjs')
+    const hashed = await bcrypt.hash(password, 12)
+    await db.user.update({ where: { id: req.params.id }, data: { password: hashed } })
+    res.json({ message: 'Şifre güncellendi' })
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message })
+    res.status(500).json({ error: 'Şifre güncellenemedi' })
+  }
+})

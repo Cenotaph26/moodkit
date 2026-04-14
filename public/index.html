@@ -246,6 +246,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 
 
+
 // ── API LAYER ─────────────────────────────────────────────
 const API = '';
 let _token = localStorage.getItem('mk_token') || '';
@@ -1719,15 +1720,20 @@ function showTeam(){
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
     '<div style="font-size:16px;font-weight:600;color:var(--txt)">Ekip Üyeleri</div>'+
     '<div class="btn bp" onclick="showMod(\'add-member\')">+ Üye Ekle</div></div>'+
-    '<div style="max-width:540px;display:flex;flex-direction:column;gap:8px">'+
+    '<div style="max-width:580px;display:flex;flex-direction:column;gap:8px">'+
     members.map(m=>
-      '<div class="card cp" style="transition:transform .15s" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'\'">'+
+      '<div class="card cp">'+
       '<div style="display:flex;align-items:center;gap:10px">'+
-      '<div style="width:34px;height:34px;border-radius:50%;background:var(--abg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--atxt);flex-shrink:0">'+m.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div>'+
-      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--txt)">'+m.name+'</div>'+
-      '<div style="font-size:11px;color:var(--txt3)">'+m.title+(m.prodRole?' · '+m.prodRole:'')+'</div></div>'+
-      '<span class="badge '+({admin:'bpu',editor:'bgn',prod:'bcor',client:'bgr'}[m.role]||'bgr')+'">'+(
-        {admin:'Admin',editor:'Kreatif',prod:'Prodüksiyon',client:'Müşteri'}[m.role]||m.role)+'</span>'+
+      '<div style="width:36px;height:36px;border-radius:50%;background:var(--abg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--atxt);flex-shrink:0">'+m.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:13px;font-weight:500;color:var(--txt)">'+m.name+'</div>'+
+        '<div style="font-size:11px;color:var(--txt3)">'+(m.email||'')+(m.title?' · '+m.title:'')+(m.prodRole?' · '+m.prodRole:'')+'</div>'+
+      '</div>'+
+      '<span class="badge '+({admin:'bpu',editor:'bgn',prod:'bcor',client:'bgr'}[m.role]||'bgr')+'">'+({admin:'Admin',editor:'Kreatif',prod:'Prodüksiyon',client:'Müşteri'}[m.role]||m.role)+'</span>'+
+      '<div style="display:flex;gap:4px;margin-left:6px">'+
+        '<div class="btn bg0 bs" onclick="showMod(\'edit-member\',\''+m.id+'\')">✎</div>'+
+        '<div class="btn brd-btn bs" onclick="deleteMember(\''+m.id+'\')">✕</div>'+
+      '</div>'+
       '</div></div>'
     ).join('')+
     '</div>';
@@ -1845,6 +1851,26 @@ function showMod(type,...args){
       '<div class="fg"><label class="fl">Hashtags</label><input class="inp" id="nic-hash" value="'+(cell?.hash||'')+'" placeholder="#marka #kampanya"></div>'+
       '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div>'+
       '<div class="btn bp" onclick="'+(type==='edit-ig'?'saveIGCell(\''+fid+'\',\''+bid+'\','+idx+')':'addIGCell(\''+fid+'\',\''+bid+'\')')+'">Kaydet</div></div>';
+  } else if(type==='edit-member'){
+    const [mid]=args;
+    const m=members.find(x=>x.id===mid)||{};
+    html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Üye Düzenle</div>'+
+      '<div class="fr2 fg"><div><label class="fl">Ad Soyad *</label><input class="inp" id="em-n" value="'+(m.name||'')+'"></div><div><label class="fl">E-posta</label><input class="inp" id="em-e" type="email" value="'+(m.email||'')+'"></div></div>'+
+      '<div class="fr2 fg"><div><label class="fl">Ünvan</label><input class="inp" id="em-t" value="'+(m.title||'')+'"></div>'+
+      '<div><label class="fl">Rol</label><select class="inp sel" id="em-r">'+
+        ['ADMIN','EDITOR','PROD','CLIENT'].map(r=>'<option value="'+r+'" '+(m.role&&m.role.toUpperCase()===r?'selected':'')+'>'+{ADMIN:'Admin',EDITOR:'Kreatif',PROD:'Prodüksiyon',CLIENT:'Müşteri'}[r]+'</option>').join('')+
+      '</select></div></div>'+
+      '<div class="fg"><label class="fl">Prodüksiyon Rolü</label><select class="inp sel" id="em-pr"><option value="">—</option>'+
+        ['Videograf','Grafiker','Fotoğrafçı','Kreatif Direktör'].map(r=>'<option '+(m.prodRole===r?'selected':'')+'>'+r+'</option>').join('')+
+      '</select></div>'+
+      '<div style="height:.5px;background:var(--bdr);margin:12px 0"></div>'+
+      '<div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:8px">Şifre Değiştir (opsiyonel)</div>'+
+      '<div class="fr2 fg"><div><label class="fl">Yeni Şifre</label><input class="inp" id="em-pw" type="password" placeholder="Min 8 karakter"></div>'+
+      '<div><label class="fl">Tekrar</label><input class="inp" id="em-pw2" type="password" placeholder="Tekrar gir"></div></div>'+
+      '<div style="display:flex;gap:7px;justify-content:flex-end">'+
+        '<div class="btn bg0" onclick="closeMod()">İptal</div>'+
+        '<div class="btn bp" onclick="updateMember(\''+mid+'\')">Kaydet</div>'+
+      '</div>';
   } else if(type==='add-member'){
     html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Üye Ekle</div>'+
       '<div class="fr2 fg"><div><label class="fl">Ad Soyad *</label><input class="inp" id="nm-n" placeholder="Ahmet Yılmaz"></div><div><label class="fl">E-posta *</label><input class="inp" id="nm-e" type="email" placeholder="ahmet@firma.com"></div></div>'+
@@ -1852,7 +1878,8 @@ function showMod(type,...args){
       '<div><label class="fl">Rol</label><select class="inp sel" id="nm-r"><option value="ADMIN">Admin</option><option value="EDITOR">Kreatif</option><option value="PROD" selected>Prodüksiyon</option><option value="CLIENT">Müşteri</option></select></div></div>'+
       '<div class="fg"><label class="fl">Prodüksiyon Rolü</label><select class="inp sel" id="nm-pr"><option value="">—</option>'+
       ['Videograf','Grafiker','Fotoğrafçı','Kreatif Direktör'].map(r=>'<option>'+r+'</option>').join('')+'</select></div>'+
-      '<div style="font-size:10px;color:var(--txt3);margin-bottom:10px">Üye sisteme kayıt edilir. Giriş şifresi: <strong>Moodkit2025!</strong></div>'+
+      '<div class="fr2 fg"><div><label class="fl">Şifre *</label><input class="inp" id="nm-pw" type="password" placeholder="Min 8 karakter"></div>'+
+      '<div><label class="fl">Tekrar *</label><input class="inp" id="nm-pw2" type="password" placeholder="Tekrar gir"></div></div>'+
       '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addMember()">Ekle</div></div>';
   }
   document.getElementById('v-modal').innerHTML='<div class="mov"><div class="mbox">'+html+'</div></div>';
@@ -1930,10 +1957,9 @@ async function addMbCard(fid,bid,which){
       taskDeadline: document.getElementById('mbc-dl')?.value||'',
       taskAssigneeId: document.getElementById('mbc-ass')?.value||undefined,
       taskIGCell: which==='ig'?cellNum:undefined,
-      versionNote: 'İlk taslak',
-      versionDesc: document.getElementById('mbc-desc')?.value||'',
-      versionMediaUrl: mbc.img||null,
-      versionVideoUrl: url||null
+      desc: document.getElementById('mbc-desc')?.value||'',
+      mediaUrl: mbc.img||null,
+      videoUrl: url||undefined
     });
     toast('Kart eklendi ✓');
     await loadCards(fid, bid, which);
@@ -2016,6 +2042,34 @@ async function saveIGCell(fid,bid,idx){
   toast('Kaydedildi ✓'); openIG(fid,bid);
 }
 
+async function updateMember(mid){
+  const m=members.find(x=>x.id===mid);if(!m)return;
+  const name=document.getElementById('em-n')?.value.trim()||m.name;
+  const title=document.getElementById('em-t')?.value||m.title||'';
+  const role=document.getElementById('em-r')?.value||m.role;
+  const prodRole=document.getElementById('em-pr')?.value||null;
+  const pw=document.getElementById('em-pw')?.value||'';
+  const pw2=document.getElementById('em-pw2')?.value||'';
+  if(pw&&pw!==pw2){toast('Şifreler eşleşmiyor');return;}
+  if(pw&&pw.length<8){toast('Şifre en az 8 karakter olmalı');return;}
+  try {
+    const body={name,title,prodRole,role:role.toUpperCase()};
+    await apiFetch('/api/users/'+mid,{method:'PUT',body});
+    if(pw){await apiFetch('/api/users/'+mid+'/password',{method:'PATCH',body:{password:pw}}).catch(e=>console.warn('Şifre API yok',e));}
+    m.name=name;m.title=title;m.role=role.toLowerCase();m.prodRole=prodRole;
+    sessionStorage.setItem('mk_members',JSON.stringify(members));
+    toast('Güncellendi ✓');showTeam();
+  }catch(e){toast('Hata: '+e.message);}
+}
+
+async function deleteMember(mid){
+  if(!confirm('Bu üyeyi silmek istediğinize emin misiniz?'))return;
+  try{await apiFetch('/api/users/'+mid,{method:'DELETE'});}catch(e){console.warn(e);}
+  members=members.filter(x=>x.id!==mid);
+  sessionStorage.setItem('mk_members',JSON.stringify(members));
+  toast('Üye silindi ✓');showTeam();
+}
+
 async function addMember(){
   const name=document.getElementById('nm-n')?.value.trim();if(!name)return;
   const role=document.getElementById('nm-r')?.value||'PROD';
@@ -2026,7 +2080,7 @@ async function addMember(){
   try {
     const u=await apiFetch('/api/auth/register',{method:'POST',body:{
       name, email,
-      password:'Moodkit2025!',
+      password:(()=>{const pw=document.getElementById('nm-pw')?.value||'';const pw2=document.getElementById('nm-pw2')?.value||'';if(!pw||pw.length<8){toast('Şifre en az 8 karakter');throw new Error('Şifre');}if(pw!==pw2){toast('Şifreler eşleşmiyor');throw new Error('Şifre');}return pw;})(),
       role: role.toUpperCase(),
       title, prodRole
     }});
@@ -2060,6 +2114,7 @@ async function addMember(){
     showLogin();
   }
 })();
+
 
 </script>
 </body>
