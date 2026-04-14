@@ -446,11 +446,21 @@ async function loadIGCells(fid, bid) {
 async function loadMembers() {
   try {
     const data = await apiFetch('/api/users');
-    members = data.map(u => ({
-      id: u.id, name: u.name, role: u.role.toLowerCase(),
-      title: u.title || '', prodRole: u.prodRole || null
-    }));
-  } catch(e) { /* admin değilse 403 gelir, sorun yok */ }
+    if (data && data.length > 0) {
+      members = data.map(u => ({
+        id: u.id, name: u.name, role: u.role.toLowerCase(),
+        title: u.title || '', prodRole: u.prodRole || null
+      }));
+      // Üyeleri sessionStorage'a yedekle
+      sessionStorage.setItem('mk_members', JSON.stringify(members));
+    }
+  } catch(e) {
+    // Admin değilse 403 gelir — session backup'tan yükle
+    const backup = sessionStorage.getItem('mk_members');
+    if (backup) {
+      try { members = JSON.parse(backup); } catch(_) {}
+    }
+  }
 }
 
 // ── API SAVE HELPERS ──────────────────────────────────────
@@ -1272,34 +1282,98 @@ function viewCell(fid,bid,idx){
   let cs=0;
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   const el=document.getElementById('v-ig');
+
   function renderPV(){
     const sl=slides[cs];
-    el.innerHTML=
-      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'+
+    const approveStatus = cell.approved===true?'bgn':cell.approved===false?'brd':'bam';
+    const approveLabel = cell.approved===true?'✓ Onaylı':cell.approved===false?'✗ Reddedildi':'⏳ Bekliyor';
+
+    el.innerHTML =
+      // Üst nav
+      '<div style="display:flex;align-items:center;gap:8px;padding:0 0 12px 0">'+
       '<div class="btn bg0" onclick="openIG(\''+fid+'\',\''+bid+'\')">← Grid</div>'+
-      '<span style="font-size:11px;color:var(--txt2)">'+(cell.type==='carousel'?'Carousel':'Post')+' · '+(cell.date||'')+'</span>'+
-      '<span class="badge '+(cell.approved===true?'bgn':cell.approved===false?'brd':'bam')+'" style="margin-left:auto">'+(cell.approved===true?'✓ Onaylı':cell.approved===false?'✗ Red':'Bekliyor')+'</span></div>'+
-      '<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">'+
-      '<div class="pv" style="max-width:280px;flex-shrink:0">'+
-      '<div class="pvh"><div class="igav" style="width:26px;height:26px;font-size:9px;background:'+f.color+'">'+un.slice(0,2).toUpperCase()+'</div>'+
-      '<div style="flex:1;margin-left:7px"><div style="font-size:11px;font-weight:700;color:#1a1a1a">'+un+'</div></div></div>'+
-      '<div class="pvm">'+
-      (sl?'<img src="'+sl+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">':'<div style="position:absolute;inset:0;background:'+GR[idx%9][0]+'"></div>')+
-      (slides.length>1?'<div class="pvn"><button class="pvnb" onclick="if(cs>0){cs--;renderPV()}">‹</button><button class="pvnb" onclick="if(cs<'+(slides.length-1)+'){cs++;renderPV()}">›</button></div>':'')+
+      '<span style="font-size:12px;font-weight:500;color:var(--txt)">'+(idx+1)+'. '+(cell.type==='carousel'?'Carousel':'Post')+'</span>'+
+      '<span class="badge '+approveStatus+'" style="margin-left:auto">'+approveLabel+'</span>'+
       '</div>'+
-      (slides.length>1?'<div class="pvd">'+slides.map((_,i)=>'<div class="pvdot '+(i===cs?'act':'')+'"></div>').join('')+'</div>':'')+
-      '<div style="display:flex;align-items:center;padding:7px 10px;gap:10px;font-size:19px"><span>♡</span><span>💬</span><span>➤</span><span style="margin-left:auto">🔖</span></div>'+
-      '<div style="padding:0 10px 4px;font-size:11px;color:#8e8e8e">'+(cell.likes||'0')+' beğeni</div>'+
-      '<div style="padding:0 10px 5px;font-size:11px;color:#1a1a1a;line-height:1.5"><strong>'+un+'</strong> '+(cell.cap||'')+'</div>'+
-      (cell.hash?'<div style="padding:0 10px 5px;font-size:11px;color:#0095f6">'+cell.hash+'</div>':'')+
-      '<div style="padding:0 10px 8px;font-size:9px;color:#8e8e8e">'+(cell.date||'')+'</div></div>'+
-      '<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:8px">'+
-      '<div class="card cp">'+
-      '<div style="display:flex;gap:6px;margin-bottom:6px">'+
-      '<div class="btn bgn-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',true)">✓ Onayla</div>'+
-      '<div class="btn brd-btn bs" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',false)">✗ Reddet</div></div>'+
-      '<div class="btn bg0 bs" style="width:100%;justify-content:center" onclick="showMod(\'edit-ig\',\''+fid+'\',\''+bid+'\','+idx+')">Düzenle</div>'+
-      '</div></div></div>';
+      // Ana layout: instagram post solda + aksiyonlar sağda
+      '<div style="display:grid;grid-template-columns:375px 1fr;gap:20px;align-items:start">'+
+      // Sol: tam instagram post
+      '<div style="background:#fff;border:1px solid #dbdbdb;border-radius:4px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif">'+
+        // Header
+        '<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:.5px solid #efefef">'+
+          '<div style="width:32px;height:32px;border-radius:50%;background:'+f.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">'+un.slice(0,2).toUpperCase()+'</div>'+
+          '<div style="flex:1">'+
+            '<div style="font-size:12px;font-weight:600;color:#262626">'+un+'</div>'+
+            (cell.date?'<div style="font-size:10px;color:#8e8e8e">'+cell.date+'</div>':'')+
+          '</div>'+
+          '<div style="font-size:18px;color:#262626;cursor:pointer">···</div>'+
+        '</div>'+
+        // Görsel - tam kare
+        '<div style="position:relative;width:100%;aspect-ratio:1;background:#000;overflow:hidden">'+
+          (sl?'<img src="'+sl+'" style="width:100%;height:100%;object-fit:cover;display:block">':'<div style="position:absolute;inset:0;background:#111"></div>')+
+          // Carousel navigation
+          (slides.length>1?
+            '<div style="position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);display:flex;justify-content:space-between;padding:0 8px;pointer-events:none">'+
+              '<button class="pvnb" style="pointer-events:all" onclick="event.stopPropagation();if(cs>0){cs--;renderPV()}">‹</button>'+
+              '<button class="pvnb" style="pointer-events:all" onclick="event.stopPropagation();if(cs<'+(slides.length-1)+'){cs++;renderPV()}">›</button>'+
+            '</div>':'')+
+          // Carousel dots
+          (slides.length>1?
+            '<div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px">'+
+              slides.map((_,i)=>'<div style="width:'+(i===cs?6:5)+'px;height:'+(i===cs?6:5)+'px;border-radius:50%;background:'+(i===cs?'#fff':'rgba(255,255,255,.5)+')+';transition:all .15s"></div>').join('')+
+            '</div>':'')+
+        '</div>'+
+        // Aksiyonlar
+        '<div style="padding:8px 12px 4px">'+
+          '<div style="display:flex;align-items:center;margin-bottom:6px">'+
+            '<div style="display:flex;gap:14px;font-size:22px">'+
+              '<span style="cursor:pointer" title="Beğen">♡</span>'+
+              '<span style="cursor:pointer;font-size:20px" title="Yorum">💬</span>'+
+              '<span style="cursor:pointer;font-size:19px" title="Paylaş">➤</span>'+
+            '</div>'+
+            '<span style="margin-left:auto;font-size:22px;cursor:pointer">🔖</span>'+
+          '</div>'+
+          '<div style="font-size:12px;font-weight:600;color:#262626;margin-bottom:5px">'+(cell.likes||'0')+' beğeni</div>'+
+          '<div style="font-size:13px;color:#262626;line-height:1.5;margin-bottom:4px"><span style="font-weight:600">'+un+'</span> '+(cell.cap||'')+'</div>'+
+          (cell.hash?'<div style="font-size:13px;color:#00376b;margin-bottom:4px">'+cell.hash+'</div>':'')+
+          '<div style="font-size:11px;color:#8e8e8e;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">'+(cell.date||'')+'</div>'+
+          // Yorum kutusu
+          '<div style="display:flex;align-items:center;border-top:.5px solid #efefef;padding-top:8px;gap:8px">'+
+            '<input placeholder="Yorum ekle..." style="border:none;outline:none;font-size:13px;flex:1;color:#262626;background:transparent">'+
+            '<span style="font-size:13px;color:#0095f6;font-weight:600;cursor:pointer">Paylaş</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      // Sağ: onay / kontrol paneli
+      '<div style="display:flex;flex-direction:column;gap:10px">'+
+        // Onay kartı
+        '<div class="card cp">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">İçerik Onayı</div>'+
+          '<div style="display:flex;gap:7px;margin-bottom:8px">'+
+            '<div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',true)">✓ Onayla</div>'+
+            '<div class="btn brd-btn" style="flex:1;justify-content:center" onclick="setIGAp(\''+fid+'\',\''+bid+'\','+idx+',false)">✗ Reddet</div>'+
+          '</div>'+
+          '<div class="btn bg0" style="width:100%;justify-content:center;font-size:11px" onclick="showMod(\'edit-ig\',\''+fid+'\',\''+bid+'\','+idx+')">✎ Düzenle</div>'+
+        '</div>'+
+        // Post detayları
+        '<div class="card cp">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">Post Detayları</div>'+
+          '<div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--txt2)">'+
+            '<div style="display:flex;justify-content:space-between"><span style="color:var(--txt3)">Tür</span><span class="badge '+(cell.type==='reels'?'brd':cell.type==='carousel'?'bpu':'bgn')+'" style="font-size:9px">'+(cell.type==='reels'?'Reels':cell.type==='carousel'?'Carousel':'Post')+'</span></div>'+
+            '<div style="display:flex;justify-content:space-between"><span style="color:var(--txt3)">Tarih</span><span>'+(cell.date||'—')+'</span></div>'+
+            '<div style="display:flex;justify-content:space-between"><span style="color:var(--txt3)">Durum</span><span class="badge '+approveStatus+'" style="font-size:9px">'+approveLabel+'</span></div>'+
+            (cell.type==='carousel'?'<div style="display:flex;justify-content:space-between"><span style="color:var(--txt3)">Slayt</span><span>'+slides.length+' görsel</span></div>':'')+
+          '</div>'+
+        '</div>'+
+        // Caption düzenle
+        '<div class="card cp">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:8px">Caption & Hashtag</div>'+
+          '<textarea class="inp ta" id="ig-cap-edit" style="min-height:60px;margin-bottom:6px">'+( cell.cap||'')+'</textarea>'+
+          '<input class="inp" id="ig-hash-edit" value="'+(cell.hash||'')+'" placeholder="#hashtag" style="margin-bottom:8px">'+
+          '<div class="btn bg0 bs" style="width:100%;justify-content:center" onclick="saveCaption(\''+fid+'\',\''+bid+'\','+idx+')">Kaydet</div>'+
+        '</div>'+
+      '</div>'+
+      '</div>';
   }
   renderPV();
 }
@@ -1308,6 +1382,15 @@ async function setIGAp(fid,bid,idx,v){
   const b=gB(fid,bid);b.igCells[idx].approved=v;
   try { await apiUpdateIGCell(fid, bid, idx, { approved: v }); } catch(e) { console.error(e); }
   toast(v?'✓ Onaylandı':'✗ Reddedildi');
+  viewCell(fid,bid,idx);
+}
+
+function saveCaption(fid,bid,idx){
+  const b=gB(fid,bid);const cell=b.igCells[idx];
+  cell.cap=document.getElementById('ig-cap-edit')?.value||cell.cap;
+  cell.hash=document.getElementById('ig-hash-edit')?.value||cell.hash;
+  apiUpdateIGCell(fid, bid, idx, { caption: cell.cap, hashtags: cell.hash }).catch(e=>console.error(e));
+  toast('Caption kaydedildi ✓');
   viewCell(fid,bid,idx);
 }
 
@@ -1734,10 +1817,12 @@ function showMod(type,...args){
       '<div class="btn bp" onclick="'+(type==='edit-ig'?'saveIGCell(\''+fid+'\',\''+bid+'\','+idx+')':'addIGCell(\''+fid+'\',\''+bid+'\')')+'">Kaydet</div></div>';
   } else if(type==='add-member'){
     html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Üye Ekle</div>'+
-      '<div class="fr2 fg"><div><label class="fl">Ad Soyad</label><input class="inp" id="nm-n"></div><div><label class="fl">Ünvan</label><input class="inp" id="nm-t"></div></div>'+
-      '<div class="fg"><label class="fl">Rol</label><select class="inp sel" id="nm-r"><option value="admin">Admin</option><option value="editor">Kreatif</option><option value="prod">Prodüksiyon</option><option value="client">Müşteri</option></select></div>'+
+      '<div class="fr2 fg"><div><label class="fl">Ad Soyad *</label><input class="inp" id="nm-n" placeholder="Ahmet Yılmaz"></div><div><label class="fl">E-posta *</label><input class="inp" id="nm-e" type="email" placeholder="ahmet@firma.com"></div></div>'+
+      '<div class="fr2 fg"><div><label class="fl">Ünvan</label><input class="inp" id="nm-t" placeholder="Grafik Tasarımcı"></div>'+
+      '<div><label class="fl">Rol</label><select class="inp sel" id="nm-r"><option value="ADMIN">Admin</option><option value="EDITOR">Kreatif</option><option value="PROD" selected>Prodüksiyon</option><option value="CLIENT">Müşteri</option></select></div></div>'+
       '<div class="fg"><label class="fl">Prodüksiyon Rolü</label><select class="inp sel" id="nm-pr"><option value="">—</option>'+
       ['Videograf','Grafiker','Fotoğrafçı','Kreatif Direktör'].map(r=>'<option>'+r+'</option>').join('')+'</select></div>'+
+      '<div style="font-size:10px;color:var(--txt3);margin-bottom:10px">Üye sisteme kayıt edilir. Giriş şifresi: <strong>Moodkit2025!</strong></div>'+
       '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addMember()">Ekle</div></div>';
   }
   document.getElementById('v-modal').innerHTML='<div class="mov"><div class="mbox">'+html+'</div></div>';
@@ -1792,7 +1877,7 @@ async function addMbCard(fid,bid,which){
       taskDesc: document.getElementById('mbc-tdesc')?.value||'',
       taskFormat: document.getElementById('mbc-fmt')?.value||'',
       taskDeadline: document.getElementById('mbc-dl')?.value||'',
-      taskAssigneeId: document.getElementById('mbc-ass')?.value||null,
+      taskAssigneeId: document.getElementById('mbc-ass')?.value||undefined,
       taskIGCell: which==='ig'?cellNum:undefined,
       versionNote: 'İlk taslak',
       versionDesc: document.getElementById('mbc-desc')?.value||'',
@@ -1880,10 +1965,29 @@ async function saveIGCell(fid,bid,idx){
   toast('Kaydedildi ✓'); openIG(fid,bid);
 }
 
-function addMember(){
+async function addMember(){
   const name=document.getElementById('nm-n')?.value.trim();if(!name)return;
-  members.push({id:Date.now(),name,role:document.getElementById('nm-r').value,title:document.getElementById('nm-t')?.value||'',prodRole:document.getElementById('nm-pr')?.value||null});
-  toast('Üye eklendi ✓');showTeam();
+  const role=document.getElementById('nm-r')?.value||'PROD';
+  const email=document.getElementById('nm-e')?.value?.trim()||'';
+  const title=document.getElementById('nm-t')?.value||'';
+  const prodRole=document.getElementById('nm-pr')?.value||null;
+  if(!email){toast('E-posta zorunlu');return;}
+  try {
+    const u=await apiFetch('/api/auth/register',{method:'POST',body:{
+      name, email,
+      password:'Moodkit2025!',
+      role: role.toUpperCase(),
+      title, prodRole
+    }});
+    members.push({id:u.user?.id||Date.now(),name,role:role.toLowerCase(),title,prodRole});
+    toast('Üye eklendi ✓ (Şifre: Moodkit2025!)');
+    showTeam();
+  } catch(e){
+    // Fallback: sadece lokal ekle
+    members.push({id:Date.now(),name,role:role.toLowerCase(),title,prodRole});
+    toast('Üye lokal eklendi (API: '+e.message+')');
+    showTeam();
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────

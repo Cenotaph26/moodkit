@@ -6,11 +6,23 @@ import { requireAuth, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
-// GET /api/users - tüm kullanıcılar (admin)
-router.get('/', requireAuth, requireRole('ADMIN'), async (_req: AuthRequest, res: Response) => {
+// GET /api/users - tüm kullanıcılar
+// Admin: herkesi görür
+// Diğerleri: sadece isim/rol/prodRole bilgisi (form dropdown'ları için)
+router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
+    const isAdmin = req.user!.role === 'ADMIN'
     const users = await db.user.findMany({
-      select: { id: true, name: true, email: true, role: true, prodRole: true, title: true, avatar: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: isAdmin,  // Sadece admin email görür
+        role: true,
+        prodRole: true,
+        title: true,
+        avatar: true,
+        createdAt: isAdmin
+      },
       orderBy: { name: 'asc' }
     })
     res.json(users)
@@ -22,7 +34,6 @@ router.get('/', requireAuth, requireRole('ADMIN'), async (_req: AuthRequest, res
 // PUT /api/users/:id - profil güncelle
 router.put('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    // Kendi profilini veya admin başkasını güncelleyebilir
     if (req.user!.id !== req.params.id && req.user!.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Yetki yok' })
     }
@@ -34,7 +45,6 @@ router.put('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
       role: z.enum(['ADMIN', 'EDITOR', 'PROD', 'CLIENT']).optional(),
     }).parse(req.body)
 
-    // Sadece admin role değiştirebilir
     if (data.role && req.user!.role !== 'ADMIN') delete data.role
 
     const user = await db.user.update({
