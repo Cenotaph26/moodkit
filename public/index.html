@@ -772,7 +772,7 @@ function goHome(){
     const lb=f.briefs[f.briefs.length-1];
     const ap=lb?(lb.mbIG.filter(k=>k.status==='approved').length+lb.mbKamp.filter(k=>k.status==='approved').length):0;
     const tot=lb?(lb.mbIG.length+lb.mbKamp.length):0;
-    return '<div class="card" style="cursor:pointer;overflow:hidden;transition:transform .15s" onclick="openBrief(\''+f.id+'\','+(f.briefs[0]?.id||0)+')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">'+
+    return '<div class="card" style="cursor:pointer;overflow:hidden;transition:transform .15s" onclick="openBrief(\''+f.id+'\','+(f.briefs[0]?.id||'')+')" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">'+
       '<div style="height:72px;position:relative;overflow:hidden">'+
       '<img src="'+(lb?.igCells[0]?.src||gS(0))+'" style="width:100%;height:100%;object-fit:cover">'+
       '<div style="position:absolute;inset:0;background:'+f.color+'cc"></div>'+
@@ -991,7 +991,7 @@ function openMBDet(fid,bid,which,cid){
   const f=gF(fid),b=gB(fid,bid);
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const c=cards.find(x=>x.id===cid);if(!c)return;
-  const bf=which==='ig'?'openMbIG('+fid+','+bid+')':'openMbK('+fid+','+bid+')';
+  const bf=which==='ig'?`openMbIG('${fid}','${bid}')`:`openMbK('${fid}','${bid}')`;
   const bl=which==='ig'?'IG Moodboard':'Kampanya MB';
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:b.month+' '+b.year},{label:bl,fn:bf},{label:c.label}]);
   const sv={approved:'bgn',review:'bpu',pending:'bgr',rejected:'brd'};
@@ -1043,15 +1043,16 @@ function openMBDet(fid,bid,which,cid){
     '<div style="background:var(--bg2);border-radius:var(--r8);padding:11px 13px;margin-bottom:12px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap">'+(cv?.desc||c.desc||'Açıklama yok.')+'</div>'+
     (url?'<div style="margin-bottom:12px"><a href="'+url+'" target="_blank" style="font-size:11px;color:var(--acc)">'+url.replace('https://','').slice(0,55)+'↗</a></div>':'')+
     '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
-    '<div class="btn bgn-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'approved\')">✓ Onayla</div>'+
-    '<div class="btn brd-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'rejected\')">✗ Reddet</div>'+
-    '<div class="btn bam-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+',\'review\')">● İncele</div>'+
+    '<div class="btn bgn-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+cid+'\',\'approved\')">✓ Onayla</div>'+
+    '<div class="btn brd-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+cid+'\',\'rejected\')">✗ Reddet</div>'+
+    '<div class="btn bam-btn" onclick="setMBS(\''+fid+'\',\''+bid+'\',\''+which+'\',\''+cid+'\',\'review\')">● İncele</div>'+
+    '\'<div class="btn bg0" style="width:100%;margin-top:6px" onclick="showMod(\'edit-mb\',\''+fid+'\',\''+bid+'\',\''+which+'\',\''+cid+'\')" >✎ Düzenle</div>\'+',
     '</div></div>'+
     '<div style="display:flex;flex-direction:column;gap:10px">'+
     '<div class="card cp">'+
     '<div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:10px">Versiyon Geçmişi</div>'+
     verHtml+
-    '<div class="btn bg0" style="width:100%;justify-content:center;margin-top:8px;font-size:11px" onclick="showMod(\'add-ver\',\''+fid+'\',\''+bid+'\',\''+which+'\','+cid+')">+ Yeni Versiyon</div>'+
+    '<div class="btn bg0" style="width:100%;justify-content:center;margin-top:8px;font-size:11px" onclick="showMod(\'add-ver\',\''+fid+'\',\''+bid+'\',\''+which+'\',\''+cid+'\')">+ Yeni Versiyon</div>'+
     '</div>'+taskHtml+'</div></div>';
   showV('det');
 }
@@ -1774,6 +1775,35 @@ function showMod(type,...args){
       (which==='ig'?'<div class="fg" style="margin:0"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" placeholder="1"></div>':'')+
       '</div>'+
       '<div style="display:flex;gap:7px;justify-content:flex-end"><div class="btn bg0" onclick="closeMod()">İptal</div><div class="btn bp" onclick="addMbCard(\''+fid+'\',\''+bid+'\',\''+which+'\')">Ekle</div></div>';
+  } else if(type==='edit-mb'){
+    const [efid,ebid,ewhich,ecid]=args;
+    const eb=gB(efid,ebid);const ecards=ewhich==='ig'?eb.mbIG:eb.mbKamp;
+    const ec=ecards.find(x=>x.id===ecid);if(!ec)return;
+    const etypes=ewhich==='ig'?MBIGT:MBKT;
+    window._mbc={img:ec.img||null,isVid:ec.isVid||false};
+    const ecv=ec.versions[ec.versions.length-1];
+    html='<div style="font-size:14px;font-weight:600;color:var(--txt);margin-bottom:14px">Kartı Düzenle</div>'+
+      '<div class="fr2 fg">'+
+        '<div><label class="fl">Tür</label><select class="inp sel" id="mbc-type">'+etypes.map(t=>'<option '+(ec.type===t?'selected':'')+'>'+t+'</option>').join('')+'</select></div>'+
+        '<div><label class="fl">Başlık *</label><input class="inp" id="mbc-label" value="'+(ec.label||'')+'"></div>'+
+      '</div>'+
+      '<div class="fg"><label class="fl">Açıklama</label>'+
+        '<textarea class="inp ta" id="mbc-desc" style="min-height:64px">'+(ecv?.desc||ec.desc||'')+'</textarea>'+
+      '</div>'+
+      '<div class="fg"><label class="fl">Video / Referans URL</label>'+
+        '<input class="inp" id="mbc-url" value="'+(ecv?.url||ec.url||'')+'" placeholder="https://...">'+
+      '</div>'+
+      '<div class="fg"><label class="fl">Görsel değiştir (opsiyonel)</label>'+
+        '<div style="border:1.5px dashed var(--bdr2);border-radius:var(--r8);padding:10px;text-align:center;cursor:pointer" onclick="document.getElementById(\'mbc-f2\').click()">'+
+          '<div id="mbc-fp2" style="font-size:11px;color:var(--txt3)">'+(ec.img?'Görsel var · Değiştir':'Görsel seç')+'</div>'+
+          '<input type="file" id="mbc-f2" accept="image/*,video/*" style="display:none" onchange="prevFile(\'mbc-fp2\',this,\'_mbc\')">'+
+        '</div>'+
+      '</div>'+
+      (ewhich==='ig'?'<div class="fg"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" value="'+((ec.task?.igCell??0)+1)+'"></div>':'')+
+      '<div style="display:flex;gap:7px;justify-content:flex-end">'+
+        '<div class="btn bg0" onclick="closeMod()">İptal</div>'+
+        '<div class="btn bp" onclick="updateMbCard(\''+efid+'\',\''+ebid+'\',\''+ewhich+'\',\''+ecid+'\')">Güncelle</div>'+
+      '</div>';
   } else if(type==='add-ver'){
     const [fid,bid,which,cid]=args;
     window._ver={img:null,isVid:false};
@@ -1861,6 +1891,27 @@ async function addFirm(){
     await loadBriefs(f.id);
     toast('Firma eklendi ✓');renderSB();goHome();
   } catch(e) { toast('Hata: '+e.message); }
+}
+
+function updateMbCard(fid,bid,which,cid){
+  const b=gB(fid,bid);
+  const cards=which==='ig'?b.mbIG:b.mbKamp;
+  const c=cards.find(x=>x.id===cid);if(!c)return;
+  const label=document.getElementById('mbc-label')?.value.trim();if(!label){toast('Başlık zorunlu');return;}
+  const url=document.getElementById('mbc-url')?.value.trim()||c.url||'';
+  const desc=document.getElementById('mbc-desc')?.value||c.desc||'';
+  const mbc=window._mbc||{img:null,isVid:false};
+  const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
+  c.label=label;
+  c.type=document.getElementById('mbc-type')?.value||c.type;
+  c.desc=desc; c.url=url;
+  if(mbc.img)c.img=mbc.img;
+  if(mbc.isVid)c.isVid=true;
+  if(c.task&&which==='ig')c.task.igCell=cellNum;
+  if(c.versions?.length>0){c.versions[c.versions.length-1].url=url;c.versions[c.versions.length-1].desc=desc;}
+  apiFetch('/api/firms/'+fid+'/briefs/'+bid+'/cards/'+cid,{method:'PUT',body:{type:c.type,label:c.label,taskIGCell:which==='ig'?cellNum:undefined}}).catch(e=>console.error(e));
+  toast('Kart güncellendi ✓');
+  if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
 }
 
 async function addMbCard(fid,bid,which){
