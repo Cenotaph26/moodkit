@@ -1,5 +1,5 @@
 // src/lib/notifWorker.ts
-// Redis kuyruğundan bildirimleri alır, PostgreSQL'e kaydeder
+// Redis kuyruğundan bildirimleri alır, PostgreSQL'e kaydeder, WebSocket ile gönderir
 import { db } from './db'
 import { popNotification } from './redis'
 
@@ -12,7 +12,7 @@ export async function processNotifications() {
   try {
     let notif = await popNotification()
     while (notif) {
-      await db.notification.create({
+      const saved = await db.notification.create({
         data: {
           userId: notif.userId,
           briefId: notif.briefId || null,
@@ -20,6 +20,13 @@ export async function processNotifications() {
           sub: notif.sub || null,
         }
       })
+
+      // Push to connected browser via WebSocket (lazy import to avoid circular dep)
+      try {
+        const { sendWS } = await import('../index')
+        sendWS(notif.userId, { type: 'notif', ...saved })
+      } catch (_) {}
+
       notif = await popNotification()
     }
   } catch (err) {
@@ -29,7 +36,6 @@ export async function processNotifications() {
   }
 }
 
-// Her 5 saniyede bir kuyruktan işle
 export function startNotifWorker() {
   setInterval(processNotifications, 5000)
   console.log('✅ Bildirim worker başladı')

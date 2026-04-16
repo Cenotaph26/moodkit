@@ -24,11 +24,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   // İlişkiler
-  firmMembers FirmMember[]
-  tasks       Task[]       @relation("AssignedTasks")
-  createdTasks Task[]      @relation("CreatedTasks")
-  notifications Notification[]
-  sessions    Session[]
+  firmMembers    FirmMember[]
+  tasks          Task[]           @relation("AssignedTasks")
+  createdTasks   Task[]           @relation("CreatedTasks")
+  notifications  Notification[]
+  sessions       Session[]
+  activityLogs   ActivityLog[]
+  briefTemplates BriefTemplate[]
+  timeEntries    TimeEntry[]
 }
 
 enum Role {
@@ -102,11 +105,17 @@ model Brief {
   specialContent  String?
   notes           String?
 
+  // Bütçe alanları
+  budgetTotal    Decimal?
+  budgetCurrency String?  @default("TRY")
+
   firm            Firm           @relation(fields: [firmId], references: [id], onDelete: Cascade)
   moodboardCards  MoodboardCard[]
   tasks           Task[]
   igCells         IGCell[]
   notifications   Notification[]
+  activityLogs    ActivityLog[]
+  budgetItems     BudgetItem[]
 }
 
 enum BriefStage {
@@ -192,6 +201,7 @@ model Task {
   card        MoodboardCard? @relation(fields: [cardId], references: [id])
   assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
   createdBy   User?      @relation("CreatedTasks", fields: [createdById], references: [id])
+  timeEntries TimeEntry[]
 }
 
 enum TaskStatus {
@@ -243,4 +253,70 @@ model Notification {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   brief     Brief?   @relation(fields: [briefId], references: [id])
+}
+
+// ── AKTİVİTE LOGU ────────────────────────────────────────
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  firmId    String?
+  briefId   String?
+  action    String   // "card.approved", "task.status_changed", "brief.stage_changed"
+  entity    String   // "MoodboardCard", "Task", "Brief"
+  entityId  String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brief     Brief?   @relation(fields: [briefId], references: [id])
+}
+
+// ── BRIEF ŞABLONLARI ─────────────────────────────────────
+
+model BriefTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  firmId         String?
+  products       String?
+  tone           String?
+  colorDir       String?
+  avoid          String?
+  platforms      String[]
+  targetAudience String?
+  notes          String?
+  createdById    String
+  createdAt      DateTime @default(now())
+
+  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+// ── ZAMAN TAKİBİ ─────────────────────────────────────────
+
+model TimeEntry {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  minutes   Int
+  note      String?
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── BÜTÇE ─────────────────────────────────────────────────
+
+model BudgetItem {
+  id        String    @id @default(cuid())
+  briefId   String
+  label     String
+  amount    Decimal
+  category  String    // "Prodüksiyon", "Reklam", "Tasarım", "Diğer"
+  paidAt    DateTime?
+  note      String?
+  createdAt DateTime  @default(now())
+
+  brief     Brief     @relation(fields: [briefId], references: [id], onDelete: Cascade)
 }

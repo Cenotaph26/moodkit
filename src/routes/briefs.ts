@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '../lib/db'
 import { cacheGet, cacheSet, cacheDelete, pushNotification } from '../lib/redis'
 import { requireAuth, requireFirmAccess, requireRole, AuthRequest } from '../middleware/auth'
+import { logActivity } from '../lib/activity'
 
 const router = Router({ mergeParams: true }) // firmId params'tan geliyor
 
@@ -133,7 +134,7 @@ router.put('/:briefId', requireAuth, requireFirmAccess, async (req: AuthRequest,
     await cacheDelete(`brief:${req.params.briefId}`)
     await cacheDelete(`briefs:${req.params.firmId}`)
 
-    // Eğer stage değiştiyse bildirim gönder
+    // Eğer stage değiştiyse bildirim gönder + aktivite logla
     if (data.stage) {
       const firm = await db.firm.findUnique({ where: { id: req.params.firmId }, include: { members: true } })
       if (firm) {
@@ -149,6 +150,11 @@ router.put('/:briefId', requireAuth, requireFirmAccess, async (req: AuthRequest,
             sub: firm.name + ' · Az önce'
           })
         }
+        await logActivity({
+          userId: req.user!.id, firmId: req.params.firmId, briefId: req.params.briefId,
+          action: 'brief.stage_changed', entity: 'Brief', entityId: brief.id,
+          meta: { to: data.stage, month: brief.month, year: brief.year }
+        })
       }
     }
 
@@ -172,6 +178,84 @@ router.delete('/:briefId', requireAuth, requireRole('ADMIN', 'EDITOR'), async (r
     res.json({ message: 'Brief silindi' })
   } catch (err) {
     res.status(500).json({ error: 'Brief silinemedi' })
+  }
+})
+
+// GET /api/firms/:firmId/briefs/:briefId/activity
+router.get('/:briefId/activity', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const limit = Math.min(parseInt(String(req.query.limit || '50')), 100)
+    const logs = await db.activityLog.findMany({
+      where: { briefId: req.params.briefId },
+      include: { user: { select: { name: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    })
+    res.json(logs)
+  } catch (err) {
+    res.status(500).json({ error: 'Aktivite alınamadı' })
+  }
+})
+
+// GET /api/firms/:firmId/briefs/:briefId/budget
+router.get('/:briefId/budget', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const [brief, items] = await Promise.all([
+      db.brief.findFirst({ where: { id: req.params.briefId }, select: { budgetTotal: true, budgetCurrency: true } }),
+      db.budgetItem.findMany({ where: { briefId: req.params.briefId }, orderBy: { createdAt: 'asc' } })
+    ])
+    res.json({ budgetTotal: brief?.budgetTotal, budgetCurrency: brief?.budgetCurrency || 'TRY', items })
+  } catch (err) {
+    res.status(500).json({ error: 'Bütçe alınamadı' })
+  }
+})
+
+// PUT /api/firms/:firmId/briefs/:briefId/budget
+router.put('/:briefId/budget', requireAuth, requireRole('ADMIN', 'EDITOR'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { budgetTotal, budgetCurrency } = z.object({
+      budgetTotal: z.number().optional(),
+      budgetCurrency: z.string().optional()
+    }).parse(req.body)
+    await db.brief.update({ where: { id: req.params.briefId }, data: { budgetTotal, budgetCurrency } })
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Bütçe güncellenemedi' })
+  }
+})
+
+const BudgetItemSchema = z.object({
+  label: z.string().min(1),
+  amount: z.number().min(0),
+  category: z.string(),
+  note: z.string().optional(),
+  paidAt: z.string().optional(),
+})
+
+// POST /api/firms/:firmId/briefs/:briefId/budget/items
+router.post('/:briefId/budget/items', requireAuth, requireRole('ADMIN', 'EDITOR'), async (req: AuthRequest, res: Response) => {
+  try {
+    const data = BudgetItemSchema.parse(req.body)
+    const item = await db.budgetItem.create({
+      data: { ...data, briefId: req.params.briefId, paidAt: data.paidAt ? new Date(data.paidAt) : null }
+    })
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.status(201).json(item)
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message })
+    res.status(500).json({ error: 'Kalem eklenemedi' })
+  }
+})
+
+// DELETE /api/firms/:firmId/briefs/:briefId/budget/items/:itemId
+router.delete('/:briefId/budget/items/:itemId', requireAuth, requireRole('ADMIN', 'EDITOR'), async (req: AuthRequest, res: Response) => {
+  try {
+    await db.budgetItem.delete({ where: { id: req.params.itemId } })
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.json({ message: 'Kalem silindi' })
+  } catch (err) {
+    res.status(500).json({ error: 'Kalem silinemedi' })
   }
 })
 
