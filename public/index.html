@@ -416,7 +416,12 @@ async function loadBriefs(fid) {
     const f = gF(fid); if (!f) return;
     f.briefs = data.map(b => ({
       id: b.id, month: b.month, year: b.year, stage: (b.stage || 'BRIEF').toLowerCase(),
-      answers: b.answers || {},
+      products: b.products||'', tone: b.tone||'', colorDir: b.colorDir||'',
+      avoid: b.avoid||'', refs: b.refs||'', featured: b.featured||'',
+      newProduct: b.newProduct||false, newProductDesc: b.newProductDesc||'',
+      specialDay: b.specialDay||'', specialContent: b.specialContent||'',
+      notes: b.notes||'', hasAd: b.hasAd||false, budget: b.budget||'',
+      platforms: b.platforms||[], targetAudience: b.targetAudience||'', adAreas: b.adAreas||'',
       mbIG: [], mbKamp: [], tasks: [],
       igCells: Array.from({length: 9}, (_, i) => ({id: i, type: 'post', src: null, cap: '', hash: '', date: '', videoUrl: '', blob: null, slides: [], approved: null, likes: '0', cmts: '0'}))
     }));
@@ -757,7 +762,7 @@ document.addEventListener('click',e=>{
 
 // ── SIDEBAR ──────────────────────────────────────────────
 function renderSB(){
-  document.getElementById('firm-list').innerHTML=firms.map(f=>`
+  document.getElementById('flist').innerHTML=firms.map(f=>`
     <div class="aw" id="aw-${f.id}">
       <div class="ah" onclick="document.getElementById('aw-${f.id}').classList.toggle('open')">
         <div class="adot" style="background:${f.color}"></div>
@@ -872,7 +877,7 @@ async function openBrief(fid,bid){
   if(!b&&f.briefs?.length){bid=f.briefs[0].id;curBid=bid;b=f.briefs[0];}
   if(!b)return;
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:`${b.month} ${b.year} Brief`}]);
-  const a=b.answers||{};
+  const a=b;
   document.getElementById('v-brief').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div>
