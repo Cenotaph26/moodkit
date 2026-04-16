@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '../lib/db'
 import { cacheDelete, pushNotification } from '../lib/redis'
 import { requireAuth, requireFirmAccess, AuthRequest } from '../middleware/auth'
+import { logActivity } from '../lib/activity'
 
 const router = Router({ mergeParams: true })
 
@@ -101,6 +102,17 @@ router.put('/:cardId', requireAuth, requireFirmAccess, async (req: AuthRequest, 
     // Onay durumu değiştiyse görev oluştur + bildirim gönder
     if (data.status === 'APPROVED' && prevCard?.status !== 'APPROVED') {
       await handleApproval(card, req.params.briefId, req.user!.id)
+      await logActivity({
+        userId: req.user!.id, firmId: req.params.firmId, briefId: req.params.briefId,
+        action: 'card.approved', entity: 'MoodboardCard', entityId: card.id,
+        meta: { label: card.label, from: prevCard?.status }
+      })
+    } else if (data.status === 'REJECTED' && prevCard?.status !== 'REJECTED') {
+      await logActivity({
+        userId: req.user!.id, firmId: req.params.firmId, briefId: req.params.briefId,
+        action: 'card.rejected', entity: 'MoodboardCard', entityId: card.id,
+        meta: { label: card.label }
+      })
     }
 
     await cacheDelete(`brief:${req.params.briefId}`)

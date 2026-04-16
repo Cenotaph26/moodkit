@@ -190,6 +190,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .radio-opt input{accent-color:var(--acc)}
 .empty-st{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;gap:10px;color:var(--txt3)}
 .empty-st p{font-size:12px;text-align:center;line-height:1.5}
+/* SEARCH */
+.srch-wrap{position:relative;display:flex;align-items:center}
+#srch-inp{width:0;padding:0;border:none;background:transparent;outline:none;font-family:inherit;font-size:12px;color:var(--txt);transition:width .2s,padding .2s,border-color .2s;border-radius:var(--r8);border:.5px solid transparent}
+#srch-inp.open{width:160px;padding:5px 10px;border-color:var(--bdr2);background:var(--bg2)}
+#srch-inp.open:focus{border-color:var(--acc)}
+#srch-res{position:absolute;top:34px;right:0;width:280px;background:var(--bg);border:.5px solid var(--bdr2);border-radius:var(--r12);z-index:500;box-shadow:0 4px 20px rgba(0,0,0,.1);display:none;max-height:320px;overflow-y:auto}
+.sr-item{padding:9px 13px;border-bottom:.5px solid var(--bdr);cursor:pointer;transition:background .15s}
+.sr-item:last-child{border-bottom:none}.sr-item:hover{background:var(--bg2)}
+.sr-label{font-size:11px;color:var(--txt);font-weight:500}.sr-sub{font-size:10px;color:var(--txt3);margin-top:1px}
+/* ACTIVITY */
+.act-item{padding:8px 0;border-bottom:.5px solid var(--bdr);display:flex;gap:8px;align-items:flex-start}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:4px}
+.act-txt{font-size:11px;color:var(--txt2);line-height:1.4}
+.act-time{font-size:10px;color:var(--txt3);margin-top:2px}
+@media print{
+  .sidebar,.tb,.no-print,#toast,.mov{display:none!important}
+  .app{display:block!important;height:auto!important;overflow:visible!important}
+  .body{display:block!important;overflow:visible!important}
+  .content{overflow:visible!important}
+  .view{display:none!important}
+  #print-area{display:block!important}
+  .print-only{display:block!important}
+  body{background:#fff!important}
+}
 
 </style>
 </head>
@@ -200,6 +225,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sep"></div>
   <div class="bc" id="bc"><span class="bcu">Dashboard</span></div>
   <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-shrink:0">
+    <div class="srch-wrap">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="position:absolute;left:8px;z-index:1;pointer-events:none;opacity:.4;display:none" id="srch-ic"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input id="srch-inp" placeholder="Ara..." oninput="onSearch(this.value)" onfocus="this.classList.add('open');document.getElementById('srch-ic').style.display='block'" onblur="setTimeout(()=>{if(!document.getElementById('srch-res').matches(':hover')){closeSearch()}},200)">
+      <div id="srch-res"></div>
+    </div>
     <div class="nb" id="nbw" onclick="toggleN()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 14a1.5 1.5 0 003 0M8 14a1.5 1.5 0 01-3 0M2 11l1-2V6a5 5 0 0110 0v3l1 2H2z" stroke="currentColor" stroke-width="1.2"/></svg>
       <div class="nd" id="ndot"></div>
@@ -518,21 +548,17 @@ async function apiApproveAllIG(fid, bid) {
 
 // ── APP INIT ──────────────────────────────────────────────
 async function initApp() {
-  // Update topbar user info
   if (_me) {
     const ini = _me.name.split(' ').map(w => w[0]).join('').slice(0, 2);
     const roleBadge = {ADMIN: 'bpu', EDITOR: 'bgn', PROD: 'bcor', CLIENT: 'bgr'};
     const roleLabel = {ADMIN: 'Admin', EDITOR: 'Kreatif', PROD: 'Prod', CLIENT: 'Müşteri'};
     document.querySelector('.uav').textContent = ini;
-    document.querySelector('span[style*="Ahmet"]') && (document.querySelectorAll('.tb span')[0] ? null : null);
-    // Update name and badge in topbar
     const tbRight = document.querySelector('.tb > div:last-child');
     if (tbRight) {
       const spans = tbRight.querySelectorAll('span');
       if (spans[0]) spans[0].textContent = _me.name;
       if (spans[1]) { spans[1].className = 'badge ' + (roleBadge[_me.role] || 'bgr'); spans[1].textContent = roleLabel[_me.role] || _me.role; }
     }
-    // Add logout button
     if (!document.getElementById('logout-btn')) {
       const lb = document.createElement('div');
       lb.id = 'logout-btn';
@@ -544,11 +570,103 @@ async function initApp() {
   }
   await loadMembers();
   await loadFirms();
-  // Load briefs for each firm
   for (const f of firms) {
     await loadBriefs(f.id);
   }
-  renderSB(); renderN(); goHome();
+  initWS();
+  if (_me?.role === 'CLIENT') {
+    renderClientPortal();
+  } else {
+    renderSB(); renderN(); goHome();
+  }
+}
+
+function initWS() {
+  if (!_token) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}?token=${_token}`);
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'notif') {
+        notifs.unshift({id: msg.id, title: msg.title, sub: msg.sub, read: false, fid: msg.briefId});
+        renderN();
+      }
+    } catch(_) {}
+  };
+  ws.onclose = () => { setTimeout(initWS, 5000); };
+}
+
+function renderClientPortal() {
+  document.querySelector('.sidebar').style.display = 'none';
+  renderN();
+  setBC([{label:'Müşteri Portalı'}]);
+  document.getElementById('v-home').innerHTML = `
+    <div style="max-width:560px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:14px">Merhaba, ${_me?.name?.split(' ')[0] || 'Müşteri'}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${firms.map(f=>{
+          const briefs = f.briefs || [];
+          const latest = briefs[0];
+          return `<div class="card cp" style="cursor:pointer" onclick="${latest?`openCustMB('${f.id}','${latest.id}','ig')`:''}">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:32px;height:32px;border-radius:8px;background:${f.color||'#534AB7'}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${f.color||'#534AB7'}">${f.name[0]}</div>
+              <div>
+                <div style="font-size:13px;font-weight:600">${f.name}</div>
+                <div style="font-size:10px;color:var(--txt3)">${f.sector||''}</div>
+              </div>
+            </div>
+            ${briefs.map(b=>`
+              <div style="border:.5px solid var(--bdr);border-radius:8px;padding:9px 12px;margin-bottom:6px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:12px;font-weight:500">${b.month} ${b.year}</span>
+                  <span class="badge ${STAGE_BADGES[b.stage?.toLowerCase()]||'bgr'}">${STAGE_LABELS[b.stage?.toLowerCase()]||b.stage}</span>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <div class="btn bp bs" onclick="event.stopPropagation();openCustMB('${f.id}','${b.id}','ig')">IG Moodboard</div>
+                  <div class="btn bg0 bs" onclick="event.stopPropagation();openCustIG('${f.id}','${b.id}')">IG Grid</div>
+                </div>
+              </div>`).join('')}
+            ${!briefs.length?'<div style="font-size:11px;color:var(--txt3)">Henüz brief yok.</div>':''}
+          </div>`;
+        }).join('')}
+        ${!firms.length?'<div class="empty-st"><p>Size atanmış firma yok.<br>Lütfen yöneticinizle iletişime geçin.</p></div>':''}
+      </div>
+    </div>`;
+  showV('home');
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+let _srchT = null;
+function onSearch(q) {
+  clearTimeout(_srchT);
+  const res = document.getElementById('srch-res');
+  if (!q || q.length < 2) { res.style.display = 'none'; return; }
+  _srchT = setTimeout(async () => {
+    try {
+      const data = await apiFetch('/api/search?q=' + encodeURIComponent(q));
+      renderSearchResults(data, q);
+    } catch(e) { res.style.display = 'none'; }
+  }, 300);
+}
+function renderSearchResults(data, q) {
+  const res = document.getElementById('srch-res');
+  const items = [];
+  (data.briefs||[]).forEach(b => items.push({icon:'📋',label:`${b.month} ${b.year}`,sub:firms.find(f=>f.id===b.firmId)?.name||'',fn:`openBrief('${b.firmId}','${b.id}')`}));
+  (data.cards||[]).forEach(c => items.push({icon:'🎨',label:c.label,sub:c.type,fn:`openMBDet('${c.briefId_firmId||''}','${c.briefId}','${(c.which||'IG').toLowerCase()}','${c.id}')`}));
+  (data.tasks||[]).forEach(t => items.push({icon:'✓',label:t.desc||t.cardRef,sub:t.type,fn:`openTasks('${t.briefId_firmId||''}','${t.briefId}')`}));
+  if (!items.length) {
+    res.innerHTML = '<div style="padding:12px 14px;font-size:11px;color:var(--txt3)">Sonuç bulunamadı.</div>';
+  } else {
+    res.innerHTML = items.slice(0,8).map(it=>`<div class="sr-item" onclick="${it.fn};closeSearch()"><div class="sr-label">${it.icon} ${it.label}</div><div class="sr-sub">${it.sub}</div></div>`).join('');
+  }
+  res.style.display = 'block';
+}
+function closeSearch() {
+  const inp = document.getElementById('srch-inp');
+  const res = document.getElementById('srch-res');
+  if (inp) { inp.value = ''; inp.classList.remove('open'); document.getElementById('srch-ic').style.display='none'; }
+  if (res) res.style.display = 'none';
 }
 
 
@@ -662,10 +780,20 @@ function renderSB(){
 }
 
 // ── DASHBOARD ────────────────────────────────────────────
-function goHome(){
+async function goHome(){
   curFid=null;curBid=null;setSBI('home');setBC([{label:'Dashboard'}]);
-  const totalT=firms.reduce((a,f)=>a+f.briefs.reduce((b,br)=>b+br.tasks.length,0),0);
-  const pendT=firms.reduce((a,f)=>a+f.briefs.reduce((b,br)=>b+br.tasks.filter(t=>t.status==='todo').length,0),0);
+  const totalT=firms.reduce((a,f)=>a+f.briefs.reduce((b,br)=>b+(br.tasks||[]).length,0),0);
+  const pendT=firms.reduce((a,f)=>a+f.briefs.reduce((b,br)=>b+(br.tasks||[]).filter(t=>t.status==='TODO'||t.status==='todo').length,0),0);
+
+  // Fetch analytics
+  let analytics=null;
+  try{analytics=await apiFetch('/api/analytics/summary');}catch(_){}
+
+  const taskStats=analytics?.tasksByStatus||{};
+  const stageStats=analytics?.briefsByStage||{};
+  const cardStats=analytics?.cardsByStatus||{};
+  const recentAct=analytics?.recentActivity||[];
+
   document.getElementById('v-home').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div>
@@ -674,13 +802,33 @@ function goHome(){
       </div>
       <div class="btn bp" onclick="showMod('add-firm')">+ Firma Ekle</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-      ${[['Aktif Firmalar',firms.length,'bpu'],['Bekleyen Görev',pendT,'bam'],['Toplam Görev',totalT,'bgr']].map(([l,v,b])=>`
-        <div class="card cp">
-          <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">${l}</div>
-          <div style="font-size:24px;font-weight:600;color:var(--txt)">${v}</div>
-        </div>`).join('')}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div class="card cp">
+        <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Aktif Firmalar</div>
+        <div style="font-size:24px;font-weight:600;color:var(--txt)">${firms.length}</div>
+      </div>
+      <div class="card cp">
+        <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Bekleyen Görev</div>
+        <div style="font-size:24px;font-weight:600;color:var(--txt)">${taskStats.TODO||pendT}</div>
+      </div>
+      <div class="card cp">
+        <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Tamamlanan</div>
+        <div style="font-size:24px;font-weight:600;color:var(--grn)">${taskStats.DONE||0}</div>
+      </div>
+      <div class="card cp">
+        <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Onaylı Kart</div>
+        <div style="font-size:24px;font-weight:600;color:var(--acc)">${cardStats.APPROVED||0}</div>
+      </div>
     </div>
+    ${recentAct.length?`<div class="card cp" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px">Son Aktivite</div>
+      ${recentAct.slice(0,5).map(a=>`<div class="act-item">
+        <div class="act-dot"></div>
+        <div><div class="act-txt">${a.user?.name||'?'} · ${a.action.replace('.',' ')}</div>
+        <div class="act-time">${new Date(a.createdAt).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+      </div>`).join('')}
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">
       ${firms.map(f=>{
         const lb=f.briefs[f.briefs.length-1];
@@ -796,7 +944,8 @@ async function saveBrief(fid,bid){
   const b=gB(fid,bid);if(!b)return;
   b.month=document.getElementById('bf-m')?.value||b.month;
   b.year=parseInt(document.getElementById('bf-y')?.value)||b.year;
-  b.answers={
+  const payload={
+    month:b.month,year:b.year,
     products:document.getElementById('bf-p')?.value||'',
     newProduct:document.querySelector(`input[name="np_${bid}"]:checked`)?.value==='yes',
     newProductDesc:document.getElementById('bf-np')?.value||'',
@@ -809,7 +958,8 @@ async function saveBrief(fid,bid){
     specialContent:document.getElementById('bf-sc')?.value||'',
     notes:document.getElementById('bf-notes')?.value||''
   };
-  try{await apiSaveBrief(fid,bid,{month:b.month,year:b.year,answers:b.answers});}catch(e){}
+  Object.assign(b,payload);
+  try{await apiSaveBrief(fid,bid,payload);}catch(e){}
   toast('Brief kaydedildi ✓');
 }
 
@@ -1102,11 +1252,11 @@ function renderTC(fid,bid){
 
 function startDT(e,tid){
   dragTid=tid;
-  setTimeout(()=>{const el=e.target.closest('.tc');if(el)el.classList.add('dragging');},0);
+  setTimeout(()=>{const el=e.target.closest('.tc');if(el)el.classList.add('drg');},0);
   e.dataTransfer.setData('text/plain',tid);
 }
 function endDT(e){
-  const el=e.target.closest('.tc');if(el)el.classList.remove('dragging');
+  const el=e.target.closest('.tc');if(el)el.classList.remove('drg');
   document.querySelectorAll('.kcol').forEach(c=>c.classList.remove('dov'));
   dragTid=null;
 }
@@ -1516,35 +1666,108 @@ async function openYayin(fid,bid){
   let b=gB(fid,bid);
   if(!b&&f.briefs?.length){bid=f.briefs[0].id;curBid=bid;b=f.briefs[0];}
   if(!b)return;
+  await loadIGCells(fid,bid);
+  b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:`${b.month} ${b.year}`},{label:'Yayın'}]);
   const igAp=b.igCells.filter(x=>x.approved===true).length;
-  const mbAp=b.mbIG.filter(k=>k.status==='approved').length+b.mbKamp.filter(k=>k.status==='approved').length;
-  const totMB=b.mbIG.length+b.mbKamp.length;
-  const tDone=b.tasks.filter(t=>t.status==='done').length;
+  const mbIG=b.mbIG||[];const mbKamp=b.mbKamp||[];
+  const mbAp=mbIG.filter(k=>k.status==='approved').length+mbKamp.filter(k=>k.status==='approved').length;
+  const totMB=mbIG.length+mbKamp.length;
+  const tDone=(b.tasks||[]).filter(t=>t.status==='DONE'||t.status==='done').length;
+  const scheduledCells=b.igCells.filter(x=>x.date).sort((a,c)=>{
+    const da=parseInt(a.date)||parseInt((a.date||'').replace(/\D/g,''))||99;
+    const dc=parseInt(c.date)||parseInt((c.date||'').replace(/\D/g,''))||99;
+    return da-dc;
+  });
   document.getElementById('v-yayin').innerHTML=`
-    <div style="max-width:520px">
+    <div id="print-area" style="max-width:640px">
       <div style="font-size:16px;font-weight:600;margin-bottom:14px">Yayın — ${b.month} ${b.year}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        ${[['Moodboard',mbAp,totMB,'bpu'],['IG Grid',igAp,9,'bbl'],['Görevler',tDone,b.tasks.length,'bgn']].map(([l,v,tot,badge])=>`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        ${[['Moodboard',mbAp,totMB,'bpu'],['IG Grid',igAp,9,'bbl'],['Görevler',tDone,(b.tasks||[]).length,'bgn']].map(([l,v,tot,badge])=>`
           <div class="card cp">
             <div style="font-size:10px;font-weight:500;color:var(--txt3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">${l}</div>
             <div style="font-size:22px;font-weight:600;margin-bottom:6px">${v}<span style="font-size:14px;color:var(--txt3)">/${tot}</span></div>
             <div class="prog"><div class="prog-f" style="width:${tot?Math.round(v/tot*100):0}%"></div></div>
           </div>`).join('')}
       </div>
-      <div class="card cp">
+      <div class="card" style="margin-bottom:14px">
+        <div class="cp" style="border-bottom:.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:12px;font-weight:600">Yayın Takvimi <span style="font-weight:400;color:var(--txt3)">(${scheduledCells.length} tarihli gönderi)</span></div>
+          <div class="btn bgn-btn bs no-print" onclick="approveAllYayin('${fid}','${bid}')">Tümünü Onayla</div>
+        </div>
+        ${scheduledCells.length?scheduledCells.map(cell=>{
+          const idx=b.igCells.indexOf(cell);
+          const typeLabel=cell.type==='reels'?'Reels':cell.type==='carousel'?'Carousel':'Post';
+          const typeBadge=cell.type==='reels'?'brd':cell.type==='carousel'?'bpu':'bgn';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:.5px solid var(--bdr)">
+            <div style="width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;background:${f.color||'#534AB7'}22;position:relative">
+              ${cell.src?`<img src="${cell.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" loading="lazy">`:''}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
+                <span class="badge ${typeBadge}" style="font-size:9px">${typeLabel}</span>
+                <span style="font-size:10px;color:var(--txt3)">${cell.date}</span>
+              </div>
+              <div style="font-size:11px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cell.cap||'—'}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px" class="no-print">
+              ${cell.approved===true?
+                `<span style="font-size:11px;color:var(--grn);font-weight:500">✓ Onaylı</span>
+                 <div class="btn brd-btn bs" onclick="toggleCellApprove('${fid}','${bid}',${idx},false)">Geri Al</div>`:
+                `<div class="btn bgn-btn bs" onclick="toggleCellApprove('${fid}','${bid}',${idx},true)">Onayla</div>`}
+            </div>
+            <div class="print-only" style="display:none">${cell.approved===true?'✓':'○'}</div>
+          </div>`;
+        }).join(''):`<div style="text-align:center;padding:20px;font-size:12px;color:var(--txt3)">Tarihli gönderi yok. IG Grid'den tarih ekleyin.</div>`}
+      </div>
+      <div class="card cp no-print" style="margin-bottom:14px">
         <div style="font-size:12px;font-weight:600;margin-bottom:10px">Yayın İşlemleri</div>
         <div style="display:flex;flex-direction:column;gap:7px">
-          <div class="btn bgn-btn" style="justify-content:center" onclick="toast('PDF rapor oluşturuluyor... ✓')">PDF Rapor Oluştur</div>
-          <div class="btn bpu-btn" style="justify-content:center" onclick="toast('Paylaşım linki kopyalandı ✓')">Müşteriyle Paylaş</div>
-          <div class="btn bp" style="justify-content:center" onclick="toast('Kampanya arşive alındı ✓')">Arşive Al</div>
+          <div class="btn bgn-btn" style="justify-content:center" onclick="printBriefReport('${fid}','${bid}')">📄 PDF Rapor Oluştur</div>
+          <div class="btn bpu-btn" style="justify-content:center" onclick="navigator.clipboard.writeText(window.location.href).then(()=>toast('Link kopyalandı ✓'))">🔗 Müşteriyle Paylaş</div>
+          <div class="btn bp" style="justify-content:center" onclick="archiveBrief('${fid}','${bid}')">✓ Yayına Geç / Arşive Al</div>
         </div>
       </div>
     </div>`;
   showV('yayin');
 }
 
+async function toggleCellApprove(fid,bid,idx,approved){
+  const b=gB(fid,bid);if(!b||idx<0||idx>8)return;
+  b.igCells[idx].approved=approved;
+  try{await apiUpdateIGCell(fid,bid,idx,{approved});}catch(e){toast('Hata: '+e.message);return;}
+  openYayin(fid,bid);
+}
+
+async function approveAllYayin(fid,bid){
+  const b=gB(fid,bid);if(!b)return;
+  b.igCells.forEach(c=>{if(c.date)c.approved=true;});
+  try{await apiApproveAllIG(fid,bid);}catch(e){}
+  openYayin(fid,bid);
+  toast('Tüm gönderiler onaylandı ✓');
+}
+
+async function archiveBrief(fid,bid){
+  try{await apiSaveBrief(fid,bid,{stage:'YAYIN'});}catch(e){}
+  toast('Kampanya arşive alındı ✓');
+}
+
+function printBriefReport(fid,bid){
+  const f=gF(fid);const b=gB(fid,bid);if(!f||!b)return;
+  window.print();
+}
+
 // ── TAKVİM ───────────────────────────────────────────────
+function calDayFromStr(s){
+  if(!s)return 0;
+  // ISO date "2026-04-15" → 15
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso)return parseInt(iso[3]);
+  // Turkish "15 Nisan" → 15
+  const m=s.match(/^(\d+)/);
+  return m?parseInt(m[1]):0;
+}
+
 async function openCal(fid,bid){
   curFid=fid;curBid=bid;openAcc(fid);lastView='cal';
   const f=gF(fid);if(!f)return;
@@ -1552,35 +1775,59 @@ async function openCal(fid,bid){
   let b=gB(fid,bid);
   if(!b&&f.briefs?.length){bid=f.briefs[0].id;curBid=bid;b=f.briefs[0];}
   if(!b)return;
+  await loadIGCells(fid,bid);
+  b=gB(fid,bid);
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:`${b.month} ${b.year}`},{label:'Takvim'}]);
-  const today=new Date().getDate();
+
+  const todayDate=new Date();
+  const isCurrentMonth=(todayDate.getFullYear()===b.year&&todayDate.getMonth()===MONTHS.indexOf(b.month));
+  const today=isCurrentMonth?todayDate.getDate():0;
+
+  const monthIdx=MONTHS.indexOf(b.month);
+  const firstDow=new Date(b.year,monthIdx,1).getDay();
+  // Convert Sunday=0 to Monday=0 for Turkish week (Pzt start)
+  const offset=(firstDow===0?6:firstDow-1);
+  const daysInMonth=new Date(b.year,monthIdx+1,0).getDate();
+
+  // Build day → events map
+  const byDay={};
+  b.igCells.filter(c=>c.date).forEach(p=>{
+    const d=calDayFromStr(p.date);
+    if(d>0){if(!byDay[d])byDay[d]={posts:[],tasks:[]};byDay[d].posts.push(p);}
+  });
+  (b.tasks||[]).filter(t=>t.deadline).forEach(t=>{
+    const d=calDayFromStr(t.deadline);
+    if(d>0){if(!byDay[d])byDay[d]={posts:[],tasks:[]};byDay[d].tasks.push(t);}
+  });
+
   const posts=b.igCells.filter(c=>c.date);
-  const byDay={};posts.forEach(p=>{const d=parseInt(p.date);if(d>0){if(!byDay[d])byDay[d]=[];byDay[d].push(p);}});
   document.getElementById('v-cal').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
         <div style="font-size:16px;font-weight:600">${f.name} — ${b.month} ${b.year}</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${posts.length} planlı gönderi</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${posts.length} planlı gönderi · ${(b.tasks||[]).filter(t=>t.deadline).length} görev son tarihi</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
       ${['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(d=>`<div style="text-align:center;font-size:10px;color:var(--txt3);padding:4px;font-weight:500">${d}</div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px">
-      <div style="background:transparent;border-color:transparent"></div>
-      ${Array.from({length:30},(_,i)=>{
-        const day=i+1;const ps=byDay[day]||[];const isToday=day===today;const isPast=day<today;
-        return `<div style="border:.5px solid var(--bdr);border-radius:8px;min-height:72px;padding:5px;background:${isToday?'var(--abg)':isPast?'var(--bg2)':'var(--bg)'};${isToday?'border-color:var(--acc)':''}">
+      ${Array.from({length:offset},()=>`<div></div>`).join('')}
+      ${Array.from({length:daysInMonth},(_,i)=>{
+        const day=i+1;const ev=byDay[day]||{posts:[],tasks:[]};
+        const isToday=day===today;const isPast=day<today&&today>0;
+        return `<div style="border:.5px solid ${isToday?'var(--acc)':'var(--bdr)'};border-radius:8px;min-height:72px;padding:5px;background:${isToday?'var(--abg)':isPast?'var(--bg2)':'var(--bg)'}">
           <div style="font-size:10px;font-weight:500;color:var(--txt2);margin-bottom:3px">${day}</div>
-          ${ps.map(p=>`<div style="font-size:8px;padding:2px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:${f.color}22;color:${f.color}">${p.type==='reels'?'▶':p.type==='carousel'?'⧉':'○'} ${p.cap?.slice(0,10)||'—'}</div>`).join('')}
+          ${ev.posts.map(p=>`<div style="font-size:8px;padding:2px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:${f.color||'#534AB7'}22;color:${f.color||'#534AB7'}" onclick="openIG('${fid}','${bid}')">${p.type==='reels'?'▶':p.type==='carousel'?'⧉':'○'} ${p.cap?.slice(0,12)||'—'}</div>`).join('')}
+          ${ev.tasks.map(t=>`<div style="font-size:8px;padding:2px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:${TASK_COLORS[t.type]||'#534AB7'}22;color:${TASK_COLORS[t.type]||'#534AB7'}" onclick="openTasks('${fid}','${bid}')">⏰ ${t.desc?.slice(0,12)||t.cardRef||'—'}</div>`).join('')}
         </div>`;
       }).join('')}
     </div>
     <div class="card cp">
       <div style="font-size:12px;font-weight:600;margin-bottom:10px">Planlı Gönderiler</div>
-      ${posts.sort((a,b)=>(parseInt(a.date)||99)-(parseInt(b.date)||99)).map(p=>`
+      ${posts.sort((a,c)=>calDayFromStr(a.date)-calDayFromStr(c.date)).map(p=>`
         <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--bdr)">
-          <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:${f.color}22;position:relative">
+          <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:${f.color||'#534AB7'}22;position:relative">
             ${p.src?`<img src="${p.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" loading="lazy">`:''}
           </div>
           <div style="flex:1;min-width:0">
@@ -1837,14 +2084,24 @@ function closeMod(){
   else goHome();
 }
 
-function prevFile(fpId,input,key){
+async function prevFile(fpId,input,key){
   if(!input.files||!input.files[0])return;
-  const f=input.files[0];const url=URL.createObjectURL(f);const isV=isVidFile(f);
-  window[key]={img:isV?null:url,blob:isV?url:null,isVid:isV,url:''};
+  const f=input.files[0];const localUrl=URL.createObjectURL(f);const isV=isVidFile(f);
+  window[key]={img:isV?null:localUrl,blob:isV?localUrl:null,isVid:isV,url:''};
   document.getElementById(fpId).innerHTML=isV?
-    `<video src="${url}" style="height:60px;border-radius:5px" muted></video><div style="font-size:9px;color:var(--acc);margin-top:3px">Video → Reels</div>`:
-    `<img src="${url}" style="height:60px;border-radius:5px;object-fit:cover">`;
+    `<video src="${localUrl}" style="height:60px;border-radius:5px" muted></video><div style="font-size:9px;color:var(--acc);margin-top:3px">Video → Reels · Yükleniyor...</div>`:
+    `<img src="${localUrl}" style="height:60px;border-radius:5px;object-fit:cover">`;
   input.value='';
+  // Upload to server for persistent URL
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
+    if(res.ok){
+      const data=await res.json();
+      if(window[key])window[key].url=data.url;
+      if(isV){const el=document.getElementById(fpId);if(el)el.querySelector('div').textContent='Video → Reels ✓';}
+    }
+  }catch(e){console.warn('Upload hatası',e);}
 }
 
 // ── ACTIONS ──────────────────────────────────────────────
@@ -1869,7 +2126,7 @@ async function addMbCard(fid,bid,which){
       type:document.getElementById('mbc-type').value,
       label,
       desc:document.getElementById('mbc-desc')?.value||'',
-      mediaUrl:mbc.img||null,
+      mediaUrl:mbc.url||mbc.img||null,
       videoUrl:url||null,
       taskType:document.getElementById('mbc-tt')?.value||'Grafik',
       taskDesc:document.getElementById('mbc-tdesc')?.value||'',
@@ -1907,7 +2164,7 @@ async function saveVer(fid,bid,which,cid){
   const url=document.getElementById('ver-url')?.value.trim()||'';
   const desc=document.getElementById('ver-desc')?.value||'';
   try{
-    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:ver.img||null,videoUrl:url||null});
+    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:ver.url||ver.img||null,videoUrl:url||null});
     toast('Versiyon eklendi ✓');
     addN('Yeni versiyon yüklendi',gF(fid)?.name+' · Az önce',fid);
     await loadCards(fid,bid,which);

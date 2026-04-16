@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '../lib/db'
 import { cacheDelete } from '../lib/redis'
 import { requireAuth, requireFirmAccess, AuthRequest } from '../middleware/auth'
+import { logActivity } from '../lib/activity'
 
 const router = Router({ mergeParams: true })
 
@@ -60,11 +61,19 @@ router.post('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: R
 router.put('/:taskId', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
   try {
     const data = TaskSchema.partial().parse(req.body)
+    const prev = await db.task.findUnique({ where: { id: req.params.taskId } })
     const task = await db.task.update({
       where: { id: req.params.taskId },
       data,
       include: { assignee: { select: { id: true, name: true, prodRole: true } } }
     })
+    if (data.status && prev?.status !== data.status) {
+      await logActivity({
+        userId: req.user!.id, firmId: req.params.firmId, briefId: req.params.briefId,
+        action: 'task.status_changed', entity: 'Task', entityId: task.id,
+        meta: { from: prev?.status, to: data.status, desc: task.desc }
+      })
+    }
     await cacheDelete(`brief:${req.params.briefId}`)
     res.json(task)
   } catch (err) {
