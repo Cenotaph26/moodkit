@@ -1064,7 +1064,7 @@ function renderMBG(gridId,fid,bid,which){
           <div class="ovb" onclick="event.stopPropagation();delMBC('${fid}','${bid}','${which}','${c.id}')" style="color:var(--red)">✕</div>
         </div>
         <div style="position:absolute;top:8px;right:8px;z-index:3"><span class="badge bpu" style="font-size:9px">v${c.versions?.length||1}</span></div>
-        ${isYT?'<div style="position:absolute;top:8px;left:8px;z-index:3"><span class="badge brd" style="font-size:9px">VİDEO</span></div>':''}
+        ${isVid?'<div style="position:absolute;top:8px;left:8px;z-index:3"><span class="badge brd" style="font-size:9px">VİDEO</span></div>':''}
       </div>
       <div class="mbb">
         <div class="mbt">${c.label}</div>
