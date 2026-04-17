@@ -267,8 +267,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="content" id="content">
   <div id="v-home" class="view act" style="padding:16px"></div>
   <div id="v-brief" class="view" style="padding:16px"></div>
-  <div id="v-mbig" class="view" style="padding:16px"></div>
-  <div id="v-mbk" class="view" style="padding:16px"></div>
+  <div id="v-mb-ig" class="view" style="padding:16px"></div>
+  <div id="v-mb-k" class="view" style="padding:16px"></div>
   <div id="v-tasks" class="view" style="padding:16px"></div>
   <div id="v-ig" class="view" style="padding:16px"></div>
   <div id="v-yayin" class="view" style="padding:16px"></div>
@@ -405,7 +405,8 @@ async function loadFirms() {
     const data = await apiFetch('/api/firms');
     firms = data.map(f => ({
       id: f.id, name: f.name, sector: f.sector || '', color: f.color || '#3d2d12',
-      briefs: []
+      briefs: [],
+      memberIds: (f.members || []).map(m => m.userId || m.user?.id).filter(Boolean)
     }));
   } catch(e) { console.error('Firmalar yüklenemedi:', e); }
 }
@@ -1480,7 +1481,7 @@ function openReels(fid,bid,startIdx=0){
     const cell=rs[ri];
     const emb=toEmbed(cell.videoUrl||'');
     let mh=emb&&(emb.includes('youtube')||emb.includes('vimeo'))?
-      `<iframe src="${emb}?autoplay=1&mute=1&loop=1&rel=0&controls=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe>`:
+      `<iframe src="${emb}${emb.includes('?')?'&':'?'}autoplay=1&mute=1&rel=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe>`:
       cell.src?`<img src="${cell.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:
       `<div style="position:absolute;inset:0;background:${GR[ri%9][0]}"></div>`;
     el.innerHTML=`
@@ -1857,14 +1858,17 @@ function showTeam(){
       <div style="font-size:16px;font-weight:600">Ekip Üyeleri</div>
       <div class="btn bp" onclick="showMod('add-member')">+ Üye Ekle</div>
     </div>
-    <div style="max-width:580px;display:flex;flex-direction:column;gap:8px">
-      ${members.map(m=>`
+    <div style="max-width:620px;display:flex;flex-direction:column;gap:8px">
+      ${members.map(m=>{
+        const mFirms=firms.filter(f=>f.memberIds?.includes(m.id));
+        return `
         <div class="card cp">
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--abg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--atxt);flex-shrink:0">${m.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:500">${m.name}</div>
-              <div style="font-size:11px;color:var(--txt3)">${m.email||''}${m.title?' · '+m.title:''}${m.prodRole?' · '+m.prodRole:''}</div>
+              <div style="font-size:11px;color:var(--txt3);margin-bottom:4px">${m.email||''}${m.title?' · '+m.title:''}${m.prodRole?' · '+m.prodRole:''}</div>
+              ${mFirms.length?`<div style="display:flex;flex-wrap:wrap;gap:4px">${mFirms.map(f=>`<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${f.color}22;color:${f.color};border:.5px solid ${f.color}44">${f.name}</span>`).join('')}</div>`:`<span style="font-size:9px;color:var(--txt3)">Firma ataması yok</span>`}
             </div>
             <span class="badge ${{admin:'bpu',editor:'bgn',prod:'bcor',client:'bgr'}[m.role]||'bgr'}">${{admin:'Admin',editor:'Kreatif',prod:'Prodüksiyon',client:'Müşteri'}[m.role]||m.role}</span>
             <div style="display:flex;gap:4px;margin-left:6px">
@@ -1872,7 +1876,8 @@ function showTeam(){
               <div class="btn brd-btn bs" onclick="deleteMember('${m.id}')">✕</div>
             </div>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
   showV('team');
 }
@@ -2026,7 +2031,7 @@ function showMod(type,...args){
         <div><label class="fl">E-posta *</label><input class="inp" id="nm-e" type="email" placeholder="ahmet@firma.com"></div>
       </div>
       <div class="fr2 fg">
-        <div><label class="fl">Ünvan</label><input class="inp" id="nm-t" placeholder="Grafik Tasarımcı"></div>
+        <div><label class="fl">Ünvan</label><input class="inp" id="nm-t" placeholder="Grafik Tasarımcı" autocomplete="off"></div>
         <div><label class="fl">Rol</label><select class="inp sel" id="nm-r">
           <option value="ADMIN">Admin</option><option value="EDITOR">Kreatif</option>
           <option value="PROD" selected>Prodüksiyon</option><option value="CLIENT">Müşteri</option>
@@ -2036,6 +2041,13 @@ function showMod(type,...args){
         <option value="">—</option>
         ${['Videograf','Grafiker','Fotoğrafçı','Kreatif Direktör'].map(r=>`<option>${r}</option>`).join('')}
       </select></div>
+      ${firms.length?`<div class="fg"><label class="fl">Firma Erişimi</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;padding:8px;border:.5px solid var(--bdr);border-radius:8px">
+          ${firms.map(f=>`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 6px;border-radius:5px;background:var(--bg2)">
+            <input type="checkbox" class="nm-firm-cb" value="${f.id}"> <span style="width:8px;height:8px;border-radius:50%;background:${f.color};display:inline-block"></span>${f.name}
+          </label>`).join('')}
+        </div>
+      </div>`:''}
       <div class="fr2 fg">
         <div><label class="fl">Şifre *</label><input class="inp" id="nm-pw" type="password" placeholder="Min 8 karakter"></div>
         <div><label class="fl">Tekrar *</label><input class="inp" id="nm-pw2" type="password" placeholder="Tekrar gir"></div>
@@ -2228,12 +2240,21 @@ async function addMember(){
   if(pw!==pw2){toast('Şifreler eşleşmiyor');return;}
   const role=document.getElementById('nm-r')?.value||'PROD';
   const title=document.getElementById('nm-t')?.value||'';
-  const prodRole=document.getElementById('nm-pr')?.value||null;
+  const prodRole=document.getElementById('nm-pr')?.value||undefined;
   try{
-    const u=await apiFetch('/api/auth/register',{method:'POST',body:{name,email,password:pw,role,title,prodRole}});
-    const newM={id:u.user?.id||Date.now(),name,email,role:role.toLowerCase(),title,prodRole};
+    const body={name,email,password:pw,role,title};
+    if(prodRole)body.prodRole=prodRole;
+    const u=await apiFetch('/api/auth/register',{method:'POST',body});
+    const uid=u.user?.id;
+    const newM={id:uid||Date.now(),name,email,role:role.toLowerCase(),title,prodRole:prodRole||null};
     members.push(newM);
     sessionStorage.setItem('mk_members',JSON.stringify(members));
+    // Seçili firmalara üye olarak ekle
+    const selFirms=[...document.querySelectorAll('.nm-firm-cb:checked')].map(cb=>cb.value);
+    for(const fid of selFirms){
+      await apiFetch(`/api/firms/${fid}/members`,{method:'POST',body:{userId:uid}}).catch(e=>console.warn('Firma ataması başarısız:',e));
+      const fw=firms.find(x=>x.id===fid);if(fw&&!fw.memberIds.includes(uid))fw.memberIds.push(uid);
+    }
     toast('Üye eklendi ✓');showTeam();
   }catch(e){toast('Hata: '+e.message);}
 }
@@ -2243,7 +2264,7 @@ async function updateMember(mid){
   const name=document.getElementById('em-n')?.value.trim()||m.name;
   const title=document.getElementById('em-t')?.value||m.title||'';
   const role=document.getElementById('em-r')?.value||m.role;
-  const prodRole=document.getElementById('em-pr')?.value||null;
+  const prodRole=document.getElementById('em-pr')?.value||undefined;
   const pw=document.getElementById('em-pw')?.value||'';
   const pw2=document.getElementById('em-pw2')?.value||'';
   if(pw&&pw!==pw2){toast('Şifreler eşleşmiyor');return;}
