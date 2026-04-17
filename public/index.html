@@ -1185,9 +1185,16 @@ async function setMBS(fid,bid,which,cid,status){
   const msgs={approved:'✓ Onaylandı',review:'● İncelemeye alındı',rejected:'✗ Reddedildi'};
   toast(msgs[status]);
   if(status==='approved'&&c.task){
-    if(which==='ig'&&c.task.igCell!==undefined){
+    if(which==='ig'&&c.task.igCell!=null){
       const cell=b.igCells?.[c.task.igCell];
-      if(cell&&!cell.src){const cv=c.versions?.[c.versions.length-1];cell.src=cv?.img||c.img||gS(c.task.igCell);cell.type=c.isVid?'reels':'post';cell.videoUrl=cv?.url||c.url||'';}
+      if(cell){
+        const cv=c.versions?.[c.versions.length-1];
+        cell.src=cv?.img||c.img||null;
+        cell.type=(c.task.type==='Video'||c.task.type==='Reels')?'reels':'post';
+        cell.videoUrl=cv?.url||c.url||'';
+        cell.cap=c.label||cell.cap;
+        cell.approved=null;
+      }
     }
     const ex=b.tasks.find(t=>t.cardRef===c.label);
     if(!ex)b.tasks.push({id:cid,cardRef:c.label,type:c.task.type,desc:c.task.desc,format:c.task.format||'',source:which==='ig'?'IG Moodboard':'Kampanya MB',assignee:c.task.assignee,deadline:c.task.dl||'',status:'todo'});
@@ -1400,7 +1407,7 @@ function renderIGList(fid,bid){
 
 function viewCell(fid,bid,idx){
   const b=gB(fid,bid);const f=gF(fid);const cell=b.igCells[idx];
-  const isR=cell.type==='reels'||isVidUrl(cell.videoUrl||'');
+  const isR=cell.type==='reels'||isEmbedUrl(cell.videoUrl||'');
   if(isR){openReels(fid,bid,idx);return;}
   const slides=(cell.type==='carousel'&&cell.slides?.length)?cell.slides:[cell.src];
   let cs=0;
@@ -1482,61 +1489,72 @@ function saveCaption(fid,bid,idx){
 
 function openReels(fid,bid,startIdx=0){
   const b=gB(fid,bid);const f=gF(fid);
-  const rs=b.igCells.filter(c=>c.type==='reels'||isVidUrl(c.videoUrl||''));
-  if(!rs.length){toast('Reels içerik yok');return;}
+  const rs=b.igCells.filter(c=>c.type==='reels'||isEmbedUrl(c.videoUrl||''));
+  if(!rs.length){toast('Oynatılabilir içerik yok');return;}
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   let ri=typeof startIdx==='number'?rs.findIndex((_,i)=>b.igCells.indexOf(rs[i])===startIdx):0;
   if(ri<0)ri=0;
   const el=document.getElementById('v-ig');
   function render(){
     const cell=rs[ri];
+    const cellIdx=b.igCells.indexOf(cell);
     const emb=toEmbed(cell.videoUrl||'');
-    let mh=emb&&(emb.includes('youtube')||emb.includes('vimeo'))?
-      `<iframe src="${emb}${emb.includes('?')?'&':'?'}autoplay=1&mute=1&rel=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe>`:
-      cell.src?`<img src="${cell.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:
-      `<div style="position:absolute;inset:0;background:${GR[ri%9][0]}"></div>`;
+    const thumb=cell.src||ytThumb(cell.videoUrl||'');
+    let mediaEl='';
+    if(emb){
+      const sep=emb.includes('?')?'&':'?';
+      mediaEl=`<iframe src="${emb}${sep}autoplay=1&mute=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
+    } else if(thumb){
+      mediaEl=`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
+    } else {
+      mediaEl=`<div style="position:absolute;inset:0;background:${GR[ri%9][0]}"></div>`;
+    }
     el.innerHTML=`
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-        <div class="btn bg0" onclick="openIG('${fid}','${bid}')">← Grid</div>
-        <span style="font-size:11px;color:var(--txt2)">Reels · ${ri+1}/${rs.length}</span>
-      </div>
-      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
-        <div style="background:#000;border-radius:16px;overflow:hidden;position:relative;width:260px;height:462px;flex-shrink:0">
-          <div style="position:absolute;inset:0">${mh}</div>
-          <div style="position:absolute;top:0;left:0;right:0;height:90px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);z-index:3"></div>
-          <div style="position:absolute;bottom:0;left:0;right:0;height:180px;background:linear-gradient(to top,rgba(0,0,0,.75),transparent);z-index:3"></div>
-          <div style="position:absolute;right:10px;bottom:74px;display:flex;flex-direction:column;gap:14px;align-items:center;z-index:5">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;cursor:pointer"><div style="font-size:24px">♡</div><span style="font-size:9px">${cell.likes||'0'}</span></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;cursor:pointer"><div style="font-size:20px">💬</div><span style="font-size:9px">${cell.cmts||'0'}</span></div>
-          </div>
-          <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px;z-index:5">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-              <div style="width:22px;height:22px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${un.slice(0,2).toUpperCase()}</div>
-              <span style="color:#fff;font-size:11px;font-weight:700">${un}</span>
-            </div>
-            <div style="color:rgba(255,255,255,.9);font-size:10px;line-height:1.4">${cell.cap||''}</div>
-          </div>
-          <div style="position:absolute;bottom:0;left:0;right:0;height:52px;background:linear-gradient(transparent,rgba(0,0,0,.65));display:flex;align-items:center;justify-content:space-around;padding:0 6px;z-index:6">
-            <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(ri>0){ri--;render()}" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background=''">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="15,18 9,12 15,6" stroke="white" stroke-width="2"/></svg>
-            </div>
-            <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="if(ri<${rs.length-1}){ri++;render()}" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background=''">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="9,18 15,12 9,6" stroke="white" stroke-width="2"/></svg>
-            </div>
+      <div style="display:flex;align-items:stretch;height:calc(100vh - 110px);min-height:480px;background:#000;border-radius:12px;overflow:hidden;position:relative">
+        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:10px 14px;background:linear-gradient(rgba(0,0,0,.6),transparent);display:flex;align-items:center;gap:8px">
+          <div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);padding:4px 10px;font-size:11px" onclick="document.onkeydown=null;openIG('${fid}','${bid}')">← Grid</div>
+          <span style="color:rgba(255,255,255,.8);font-size:11px;font-weight:500">Reels ${ri+1}/${rs.length}</span>
+          ${cell.date?`<span style="color:rgba(255,255,255,.5);font-size:10px;margin-left:4px">${cell.date}</span>`:''}
+          <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,.7)">${cell.approved===true?'✓ Onaylı':cell.approved===false?'✗ Reddedildi':'⏳ Bekliyor'}</span>
+        </div>
+        <div style="flex:1;position:relative;display:flex;align-items:center;justify-content:center">
+          <div style="position:relative;height:100%;aspect-ratio:9/16;max-height:100%;overflow:hidden">
+            ${mediaEl}
           </div>
         </div>
-        <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px">
-          <div class="card cp">
-            <div style="font-size:12px;font-weight:600;margin-bottom:6px">Reels #${ri+1}</div>
-            <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px">${cell.cap||''}</div>
-            <div style="display:flex;gap:5px">
-              <div class="btn bgn-btn bs" onclick="setIGAp('${fid}','${bid}',${b.igCells.indexOf(cell)},true)">✓ Onayla</div>
-              <div class="btn brd-btn bs" onclick="setIGAp('${fid}','${bid}',${b.igCells.indexOf(cell)},false)">✗ Reddet</div>
-            </div>
+        <div style="position:absolute;right:12px;bottom:100px;display:flex;flex-direction:column;gap:16px;align-items:center;z-index:10">
+          <div onclick="setIGAp('${fid}','${bid}',${cellIdx},true)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div style="width:42px;height:42px;border-radius:50%;background:${cell.approved===true?'rgba(29,158,117,.7)':'rgba(255,255,255,.15)'};display:flex;align-items:center;justify-content:center;font-size:18px">✓</div>
+            <span style="font-size:9px;color:#fff">Onayla</span>
           </div>
+          <div onclick="setIGAp('${fid}','${bid}',${cellIdx},false)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div style="width:42px;height:42px;border-radius:50%;background:${cell.approved===false?'rgba(220,53,69,.7)':'rgba(255,255,255,.15)'};display:flex;align-items:center;justify-content:center;font-size:18px">✕</div>
+            <span style="font-size:9px;color:#fff">Reddet</span>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:60px;z-index:10;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.85))">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="width:28px;height:28px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${un.slice(0,2).toUpperCase()}</div>
+            <span style="color:#fff;font-size:12px;font-weight:600">${un}</span>
+          </div>
+          ${cell.cap?`<div style="color:rgba(255,255,255,.9);font-size:11px;line-height:1.5">${cell.cap}</div>`:''}
+          ${cell.hash?`<div style="color:rgba(255,255,255,.55);font-size:10px;margin-top:3px">${cell.hash}</div>`:''}
+        </div>
+        ${ri>0?`<div onclick="ri--;render()" style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:40px;height:80px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 8px 8px 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="15,18 9,12 15,6" stroke="white" stroke-width="2.5"/></svg>
+        </div>`:''}
+        ${ri<rs.length-1?`<div onclick="ri++;render()" style="position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10;width:40px;height:80px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px 0 0 8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="9,18 15,12 9,6" stroke="white" stroke-width="2.5"/></svg>
+        </div>`:''}
+        <div style="position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10">
+          ${rs.map((_,i)=>`<div style="width:${i===ri?16:5}px;height:4px;border-radius:2px;background:${i===ri?'#fff':'rgba(255,255,255,.35)'};transition:width .2s"></div>`).join('')}
         </div>
       </div>`;
-    document.onkeydown=ev=>{if(ev.key==='ArrowDown'&&ri<rs.length-1){ri++;render();}if(ev.key==='ArrowUp'&&ri>0){ri--;render();}};
+    document.onkeydown=ev=>{
+      if(ev.key==='ArrowRight'||ev.key==='ArrowDown'){if(ri<rs.length-1){ri++;render();}}
+      if(ev.key==='ArrowLeft'||ev.key==='ArrowUp'){if(ri>0){ri--;render();}}
+      if(ev.key==='Escape'){document.onkeydown=null;openIG(fid,bid);}
+    };
   }
   render();showV('ig');
 }
