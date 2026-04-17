@@ -725,7 +725,8 @@ function openAcc(fid){document.querySelectorAll('.aw').forEach(e=>e.classList.re
 function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur);}
 function tbadge(type){return `<span class="badge ${TASK_BADGES[type]||'bgr'}">${type}</span>`;}
 function mname(id){return members.find(m=>m.id===id)?.name||'Atanmadı';}
-function isVidUrl(u){return u&&(u.includes('youtube')||u.includes('youtu.be')||u.includes('vimeo')||/\.(mp4|mov|webm)$/i.test(u));}
+function isVidUrl(u){return u&&(u.includes('youtube')||u.includes('youtu.be')||u.includes('vimeo')||u.includes('tiktok')||/\.(mp4|mov|webm)$/i.test(u));}
+function isEmbedUrl(u){return u&&(isVidUrl(u)||u.includes('instagram.com/p/')||u.includes('instagram.com/reel/'));}
 function isVidFile(f){return f&&f.type&&f.type.startsWith('video/');}
 function toEmbed(u){
   if(!u) return null;
@@ -733,6 +734,8 @@ function toEmbed(u){
   if(u.includes('watch?v=')) return `https://www.youtube.com/embed/${u.split('watch?v=')[1].split('&')[0]}?rel=0&modestbranding=1`;
   if(u.includes('youtu.be/')) return `https://www.youtube.com/embed/${u.split('youtu.be/')[1].split('?')[0]}?rel=0&modestbranding=1`;
   if(u.includes('vimeo.com/')) return `https://player.vimeo.com/video/${u.split('vimeo.com/')[1].split('?')[0]}`;
+  if(u.includes('instagram.com/p/')){const s=u.split('instagram.com/p/')[1].split('/')[0];return `https://www.instagram.com/p/${s}/embed/`;}
+  if(u.includes('instagram.com/reel/')){const s=u.split('instagram.com/reel/')[1].split('/')[0];return `https://www.instagram.com/p/${s}/embed/`;}
   if(/\.(mp4|mov|webm)$/i.test(u)) return u;
   return null;
 }
@@ -1098,9 +1101,13 @@ function openMBDet(fid,bid,which,cid){
   const emb=toEmbed(url);
 
   let mh='';
-  if(emb&&(emb.includes('youtube')||emb.includes('vimeo'))){
+  const isIG=url&&(url.includes('instagram.com/p/')||url.includes('instagram.com/reel/'));
+  if(emb&&(emb.includes('youtube.com/embed')||emb.includes('vimeo.com'))){
     mh=`<div style="position:relative;padding-bottom:75%;height:0;overflow:hidden;border-radius:8px">
       <iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe></div>`;
+  } else if(isIG&&emb){
+    mh=`<div style="display:flex;justify-content:center;margin-bottom:4px">
+      <iframe src="${emb}" style="width:340px;height:440px;border:none;border-radius:12px;overflow:hidden" scrolling="no" allowtransparency="true"></iframe></div>`;
   } else if(emb&&/\.(mp4|mov|webm)$/i.test(emb)){
     mh=`<video src="${emb}" style="width:100%;max-height:260px;border-radius:8px" controls></video>`;
   } else if(img){
@@ -2074,6 +2081,13 @@ function showMod(type,...args){
         <option value="">—</option>
         ${['Videograf','Grafiker','Fotoğrafçı','Kreatif Direktör'].map(r=>`<option ${m.prodRole===r?'selected':''}>${r}</option>`).join('')}
       </select></div>
+      ${firms.length?`<div class="fg"><label class="fl">Firma Erişimi</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;padding:8px;border:.5px solid var(--bdr);border-radius:8px">
+          ${firms.map(f=>`<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 6px;border-radius:5px;background:var(--bg2)">
+            <input type="checkbox" class="em-firm-cb" value="${f.id}" ${f.memberIds?.includes(mid)?'checked':''}> <span style="width:8px;height:8px;border-radius:50%;background:${f.color};display:inline-block"></span>${f.name}
+          </label>`).join('')}
+        </div>
+      </div>`:''}
       <div style="height:.5px;background:var(--bdr);margin:12px 0"></div>
       <div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:8px">Şifre Değiştir (opsiyonel)</div>
       <div class="fr2 fg">
@@ -2181,7 +2195,7 @@ async function saveVer(fid,bid,which,cid){
   const url=document.getElementById('ver-url')?.value.trim()||'';
   const desc=document.getElementById('ver-desc')?.value||'';
   try{
-    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:ver.url||ver.img||null,videoUrl:url||null});
+    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:ver.url||ver.img||undefined,videoUrl:url||undefined});
     toast('Versiyon eklendi ✓');
     addN('Yeni versiyon yüklendi',gF(fid)?.name+' · Az önce',fid);
     await loadCards(fid,bid,which);
@@ -2270,9 +2284,28 @@ async function updateMember(mid){
   if(pw&&pw!==pw2){toast('Şifreler eşleşmiyor');return;}
   if(pw&&pw.length<8){toast('Şifre en az 8 karakter');return;}
   try{
-    await apiFetch(`/api/users/${mid}`,{method:'PUT',body:{name,title,prodRole,role:role.toUpperCase()}});
+    const body={name,title,role:role.toUpperCase()};
+    if(prodRole)body.prodRole=prodRole;
+    await apiFetch(`/api/users/${mid}`,{method:'PUT',body});
     if(pw)await apiFetch(`/api/users/${mid}/password`,{method:'PATCH',body:{password:pw}}).catch(e=>console.warn(e));
-    m.name=name;m.title=title;m.role=role.toLowerCase();m.prodRole=prodRole;
+    m.name=name;m.title=title;m.role=role.toLowerCase();m.prodRole=prodRole||null;
+    // Firma erişimi güncelle
+    const checked=[...document.querySelectorAll('.em-firm-cb:checked')].map(cb=>cb.value);
+    const unchecked=[...document.querySelectorAll('.em-firm-cb:not(:checked)')].map(cb=>cb.value);
+    for(const fid of checked){
+      const fw=firms.find(x=>x.id===fid);
+      if(fw&&!fw.memberIds?.includes(mid)){
+        await apiFetch(`/api/firms/${fid}/members`,{method:'POST',body:{userId:mid}}).catch(e=>console.warn(e));
+        if(!fw.memberIds)fw.memberIds=[];fw.memberIds.push(mid);
+      }
+    }
+    for(const fid of unchecked){
+      const fw=firms.find(x=>x.id===fid);
+      if(fw&&fw.memberIds?.includes(mid)){
+        await apiFetch(`/api/firms/${fid}/members/${mid}`,{method:'DELETE'}).catch(e=>console.warn(e));
+        fw.memberIds=fw.memberIds.filter(x=>x!==mid);
+      }
+    }
     sessionStorage.setItem('mk_members',JSON.stringify(members));
     toast('Güncellendi ✓');showTeam();
   }catch(e){toast('Hata: '+e.message);}
