@@ -740,6 +740,47 @@ function toEmbed(u){
   if(/\.(mp4|mov|webm)$/i.test(u)) return u;
   return null;
 }
+function buildReelsMedia(videoUrl,thumb,ri){
+  const GRcol=GR[ri%9][0];
+  const bgLayer=thumb
+    ?`<div style="position:absolute;inset:0;background-image:url(${thumb});background-size:cover;background-position:center"><div style="position:absolute;inset:0;background:rgba(0,0,0,.35)"></div></div>`
+    :`<div style="position:absolute;inset:0;background:${GRcol}"></div>`;
+  if(!videoUrl) return thumb?`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:bgLayer;
+  // Direct video file or data URL → native <video>
+  if(/\.(mp4|mov|webm|ogg)(\?|$)/i.test(videoUrl)||videoUrl.startsWith('data:video')||videoUrl.startsWith('blob:')){
+    return `<video src="${videoUrl}" autoplay controls loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>`;
+  }
+  // YouTube
+  if(videoUrl.includes('youtube')||videoUrl.includes('youtu.be')){
+    const emb=toEmbed(videoUrl);if(!emb)return bgLayer;
+    const sep=emb.includes('?')?'&':'?';
+    return `<iframe src="${emb}${sep}autoplay=1&mute=0&rel=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture;accelerometer;gyroscope"></iframe>`;
+  }
+  // Vimeo
+  if(videoUrl.includes('vimeo.com')){
+    const emb=toEmbed(videoUrl);if(!emb)return bgLayer;
+    const sep=emb.includes('?')?'&':'?';
+    return `<iframe src="${emb}${sep}autoplay=1" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
+  }
+  // TikTok
+  if(videoUrl.includes('tiktok.com')){
+    const emb=toEmbed(videoUrl)||videoUrl;
+    return `<iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
+  }
+  // Instagram — tarayıcı dışı embed'i engeller; kapak + link göster
+  if(videoUrl.includes('instagram.com')){
+    return `${bgLayer}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:1">
+      <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:24px">▶</div>
+      <div style="color:#fff;font-size:12px;text-align:center;line-height:1.6;opacity:.9">Instagram videosu<br>yalnızca uygulamada izlenebilir</div>
+      <a href="${videoUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);color:#fff;border-radius:22px;font-size:12px;text-decoration:none;border:1px solid rgba(255,255,255,.35);margin-top:4px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Instagram'da Aç
+      </a>
+    </div>`;
+  }
+  // Genel fallback — iframe dene
+  return `<iframe src="${videoUrl}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
+}
 function addN(title,sub,fid){notifs.unshift({id:Date.now(),title,sub,read:false,fid});renderN();}
 
 // ── NOTIFS ───────────────────────────────────────────────
@@ -1504,18 +1545,8 @@ function openReels(fid,bid,startIdx=0){
   function render(){
     const cell=rs[ri];
     const cellIdx=b.igCells.indexOf(cell);
-    const emb=toEmbed(cell.videoUrl||'');
     const thumb=cell.src||ytThumb(cell.videoUrl||'');
-    let mediaEl='';
-    if(emb){
-      const sep=emb.includes('?')?'&':'?';
-      mediaEl=`<iframe src="${emb}${sep}autoplay=1&mute=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
-    } else if(thumb){
-      mediaEl=`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
-    } else {
-      mediaEl=`<div style="position:absolute;inset:0;background:${GR[ri%9][0]}"></div>`;
-    }
-    const mediaWrap=`<div style="position:relative;height:100%;aspect-ratio:9/16;max-width:100%;overflow:hidden;flex-shrink:0">${mediaEl}</div>`;
+    const mediaWrap=`<div style="position:relative;height:100%;aspect-ratio:9/16;max-width:100%;overflow:hidden;flex-shrink:0">${buildReelsMedia(cell.videoUrl||'',thumb,ri)}</div>`;
     const apClr=cell.approved===true?'#1d9e75':cell.approved===false?'#e05363':'#888';
     const apLbl=cell.approved===true?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor';
     el.innerHTML=`
