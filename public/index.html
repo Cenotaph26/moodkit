@@ -1495,6 +1495,12 @@ function openReels(fid,bid,startIdx=0){
   let ri=typeof startIdx==='number'?rs.findIndex((_,i)=>b.igCells.indexOf(rs[i])===startIdx):0;
   if(ri<0)ri=0;
   const el=document.getElementById('v-ig');
+  window._reelsApprove=async function(cellIdx,v){
+    const cell=b.igCells[cellIdx];cell.approved=v;
+    try{await apiUpdateIGCell(fid,bid,cellIdx,{approved:v});}catch(e){console.error(e);}
+    toast(v?'✓ Onaylandı':'✗ Reddedildi');
+    render();
+  };
   function render(){
     const cell=rs[ri];
     const cellIdx=b.igCells.indexOf(cell);
@@ -1503,51 +1509,59 @@ function openReels(fid,bid,startIdx=0){
     let mediaEl='';
     if(emb){
       const sep=emb.includes('?')?'&':'?';
-      mediaEl=`<iframe src="${emb}${sep}autoplay=1&mute=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
+      mediaEl=`<iframe src="${emb}${sep}autoplay=1&mute=0" style="width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;picture-in-picture"></iframe>`;
     } else if(thumb){
-      mediaEl=`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
+      mediaEl=`<img src="${thumb}" style="width:100%;height:100%;object-fit:contain">`;
     } else {
-      mediaEl=`<div style="position:absolute;inset:0;background:${GR[ri%9][0]}"></div>`;
+      mediaEl=`<div style="width:100%;height:100%;background:${GR[ri%9][0]}"></div>`;
     }
+    const apClr=cell.approved===true?'#1d9e75':cell.approved===false?'#e05363':'#888';
+    const apLbl=cell.approved===true?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor';
     el.innerHTML=`
-      <div style="display:flex;align-items:stretch;height:calc(100vh - 110px);min-height:480px;background:#000;border-radius:12px;overflow:hidden;position:relative">
-        <div style="position:absolute;top:0;left:0;right:0;z-index:10;padding:10px 14px;background:linear-gradient(rgba(0,0,0,.6),transparent);display:flex;align-items:center;gap:8px">
-          <div class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);padding:4px 10px;font-size:11px" onclick="document.onkeydown=null;openIG('${fid}','${bid}')">← Grid</div>
-          <span style="color:rgba(255,255,255,.8);font-size:11px;font-weight:500">Reels ${ri+1}/${rs.length}</span>
-          ${cell.date?`<span style="color:rgba(255,255,255,.5);font-size:10px;margin-left:4px">${cell.date}</span>`:''}
-          <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,.7)">${cell.approved===true?'✓ Onaylı':cell.approved===false?'✗ Reddedildi':'⏳ Bekliyor'}</span>
+      <div style="display:flex;height:calc(100vh - 110px);min-height:480px;background:#000;border-radius:12px;overflow:hidden;position:relative">
+        <!-- Left: video area -->
+        <div style="flex:1;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">
+          ${mediaEl}
+          <!-- prev arrow -->
+          ${ri>0?`<div onclick="ri--;window._reelsRender()" style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:38px;height:76px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 8px 8px 0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="15,18 9,12 15,6" stroke="white" stroke-width="2.5"/></svg>
+          </div>`:''}
+          <!-- next arrow -->
+          ${ri<rs.length-1?`<div onclick="ri++;window._reelsRender()" style="position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10;width:38px;height:76px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px 0 0 8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="9,18 15,12 9,6" stroke="white" stroke-width="2.5"/></svg>
+          </div>`:''}
         </div>
-        <div style="flex:1;position:relative;display:flex;align-items:center;justify-content:center">
-          <div style="position:relative;height:100%;aspect-ratio:9/16;max-height:100%;overflow:hidden">
-            ${mediaEl}
+        <!-- Right panel -->
+        <div style="width:300px;min-width:300px;background:#1a1a1a;display:flex;flex-direction:column;border-left:1px solid #2a2a2a">
+          <!-- Header -->
+          <div style="padding:11px 14px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <div class="btn" style="background:rgba(255,255,255,.07);color:#bbb;border-color:rgba(255,255,255,.1);padding:4px 10px;font-size:11px" onclick="document.onkeydown=null;openIG('${fid}','${bid}')">← Grid</div>
+            <span style="color:#aaa;font-size:11px">${ri+1} / ${rs.length}</span>
+            <span style="margin-left:auto;font-size:10px;font-weight:600;color:${apClr}">${apLbl}</span>
           </div>
-        </div>
-        <div style="position:absolute;right:12px;bottom:100px;display:flex;flex-direction:column;gap:16px;align-items:center;z-index:10">
-          <div onclick="setIGAp('${fid}','${bid}',${cellIdx},true)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
-            <div style="width:42px;height:42px;border-radius:50%;background:${cell.approved===true?'rgba(29,158,117,.7)':'rgba(255,255,255,.15)'};display:flex;align-items:center;justify-content:center;font-size:18px">✓</div>
-            <span style="font-size:9px;color:#fff">Onayla</span>
+          <!-- Brand -->
+          <div style="padding:14px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <div style="width:36px;height:36px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${un.slice(0,2).toUpperCase()}</div>
+            <div>
+              <div style="color:#fff;font-size:13px;font-weight:600">${un}</div>
+              ${cell.date?`<div style="color:#666;font-size:10px;margin-top:1px">${cell.date}</div>`:''}
+            </div>
           </div>
-          <div onclick="setIGAp('${fid}','${bid}',${cellIdx},false)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
-            <div style="width:42px;height:42px;border-radius:50%;background:${cell.approved===false?'rgba(220,53,69,.7)':'rgba(255,255,255,.15)'};display:flex;align-items:center;justify-content:center;font-size:18px">✕</div>
-            <span style="font-size:9px;color:#fff">Reddet</span>
+          <!-- Caption -->
+          <div style="flex:1;overflow-y:auto;padding:14px">
+            ${cell.cap?`<div style="color:#ddd;font-size:13px;line-height:1.65">${cell.cap}</div>`:`<div style="color:#555;font-size:12px;font-style:italic">Açıklama yok</div>`}
+            ${cell.hash?`<div style="color:#5898e4;font-size:12px;margin-top:8px;line-height:1.7">${cell.hash}</div>`:''}
           </div>
-        </div>
-        <div style="position:absolute;bottom:0;left:0;right:60px;z-index:10;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.85))">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div style="width:28px;height:28px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${un.slice(0,2).toUpperCase()}</div>
-            <span style="color:#fff;font-size:12px;font-weight:600">${un}</span>
+          <!-- Actions -->
+          <div style="padding:12px 14px;border-top:1px solid #2a2a2a;flex-shrink:0">
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <div class="btn" onclick="window._reelsApprove(${cellIdx},true)" style="flex:1;justify-content:center;background:${cell.approved===true?'rgba(29,158,117,.25)':'rgba(255,255,255,.05)'};color:${cell.approved===true?'#1d9e75':'#aaa'};border-color:${cell.approved===true?'rgba(29,158,117,.4)':'rgba(255,255,255,.1)'};font-size:12px">✓ Onayla</div>
+              <div class="btn" onclick="window._reelsApprove(${cellIdx},false)" style="flex:1;justify-content:center;background:${cell.approved===false?'rgba(220,53,69,.2)':'rgba(255,255,255,.05)'};color:${cell.approved===false?'#e05363':'#aaa'};border-color:${cell.approved===false?'rgba(220,53,69,.35)':'rgba(255,255,255,.1)'};font-size:12px">✕ Reddet</div>
+            </div>
+            <div style="display:flex;gap:4px;justify-content:center">
+              ${rs.map((_,i)=>`<div onclick="ri=${i};window._reelsRender()" style="width:${i===ri?14:5}px;height:4px;border-radius:2px;background:${i===ri?'#fff':'rgba(255,255,255,.22)'};transition:width .2s;cursor:pointer"></div>`).join('')}
+            </div>
           </div>
-          ${cell.cap?`<div style="color:rgba(255,255,255,.9);font-size:11px;line-height:1.5">${cell.cap}</div>`:''}
-          ${cell.hash?`<div style="color:rgba(255,255,255,.55);font-size:10px;margin-top:3px">${cell.hash}</div>`:''}
-        </div>
-        ${ri>0?`<div onclick="ri--;render()" style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:40px;height:80px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 8px 8px 0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="15,18 9,12 15,6" stroke="white" stroke-width="2.5"/></svg>
-        </div>`:''}
-        ${ri<rs.length-1?`<div onclick="ri++;render()" style="position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10;width:40px;height:80px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px 0 0 8px">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="9,18 15,12 9,6" stroke="white" stroke-width="2.5"/></svg>
-        </div>`:''}
-        <div style="position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10">
-          ${rs.map((_,i)=>`<div style="width:${i===ri?16:5}px;height:4px;border-radius:2px;background:${i===ri?'#fff':'rgba(255,255,255,.35)'};transition:width .2s"></div>`).join('')}
         </div>
       </div>`;
     document.onkeydown=ev=>{
@@ -1556,6 +1570,7 @@ function openReels(fid,bid,startIdx=0){
       if(ev.key==='Escape'){document.onkeydown=null;openIG(fid,bid);}
     };
   }
+  window._reelsRender=render;
   render();showV('ig');
 }
 
