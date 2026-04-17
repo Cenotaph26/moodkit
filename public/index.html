@@ -727,6 +727,7 @@ function tbadge(type){return `<span class="badge ${TASK_BADGES[type]||'bgr'}">${
 function mname(id){return members.find(m=>m.id===id)?.name||'Atanmadı';}
 function isVidUrl(u){return u&&(u.includes('youtube')||u.includes('youtu.be')||u.includes('vimeo')||u.includes('tiktok')||/\.(mp4|mov|webm)$/i.test(u));}
 function isEmbedUrl(u){return u&&(isVidUrl(u)||u.includes('instagram.com/p/')||u.includes('instagram.com/reel/'));}
+function ytThumb(u){if(!u)return null;let id=null;if(u.includes('watch?v='))id=u.split('watch?v=')[1].split('&')[0];else if(u.includes('youtu.be/'))id=u.split('youtu.be/')[1].split('?')[0];return id?`https://img.youtube.com/vi/${id}/0.jpg`:null;}
 function isVidFile(f){return f&&f.type&&f.type.startsWith('video/');}
 function toEmbed(u){
   if(!u) return null;
@@ -1049,12 +1050,13 @@ function renderMBG(gridId,fid,bid,which){
   if(!cards.length){grid.innerHTML='';return;}
   grid.innerHTML=cards.map(c=>{
     const cv=c.versions?.[c.versions.length-1];
-    const img=cv?.img||c.img;
-    const isYT=isVidUrl(cv?.url||c.url||'');
+    const cardUrl=cv?.url||c.url||'';
+    const img=cv?.img||c.img||ytThumb(cardUrl);
+    const isVid=isEmbedUrl(cardUrl);
     return `<div class="mbc" onclick="openMBDet('${fid}','${bid}','${which}','${c.id}')">
       <div class="mbth">
-        ${isYT?`<div style="position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center">
-          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65">`:''}
+        ${isVid?`<div style="position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center">
+          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75">`:''}
           <div style="position:relative;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:14px">▶</div>
         </div>`:img?`<img src="${img}" loading="lazy">`:`<div style="position:absolute;inset:0;background:${GR[0][0]}"></div>`}
         <div class="mbov">
@@ -1317,7 +1319,7 @@ async function openIG(fid,bid){
               <div><div style="font-size:11px;font-weight:700;color:#1a1a1a">${un}</div></div>
             </div>
             <div style="display:flex;border-bottom:.5px solid #dbdbdb">
-              <div style="flex:1;text-align:center;padding:7px 3px"><strong style="font-size:12px;font-weight:700;color:#1a1a1a;display:block">${b.igCells.filter(x=>x.src).length}</strong><span style="font-size:9px;color:#8e8e8e">gönderi</span></div>
+              <div style="flex:1;text-align:center;padding:7px 3px"><strong style="font-size:12px;font-weight:700;color:#1a1a1a;display:block">${b.igCells.filter(x=>x.src||x.videoUrl).length}</strong><span style="font-size:9px;color:#8e8e8e">gönderi</span></div>
               <div style="flex:1;text-align:center;padding:7px 3px"><strong style="font-size:12px;font-weight:700;color:#1a1a1a;display:block">4.2B</strong><span style="font-size:9px;color:#8e8e8e">takipçi</span></div>
               <div style="flex:1;text-align:center;padding:7px 3px"><strong style="font-size:12px;font-weight:700;color:#1a1a1a;display:block">218</strong><span style="font-size:9px;color:#8e8e8e">takip</span></div>
             </div>
@@ -1346,9 +1348,11 @@ function renderIGCells(fid,bid){
   g.innerHTML='';
   b.igCells.forEach((cell,idx)=>{
     const d=document.createElement('div');
+    const cellThumb=cell.src||ytThumb(cell.videoUrl||'');
     d.style.cssText='aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer;background:'+GR[idx%9][0];
-    if(cell.src)d.draggable=true;
-    if(cell.src){const img=document.createElement('img');img.src=cell.src;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';d.appendChild(img);}
+    if(cell.src||cell.videoUrl)d.draggable=true;
+    if(cellThumb){const img=document.createElement('img');img.src=cellThumb;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';d.appendChild(img);}
+    else if(cell.videoUrl&&isEmbedUrl(cell.videoUrl)){const pl=document.createElement('div');pl.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2;font-size:22px;color:#fff';pl.textContent='▶';d.appendChild(pl);}
     const ov=document.createElement('div');
     ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px;z-index:4';
     ov.innerHTML=`<button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">✎</button>
@@ -1559,10 +1563,14 @@ async function openCustMB(fid,bid,which){
       <div class="mbg" style="margin-bottom:14px">
         ${cards.map(c=>{
           const cv=c.versions?.[c.versions.length-1];
-          const img=cv?.img||c.img;
+          const cUrl=cv?.url||c.url||'';
+          const img=cv?.img||c.img||ytThumb(cUrl);
+          const cIsVid=isEmbedUrl(cUrl);
           return `<div class="mbc" onclick="openCustCard('${fid}','${bid}','${which}','${c.id}')">
             <div class="mbth">
-              ${img?`<img src="${img}" loading="lazy">`:`<div style="position:absolute;inset:0;background:${GR[0][0]}"></div>`}
+              ${cIsVid?`<div style="position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center">${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75">`:''}
+                <div style="position:relative;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:14px">▶</div></div>`:
+              img?`<img src="${img}" loading="lazy">`:`<div style="position:absolute;inset:0;background:${GR[0][0]}"></div>`}
               <div class="mbov"><div class="ovb">↗</div></div>
             </div>
             <div class="mbb">
@@ -1596,10 +1604,23 @@ function openCustCard(fid,bid,which,cid){
   const img=cv?.img||c.img;
   const url=cv?.url||c.url||'';
   const emb=toEmbed(url);
-  let mh=emb?`<div style="position:relative;padding-bottom:75%;height:0"><iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>`:
-    img?`<img src="${img}" style="width:100%;display:block;max-height:420px;object-fit:contain">`:
-    url?`<div style="padding:16px;background:var(--bg2);border-radius:8px;text-align:center"><a href="${url}" target="_blank" rel="noopener" style="color:var(--acc)">${url}</a></div>`:
-    `<div style="height:240px;background:${GR[0][0]}"></div>`;
+  const isReels=c.type?.toLowerCase()==='reels'||(url&&isEmbedUrl(url)&&!url.includes('youtube')&&!url.includes('vimeo'));
+  let mh='';
+  if(emb&&isReels){
+    mh=`<div style="display:flex;justify-content:center;background:#000;border-radius:12px;padding:16px 0">
+      <div style="position:relative;width:300px;height:533px;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+        <iframe src="${emb}${emb.includes('?')?'&':'?'}autoplay=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe>
+      </div>
+    </div>`;
+  } else if(emb){
+    mh=`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000"><iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>`;
+  } else if(img){
+    mh=`<img src="${img}" style="width:100%;display:block;max-height:420px;object-fit:contain;border-radius:12px">`;
+  } else if(url){
+    mh=`<div style="padding:16px;background:var(--bg2);border-radius:8px;text-align:center"><a href="${url}" target="_blank" rel="noopener" style="color:var(--acc)">${url}</a></div>`;
+  } else {
+    mh=`<div style="height:240px;background:${GR[0][0]};border-radius:12px"></div>`;
+  }
   document.getElementById('v-cust').innerHTML=`
     <div style="max-width:560px;margin:0 auto">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
@@ -2157,13 +2178,13 @@ async function addMbCard(fid,bid,which){
       type:document.getElementById('mbc-type').value,
       label,
       desc:document.getElementById('mbc-desc')?.value||'',
-      mediaUrl:mbc.url||mbc.img||null,
-      videoUrl:url||null,
+      mediaUrl:mbc.url||mbc.img||undefined,
+      videoUrl:url||undefined,
       taskType:document.getElementById('mbc-tt')?.value||'Grafik',
       taskDesc:document.getElementById('mbc-tdesc')?.value||'',
       taskFormat:document.getElementById('mbc-fmt')?.value||'',
       taskDeadline:document.getElementById('mbc-dl')?.value||'',
-      taskAssigneeId:assigneeId||null,
+      taskAssigneeId:assigneeId||undefined,
       taskIGCell:which==='ig'?cellNum:undefined
     });
     toast('Kart eklendi ✓');
