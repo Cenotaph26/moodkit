@@ -26,7 +26,10 @@ router.get('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Re
   try {
     const tasks = await db.task.findMany({
       where: { briefId: req.params.briefId },
-      include: { assignee: { select: { id: true, name: true, prodRole: true, avatar: true } } },
+      include: {
+        assignee: { select: { id: true, name: true, prodRole: true, avatar: true } },
+        checkItems: { orderBy: { order: 'asc' } }
+      },
       orderBy: { order: 'asc' }
     })
     res.json(tasks)
@@ -89,6 +92,42 @@ router.delete('/:taskId', requireAuth, requireFirmAccess, async (req: AuthReques
     res.json({ message: 'Görev silindi' })
   } catch (err) {
     res.status(500).json({ error: 'Görev silinemedi' })
+  }
+})
+
+// POST /tasks/:taskId/check — add checklist item
+router.post('/:taskId/check', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const { text } = z.object({ text: z.string().min(1) }).parse(req.body)
+    const last = await db.checkItem.findFirst({ where: { taskId: req.params.taskId }, orderBy: { order: 'desc' } })
+    const item = await db.checkItem.create({
+      data: { taskId: req.params.taskId, text, order: (last?.order ?? -1) + 1 }
+    })
+    res.status(201).json(item)
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message })
+    res.status(500).json({ error: 'Madde eklenemedi' })
+  }
+})
+
+// PATCH /tasks/:taskId/check/:checkId — toggle done
+router.patch('/:taskId/check/:checkId', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const { done } = z.object({ done: z.boolean() }).parse(req.body)
+    const item = await db.checkItem.update({ where: { id: req.params.checkId }, data: { done } })
+    res.json(item)
+  } catch (err) {
+    res.status(500).json({ error: 'Madde güncellenemedi' })
+  }
+})
+
+// DELETE /tasks/:taskId/check/:checkId
+router.delete('/:taskId/check/:checkId', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    await db.checkItem.delete({ where: { id: req.params.checkId } })
+    res.json({ message: 'Madde silindi' })
+  } catch (err) {
+    res.status(500).json({ error: 'Madde silinemedi' })
   }
 })
 

@@ -18,7 +18,7 @@ const CellSchema = z.object({
   slides: z.array(z.string()).optional(),
 })
 
-// GET /api/firms/:firmId/briefs/:briefId/ig
+// GET /ig
 router.get('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
   try {
     const cells = await db.iGCell.findMany({
@@ -31,21 +31,48 @@ router.get('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Re
   }
 })
 
-// PUT /api/firms/:firmId/briefs/:briefId/ig/:cellIndex
-router.put('/:cellIndex', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+// POST /ig — yeni hücre ekle
+router.post('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
   try {
-    const cellIndex = parseInt(req.params.cellIndex)
-    if (isNaN(cellIndex) || cellIndex < 0 || cellIndex > 8) {
-      return res.status(400).json({ error: 'Geçersiz hücre indeksi (0-8)' })
+    const data = CellSchema.parse(req.body)
+    const last = await db.iGCell.findFirst({
+      where: { briefId: req.params.briefId },
+      orderBy: { cellIndex: 'desc' }
+    })
+    const cellIndex = (last?.cellIndex ?? -1) + 1
+    const cell = await db.iGCell.create({
+      data: { briefId: req.params.briefId, cellIndex, ...data }
+    })
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.status(201).json(cell)
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message })
+    res.status(500).json({ error: 'Hücre eklenemedi' })
+  }
+})
+
+// PUT /ig/:cellId — hücre güncelle (ID ile)
+router.put('/:cellId', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    // cellId sayısal gelirse eski index-based uyumluluk için upsert
+    const isIndex = /^\d+$/.test(req.params.cellId)
+    const data = CellSchema.parse(req.body)
+
+    if (isIndex) {
+      const cellIndex = parseInt(req.params.cellId)
+      const cell = await db.iGCell.upsert({
+        where: { briefId_cellIndex: { briefId: req.params.briefId, cellIndex } },
+        create: { briefId: req.params.briefId, cellIndex, ...data },
+        update: data
+      })
+      await cacheDelete(`brief:${req.params.briefId}`)
+      return res.json(cell)
     }
 
-    const data = CellSchema.parse(req.body)
-    const cell = await db.iGCell.upsert({
-      where: { briefId_cellIndex: { briefId: req.params.briefId, cellIndex } },
-      create: { briefId: req.params.briefId, cellIndex, ...data },
-      update: data
+    const cell = await db.iGCell.update({
+      where: { id: req.params.cellId },
+      data
     })
-
     await cacheDelete(`brief:${req.params.briefId}`)
     res.json(cell)
   } catch (err) {
@@ -54,31 +81,35 @@ router.put('/:cellIndex', requireAuth, requireFirmAccess, async (req: AuthReques
   }
 })
 
-// PUT /api/firms/:firmId/briefs/:briefId/ig/reorder - sürükle bırak sıralama
-router.put('/reorder', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+// DELETE /ig/:cellId — sil, sonraki hücrelerin indexini azalt
+router.delete('/:cellId', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
   try {
-    const { indices } = z.object({ indices: z.array(z.number()) }).parse(req.body)
-    if (indices.length !== 9) return res.status(400).json({ error: '9 hücre indeksi gerekli' })
+    const cell = await db.iGCell.findUnique({ where: { id: req.params.cellId } })
+    if (!cell) return res.status(404).json({ error: 'Hücre bulunamadı' })
 
-    const cells = await db.iGCell.findMany({
-      where: { briefId: req.params.briefId },
-      orderBy: { cellIndex: 'asc' }
+    await db.iGCell.delete({ where: { id: req.params.cellId } })
+
+    // Sonraki hücrelerin cellIndex'ini 1 azalt
+    await db.iGCell.updateMany({
+      where: { briefId: req.params.briefId, cellIndex: { gt: cell.cellIndex } },
+      data: { cellIndex: { decrement: 1 } }
     })
 
-    // Yeni sıralamaya göre güncelle
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.json({ message: 'Hücre silindi' })
+  } catch (err) {
+    res.status(500).json({ error: 'Hücre silinemedi' })
+  }
+})
+
+// POST /ig/reorder — sürükle-bırak sıralama (ID array ile)
+router.post('/reorder', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const { order } = z.object({ order: z.array(z.string()) }).parse(req.body)
+
     await db.$transaction(
-      indices.map((newIdx, oldIdx) =>
-        db.iGCell.update({
-          where: { briefId_cellIndex: { briefId: req.params.briefId, cellIndex: oldIdx } },
-          data: { cellIndex: newIdx + 100 } // Önce 100+ yap, çakışma önle
-        })
-      ).concat(
-        indices.map((newIdx, oldIdx) =>
-          db.iGCell.update({
-            where: { briefId_cellIndex: { briefId: req.params.briefId, cellIndex: oldIdx + 100 } },
-            data: { cellIndex: newIdx }
-          })
-        )
+      order.map((id, newIndex) =>
+        db.iGCell.update({ where: { id }, data: { cellIndex: newIndex } })
       )
     )
 
@@ -90,7 +121,7 @@ router.put('/reorder', requireAuth, requireFirmAccess, async (req: AuthRequest, 
   }
 })
 
-// POST /api/firms/:firmId/briefs/:briefId/ig/approve-all
+// POST /ig/approve-all
 router.post('/approve-all', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
   try {
     await db.iGCell.updateMany({

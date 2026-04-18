@@ -255,6 +255,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sbi" id="sbi-team" onclick="showTeam()">
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" fill="currentColor" opacity=".5"/><path d="M1 13c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".5"/></svg>Ekip
   </div>
+  <div id="sbi-personel-wrap" style="display:none">
+    <div class="sbi" id="sbi-personel" onclick="showPersonelPanel()">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><polyline points="3,8 7,12 13,4" stroke="currentColor" stroke-width="1.5" opacity=".6"/></svg>Benim Görevlerim
+    </div>
+  </div>
   <div class="sdiv"></div>
   <div class="sbs">Firmalar</div>
   <div id="flist"></div>
@@ -274,6 +279,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="v-yayin" class="view" style="padding:16px"></div>
   <div id="v-cal" class="view" style="padding:16px"></div>
   <div id="v-team" class="view" style="padding:16px"></div>
+  <div id="v-personel" class="view" style="padding:16px"></div>
   <div id="v-cust" class="view" style="padding:16px"></div>
   <div id="v-modal" class="view" style="padding:16px"></div>
   <div id="v-det" class="view" style="padding:16px"></div>
@@ -423,8 +429,7 @@ async function loadBriefs(fid) {
       specialDay: b.specialDay||'', specialContent: b.specialContent||'',
       notes: b.notes||'', hasAd: b.hasAd||false, budget: b.budget||'',
       platforms: b.platforms||[], targetAudience: b.targetAudience||'', adAreas: b.adAreas||'',
-      mbIG: [], mbKamp: [], tasks: [],
-      igCells: Array.from({length: 9}, (_, i) => ({id: i, type: 'post', src: null, cap: '', hash: '', date: '', videoUrl: '', blob: null, slides: [], approved: null, likes: '0', cmts: '0'}))
+      mbIG: [], mbKamp: [], tasks: [], igCells: []
     }));
   } catch(e) { console.error('Briefler yüklenemedi:', e); }
 }
@@ -464,7 +469,8 @@ async function loadTasks(fid, bid) {
       id: t.id, cardRef: t.cardRef, type: t.type,
       desc: t.desc, format: t.format || '', source: t.source || '',
       assignee: t.assigneeId, deadline: t.deadline || '',
-      status: (t.status || 'TODO').toLowerCase()
+      status: (t.status || 'TODO').toLowerCase(),
+      checkItems: (t.checkItems || []).map(ci => ({id: ci.id, text: ci.text, done: ci.done, order: ci.order}))
     }));
   } catch(e) { console.error('Görevler yüklenemedi:', e); }
 }
@@ -473,19 +479,21 @@ async function loadIGCells(fid, bid) {
   try {
     const data = await apiFetch('/api/firms/' + fid + '/briefs/' + bid + '/ig');
     const b = gB(fid, bid); if (!b) return;
-    // Reset
-    b.igCells = Array.from({length: 9}, (_, i) => ({id: i, type: 'post', src: null, cap: '', hash: '', date: '', videoUrl: '', blob: null, slides: [], approved: null, likes: '0', cmts: '0'}));
-    data.forEach(cell => {
-      if (cell.cellIndex >= 0 && cell.cellIndex < 9) {
-        b.igCells[cell.cellIndex] = {
-          id: cell.cellIndex, type: (cell.type || 'POST').toLowerCase(),
-          src: cell.mediaUrl || null, cap: cell.caption || '', hash: cell.hashtags || '',
-          date: cell.publishDate || '', videoUrl: cell.videoUrl || '',
-          blob: null, slides: cell.slides || [],
-          approved: cell.approved, likes: '0', cmts: '0'
-        };
-      }
-    });
+    b.igCells = data
+      .sort((a, c) => a.cellIndex - c.cellIndex)
+      .map(cell => ({
+        id: cell.id,
+        cellIndex: cell.cellIndex,
+        type: (cell.type || 'POST').toLowerCase(),
+        src: cell.mediaUrl || null,
+        cap: cell.caption || '',
+        hash: cell.hashtags || '',
+        date: cell.publishDate || '',
+        videoUrl: cell.videoUrl || '',
+        slides: cell.slides || [],
+        approved: cell.approved,
+        likes: '0', cmts: '0'
+      }));
   } catch(e) { console.error('IG cells yüklenemedi:', e); }
 }
 
@@ -808,6 +816,12 @@ document.addEventListener('click',e=>{
 
 // ── SIDEBAR ──────────────────────────────────────────────
 function renderSB(){
+  // "Benim Görevlerim" — PROD/EDITOR için göster
+  const personelLink=document.getElementById('sbi-personel-wrap');
+  if(personelLink){
+    const role=(_me?.role||'').toLowerCase();
+    personelLink.style.display=(role==='prod'||role==='editor')?'block':'none';
+  }
   document.getElementById('flist').innerHTML=firms.map(f=>`
     <div class="aw" id="aw-${f.id}">
       <div class="ah" onclick="document.getElementById('aw-${f.id}').classList.toggle('open')">
@@ -879,7 +893,6 @@ async function goHome(){
         <div class="act-time">${new Date(a.createdAt).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
       </div>`).join('')}
     </div>`:''}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">
       ${firms.map(f=>{
         const lb=f.briefs[f.briefs.length-1];
@@ -1025,8 +1038,7 @@ async function addBrief(fid){
   try{
     const b=await apiAddBriefAPI(fid,{month:MONTHS[NOW_M-1],year:NOW_Y});
     const f=gF(fid);
-    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',answers:{},mbIG:[],mbKamp:[],tasks:[],
-      igCells:Array.from({length:9},(_,i)=>({id:i,type:'post',src:null,cap:'',hash:'',date:'',videoUrl:'',approved:null,likes:'0',cmts:'0'}))});
+    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',answers:{},mbIG:[],mbKamp:[],tasks:[],igCells:[]});
     renderSB();openBrief(fid,b.id);
   }catch(e){toast('Hata: '+e.message);}
 }
@@ -1294,6 +1306,26 @@ function renderTC(fid,bid){
       const m=members.find(x=>x.id===t.assignee);
       const ini=m?m.name.split(' ').map(w=>w[0]).join('').slice(0,2):'?';
       const acc=TASK_COLORS[t.type]||'#534AB7';
+      const ci=t.checkItems||[];
+      const doneCI=ci.filter(x=>x.done).length;
+      const pctCI=ci.length?Math.round(doneCI/ci.length*100):0;
+      const checkHtml=ci.length?`
+        <div style="margin:5px 0 2px;cursor:pointer" onclick="event.stopPropagation();this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden">
+              <div class="tc-prog" style="height:100%;background:${doneCI===ci.length&&ci.length?'var(--grn)':'var(--acc)'};width:${pctCI}%;border-radius:2px;transition:width .3s"></div>
+            </div>
+            <span class="tc-prog-txt" style="font-size:9px;color:var(--txt3)">${doneCI}/${ci.length}</span>
+          </div>
+        </div>
+        <div style="display:none;padding:2px 0 4px">
+          ${ci.map(c=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer">
+            <input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleCheck('${fid}','${bid}','${t.id}','${c.id}',this.checked)" style="accent-color:var(--acc);flex-shrink:0">
+            <span style="font-size:11px;color:var(--txt2);${c.done?'text-decoration:line-through;color:var(--txt3)':''}">${c.text}</span>
+          </label>`).join('')}
+          <span style="font-size:10px;color:var(--acc);cursor:pointer;display:block;padding-top:3px" onclick="event.stopPropagation();addCheckItem('${fid}','${bid}','${t.id}')">+ Madde Ekle</span>
+        </div>`
+        :`<div style="padding:3px 0 0"><span style="font-size:10px;color:var(--acc);cursor:pointer" onclick="event.stopPropagation();addCheckItem('${fid}','${bid}','${t.id}')">+ Madde Ekle</span></div>`;
       return `<div class="tc ${st==='done'?'done':''}" draggable="true" data-tid="${t.id}"
         ondragstart="startDT(event,'${t.id}')" ondragend="endDT(event)">
         <div class="tca" style="background:${acc}"></div>
@@ -1301,6 +1333,7 @@ function renderTC(fid,bid){
         <div class="tcd">${t.desc}</div>
         ${t.format?`<div class="tcm">📐 ${t.format}</div>`:''}
         <div class="tcm">📁 ${t.source||'—'}</div>
+        ${checkHtml}
         <div class="tcf">
           <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt2)">
             <div class="tcav">${ini}</div>${m?m.name.split(' ')[0]:'—'}
@@ -1335,6 +1368,37 @@ async function dropTask(e,ns,fid,bid){
   }
 }
 
+async function toggleCheck(fid,bid,tid,cid,done){
+  const b=gB(fid,bid);const t=b?.tasks.find(x=>x.id===tid);if(!t)return;
+  const ci=(t.checkItems||[]).find(x=>x.id===cid);
+  if(ci){
+    ci.done=done;
+    // Update inline progress bar without full re-render
+    const card=document.querySelector(`[data-tid="${tid}"]`);
+    if(card){
+      const items=t.checkItems||[];const dc=items.filter(x=>x.done).length;
+      const pct=items.length?Math.round(dc/items.length*100):0;
+      const pb=card.querySelector('.tc-prog');if(pb){pb.style.width=pct+'%';pb.style.background=dc===items.length&&items.length?'var(--grn)':'var(--acc)';}
+      const pt=card.querySelector('.tc-prog-txt');if(pt)pt.textContent=`${dc}/${items.length}`;
+    }
+  }
+  try{
+    await apiFetch(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/check/${cid}`,{method:'PATCH',body:{done}});
+  }catch(e){
+    if(ci)ci.done=!done;toast('Hata: '+e.message);
+  }
+}
+
+async function addCheckItem(fid,bid,tid){
+  const text=prompt('Madde metni:');if(!text?.trim())return;
+  try{
+    const ci=await apiFetch(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/check`,{method:'POST',body:{text:text.trim()}});
+    const b=gB(fid,bid);const t=b?.tasks.find(x=>x.id===tid);
+    if(t){if(!t.checkItems)t.checkItems=[];t.checkItems.push({id:ci.id,text:ci.text,done:false,order:ci.order});}
+    renderTC(fid,bid);
+  }catch(e){toast('Hata: '+e.message);}
+}
+
 // ── IG GRID ──────────────────────────────────────────────
 async function openIG(fid,bid){
   curFid=fid;curBid=bid;openAcc(fid);lastView='ig';
@@ -1350,7 +1414,7 @@ async function openIG(fid,bid){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:16px;font-weight:600">IG Grid</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${b.igCells.filter(x=>x.src).length}/9 dolu · Sürükle ile sırala</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${b.igCells.filter(x=>x.src||x.videoUrl).length} içerik · ${b.igCells.filter(x=>x.approved===true).length} onaylı · Sürükle ile sırala</div>
       </div>
       <div style="display:flex;gap:6px">
         <div class="btn bpu-btn" onclick="openCustIG('${fid}','${bid}')">Müşteri Onayı</div>
@@ -1404,9 +1468,11 @@ function renderIGCells(fid,bid){
     const ov=document.createElement('div');
     ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px;z-index:4';
     ov.innerHTML=`<button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">✎</button>
-      <button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">▶</button>`;
+      <button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">▶</button>
+      <button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px;color:#A32D2D">✕</button>`;
     ov.children[0].onclick=e=>{e.stopPropagation();showMod('edit-ig',fid,bid,idx);};
     ov.children[1].onclick=e=>{e.stopPropagation();viewCell(fid,bid,idx);};
+    ov.children[2].onclick=e=>{e.stopPropagation();deleteIGCell(fid,bid,idx);};
     d.appendChild(ov);
     d.onmouseover=()=>ov.style.opacity='1';
     d.onmouseout=()=>ov.style.opacity='0';
@@ -1423,6 +1489,7 @@ function renderIGCells(fid,bid){
       dragCell=null;
       renderIGCells(fid,bid);renderIGList(fid,bid);
       toast(`${idx+1}. pozisyona taşındı`);
+      apiFetch(`/api/firms/${fid}/briefs/${bid}/ig/reorder`,{method:'POST',body:{order:b.igCells.map(c=>c.id)}}).catch(e=>console.error(e));
     });
     if(cell.approved===true){const ok=document.createElement('div');ok.style.cssText='position:absolute;bottom:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';ok.textContent='✓';d.appendChild(ok);}
     if(cell.type==='reels'){const rv=document.createElement('div');rv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';rv.textContent='▶';d.appendChild(rv);}
@@ -1444,6 +1511,18 @@ function renderIGList(fid,bid){
       </div>
       <div>${c.approved===true?'<span style="color:var(--grn);font-size:11px">✓</span>':c.approved===false?'<span style="color:var(--red);font-size:11px">✗</span>':'<span style="color:var(--txt3);font-size:11px">○</span>'}</div>
     </div>`).join('');
+}
+
+async function deleteIGCell(fid,bid,idx){
+  if(!confirm('Bu içeriği silmek istiyor musunuz?'))return;
+  const b=gB(fid,bid);const cell=b.igCells[idx];if(!cell)return;
+  try{
+    await apiFetch(`/api/firms/${fid}/briefs/${bid}/ig/${cell.id}`,{method:'DELETE'});
+    b.igCells.splice(idx,1);
+    b.igCells.forEach((c,i)=>c.cellIndex=i);
+    renderIGCells(fid,bid);renderIGList(fid,bid);
+    toast('İçerik silindi ✓');
+  }catch(e){toast('Hata: '+e.message);}
 }
 
 function viewCell(fid,bid,idx){
@@ -1513,17 +1592,18 @@ function viewCell(fid,bid,idx){
 }
 
 async function setIGAp(fid,bid,idx,v){
-  const b=gB(fid,bid);b.igCells[idx].approved=v;
-  try{await apiUpdateIGCell(fid,bid,idx,{approved:v});}catch(e){console.error(e);}
+  const b=gB(fid,bid);const cell=b.igCells[idx];if(!cell)return;
+  cell.approved=v;
+  try{await apiUpdateIGCell(fid,bid,cell.id,{approved:v});}catch(e){console.error(e);}
   toast(v?'✓ Onaylandı':'✗ Reddedildi');
   viewCell(fid,bid,idx);
 }
 
 function saveCaption(fid,bid,idx){
-  const b=gB(fid,bid);const cell=b.igCells[idx];
+  const b=gB(fid,bid);const cell=b.igCells[idx];if(!cell)return;
   cell.cap=document.getElementById('ig-cap')?.value||cell.cap;
   cell.hash=document.getElementById('ig-hash')?.value||cell.hash;
-  apiUpdateIGCell(fid,bid,idx,{caption:cell.cap,hashtags:cell.hash}).catch(e=>console.error(e));
+  apiUpdateIGCell(fid,bid,cell.id,{caption:cell.cap,hashtags:cell.hash}).catch(e=>console.error(e));
   toast('Caption kaydedildi ✓');
   viewCell(fid,bid,idx);
 }
@@ -1537,8 +1617,8 @@ function openReels(fid,bid,startIdx=0){
   if(ri<0)ri=0;
   const el=document.getElementById('v-ig');
   window._reelsApprove=async function(cellIdx,v){
-    const cell=b.igCells[cellIdx];cell.approved=v;
-    try{await apiUpdateIGCell(fid,bid,cellIdx,{approved:v});}catch(e){console.error(e);}
+    const cell=b.igCells[cellIdx];if(!cell)return;cell.approved=v;
+    try{await apiUpdateIGCell(fid,bid,cell.id,{approved:v});}catch(e){console.error(e);}
     toast(v?'✓ Onaylandı':'✗ Reddedildi');
     render();
   };
@@ -1832,9 +1912,10 @@ async function openYayin(fid,bid){
 }
 
 async function toggleCellApprove(fid,bid,idx,approved){
-  const b=gB(fid,bid);if(!b||idx<0||idx>8)return;
-  b.igCells[idx].approved=approved;
-  try{await apiUpdateIGCell(fid,bid,idx,{approved});}catch(e){toast('Hata: '+e.message);return;}
+  const b=gB(fid,bid);if(!b)return;
+  const cell=b.igCells[idx];if(!cell)return;
+  cell.approved=approved;
+  try{await apiUpdateIGCell(fid,bid,cell.id,{approved});}catch(e){toast('Hata: '+e.message);return;}
   openYayin(fid,bid);
 }
 
@@ -1973,6 +2054,117 @@ function showTeam(){
       }).join('')}
     </div>`;
   showV('team');
+}
+
+// ── PERSONEL PANELİ ──────────────────────────────────────
+let _myTasksData=[], _myTasksFilter='all';
+
+async function showPersonelPanel(){
+  setSBI('personel');
+  setBC([{label:'Dashboard',fn:'goHome()'},{label:'Benim Görevlerim'}]);
+  showV('personel');
+  document.getElementById('v-personel').innerHTML=`<div style="padding:32px;text-align:center;color:var(--txt3)">Yükleniyor...</div>`;
+  try{
+    _myTasksData=await apiFetch('/api/tasks/mine');
+    renderPersonelPanel();
+  }catch(e){
+    document.getElementById('v-personel').innerHTML=`<div class="empty-st"><p>Görevler yüklenemedi.<br>${e.message}</p></div>`;
+  }
+}
+
+function renderPersonelPanel(){
+  const tasks=_myTasksFilter==='all'?_myTasksData:_myTasksData.filter(t=>(t.status||'').toLowerCase()===_myTasksFilter);
+  const todo=_myTasksData.filter(t=>(t.status||'').toLowerCase()==='todo').length;
+  const doing=_myTasksData.filter(t=>(t.status||'').toLowerCase()==='doing').length;
+  const done=_myTasksData.filter(t=>(t.status||'').toLowerCase()==='done').length;
+  const filterBtns=['all','todo','doing','done'].map(f=>`<div class="btn ${_myTasksFilter===f?'bp':'bg0'} bs" onclick="_myTasksFilter='${f}';renderPersonelPanel()">${f==='all'?`Tümü (${_myTasksData.length})`:f==='todo'?`Bekliyor (${todo})`:f==='doing'?`Üretimde (${doing})`:`Tamamlandı (${done})`}</div>`).join('');
+  document.getElementById('v-personel').innerHTML=`
+    <div style="font-size:16px;font-weight:600;margin-bottom:14px">Benim Görevlerim</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+      ${[['Toplam',_myTasksData.length,'bgr'],['Bekliyor',todo,'bam'],['Üretimde',doing,'bpu'],['Tamamlandı',done,'bgn']].map(([l,v,b])=>`
+        <div class="card cp" style="text-align:center">
+          <div style="font-size:10px;color:var(--txt3);font-weight:500;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">${l}</div>
+          <div style="font-size:22px;font-weight:600"><span class="badge ${b}">${v}</span></div>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px">${filterBtns}</div>
+    ${!tasks.length?`<div class="empty-st"><p>${_myTasksFilter==='all'?'Henüz görev yok.':'Bu filtrede görev yok.'}</p></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${tasks.map((t,i)=>renderPersonelTask(t,i)).join('')}
+    </div>`;
+}
+
+function renderPersonelTask(t,i){
+  const firm=t.brief?.firm;
+  const ci=t.checkItems||[];
+  const doneCI=ci.filter(x=>x.done).length;
+  const pctCI=ci.length?Math.round(doneCI/ci.length*100):0;
+  const lastVer=t.card?.versions?.[0];
+  const fid=t.brief?.firmId||firm?.id||'';
+  const bid=t.briefId||'';
+  let mediaHtml='';
+  if(lastVer?.videoUrl){
+    const emb=toEmbed(lastVer.videoUrl);
+    if(emb&&(emb.includes('youtube.com/embed')||emb.includes('player.vimeo'))){
+      mediaHtml=`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;margin-bottom:10px"><iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>`;
+    }else if(/\.(mp4|mov|webm)$/i.test(lastVer.videoUrl)){
+      mediaHtml=`<video src="${lastVer.videoUrl}" controls style="width:100%;max-height:200px;border-radius:8px;margin-bottom:10px"></video>`;
+    }
+  }else if(lastVer?.mediaUrl){
+    mediaHtml=`<img src="${lastVer.mediaUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-bottom:10px">`;
+  }
+  const stBadge={todo:'bam',doing:'bpu',done:'bgn'}[(t.status||'todo').toLowerCase()]||'bgr';
+  const stLabel={todo:'Bekliyor',doing:'Üretimde',done:'Tamamlandı'}[(t.status||'todo').toLowerCase()]||t.status;
+  return `<div class="card cp">
+    <div style="display:flex;align-items:flex-start;gap:10px;cursor:pointer" onclick="(function(el){const b=el.querySelector('.pt-body');const a=el.querySelector('.pt-arr');const o=b.style.display!=='none';b.style.display=o?'none':'block';a.style.transform=o?'':'rotate(90deg)';})(this.parentNode)">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap">
+          ${firm?`<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${firm.color}22;color:${firm.color};border:.5px solid ${firm.color}44">${firm.name}</span>`:''}
+          ${t.brief?`<span style="font-size:10px;color:var(--txt3)">${t.brief.month||''} ${t.brief.year||''}</span>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:500;color:var(--txt);margin-bottom:4px">${t.cardRef||t.desc}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${tbadge(t.type||'Grafik')}
+          <span class="badge ${stBadge}" style="font-size:9px">${stLabel}</span>
+          ${t.deadline?`<span style="font-size:10px;color:var(--txt3)">⏰ ${t.deadline}</span>`:''}
+          ${ci.length?`<span style="font-size:10px;color:var(--txt3)">${doneCI}/${ci.length} ✓</span>`:''}
+        </div>
+        ${ci.length?`<div style="margin-top:6px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="height:100%;background:${doneCI===ci.length?'var(--grn)':'var(--acc)'};width:${pctCI}%;border-radius:2px;transition:width .4s"></div></div>`:''}
+      </div>
+      <div class="pt-arr" style="font-size:14px;color:var(--txt3);flex-shrink:0;margin-top:2px;transition:transform .2s">›</div>
+    </div>
+    <div class="pt-body" style="display:none;border-top:.5px solid var(--bdr);margin-top:10px;padding-top:10px">
+      ${mediaHtml}
+      ${t.desc?`<div style="background:var(--bg2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:8px;white-space:pre-wrap">${t.desc}</div>`:''}
+      ${t.format?`<div style="font-size:11px;color:var(--txt3);margin-bottom:8px">📐 ${t.format}</div>`:''}
+      ${ci.length?`<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--txt)">Checklist</div>
+        ${ci.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;border-bottom:.5px solid var(--bdr)">
+          <input type="checkbox" ${c.done?'checked':''} onchange="toggleCheckPersonel('${fid}','${bid}','${t.id}','${c.id}',this.checked,this)" style="accent-color:var(--acc);width:14px;height:14px">
+          <span style="font-size:12px;color:var(--txt2);${c.done?'text-decoration:line-through;color:var(--txt3)':''}">${c.text}</span>
+        </label>`).join('')}`:''}
+      ${fid&&bid?`<div style="margin-top:8px"><span class="btn bg0 bs" onclick="addCheckItemPersonel('${fid}','${bid}','${t.id}',this)">+ Madde Ekle</span></div>`:''}
+    </div>
+  </div>`;
+}
+
+async function toggleCheckPersonel(fid,bid,tid,cid,done,el){
+  const t=_myTasksData.find(x=>x.id===tid);
+  const ci=t?.checkItems?.find(x=>x.id===cid);
+  if(ci)ci.done=done;
+  const span=el?.parentElement?.querySelector('span');
+  if(span)span.style.cssText=`font-size:12px;color:${done?'var(--txt3)':'var(--txt2)'};${done?'text-decoration:line-through':''}`;
+  try{await apiFetch(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/check/${cid}`,{method:'PATCH',body:{done}});}
+  catch(e){if(ci)ci.done=!done;toast('Hata: '+e.message);}
+}
+
+async function addCheckItemPersonel(fid,bid,tid,btn){
+  const text=prompt('Madde metni:');if(!text?.trim())return;
+  try{
+    const ci=await apiFetch(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/check`,{method:'POST',body:{text:text.trim()}});
+    const t=_myTasksData.find(x=>x.id===tid);
+    if(t){if(!t.checkItems)t.checkItems=[];t.checkItems.push({id:ci.id,text:ci.text,done:false,order:ci.order});}
+    renderPersonelPanel();
+  }catch(e){toast('Hata: '+e.message);}
 }
 
 // ── MODALS ───────────────────────────────────────────────
@@ -2307,27 +2499,39 @@ async function addTask(fid,bid){
 }
 
 async function addIGCell(fid,bid){
-  const b=gB(fid,bid);const empty=b.igCells.findIndex(x=>!x.src);const idx=empty>=0?empty:0;
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
   let type=document.getElementById('nic-t').value;
   if(isVidUrl(urlVal)||nic.isVid)type='reels';
-  const src=nic.blob||nic.img||null;
-  b.igCells[idx]={id:idx,type,src,cap:document.getElementById('nic-cap')?.value||'',hash:document.getElementById('nic-hash')?.value||'',date:document.getElementById('nic-d')?.value||'',videoUrl:urlVal,approved:null,likes:'0',cmts:'0'};
-  try{await apiUpdateIGCell(fid,bid,idx,{type:type.toUpperCase(),mediaUrl:src||null,videoUrl:urlVal||null,caption:b.igCells[idx].cap,hashtags:b.igCells[idx].hash,publishDate:b.igCells[idx].date});}catch(e){console.error(e);}
-  toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓');openIG(fid,bid);
+  try{
+    const cell=await apiFetch(`/api/firms/${fid}/briefs/${bid}/ig`,{method:'POST',body:{
+      type:type.toUpperCase(),
+      mediaUrl:nic.url||nic.img||undefined,
+      videoUrl:urlVal||undefined,
+      caption:document.getElementById('nic-cap')?.value||'',
+      hashtags:document.getElementById('nic-hash')?.value||'',
+      publishDate:document.getElementById('nic-d')?.value||''
+    }});
+    const b=gB(fid,bid);
+    b.igCells.push({
+      id:cell.id,cellIndex:cell.cellIndex,type:(cell.type||'POST').toLowerCase(),
+      src:cell.mediaUrl||null,cap:cell.caption||'',hash:cell.hashtags||'',
+      date:cell.publishDate||'',videoUrl:cell.videoUrl||'',slides:[],approved:null,likes:'0',cmts:'0'
+    });
+    toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓');openIG(fid,bid);
+  }catch(e){toast('Hata: '+e.message);}
 }
 
 async function saveIGCell(fid,bid,idx){
-  const b=gB(fid,bid);const cell=b.igCells[idx];
+  const b=gB(fid,bid);const cell=b.igCells[idx];if(!cell)return;
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
-  if(nic.img||nic.blob)cell.src=nic.blob||nic.img;
+  if(nic.url||nic.img||nic.blob)cell.src=nic.url||nic.img||nic.blob||cell.src;
   cell.type=document.getElementById('nic-t').value;
   if(isVidUrl(urlVal)||nic.isVid)cell.type='reels';
   cell.videoUrl=urlVal;cell.cap=document.getElementById('nic-cap')?.value||cell.cap;
   cell.hash=document.getElementById('nic-hash')?.value||cell.hash;cell.date=document.getElementById('nic-d')?.value||cell.date;
-  try{await apiUpdateIGCell(fid,bid,idx,{type:cell.type.toUpperCase(),mediaUrl:cell.src||null,videoUrl:cell.videoUrl||null,caption:cell.cap,hashtags:cell.hash,publishDate:cell.date});}catch(e){console.error(e);}
+  try{await apiUpdateIGCell(fid,bid,cell.id,{type:cell.type.toUpperCase(),mediaUrl:cell.src||null,videoUrl:cell.videoUrl||null,caption:cell.cap,hashtags:cell.hash,publishDate:cell.date});}catch(e){console.error(e);}
   toast('Kaydedildi ✓');openIG(fid,bid);
 }
 

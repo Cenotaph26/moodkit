@@ -202,6 +202,7 @@ model Task {
   assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
   createdBy   User?      @relation("CreatedTasks", fields: [createdById], references: [id])
   timeEntries TimeEntry[]
+  checkItems  CheckItem[]
 }
 
 enum TaskStatus {
@@ -304,6 +305,19 @@ model TimeEntry {
 
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── CHECKLİST ────────────────────────────────────────────
+
+model CheckItem {
+  id        String   @id @default(cuid())
+  taskId    String
+  text      String
+  done      Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 // ── BÜTÇE ─────────────────────────────────────────────────
