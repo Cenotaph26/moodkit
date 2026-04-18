@@ -560,3 +560,200 @@ IG mockup içi    → repeat(3,1fr)
 ---
 
 *← [Faz 2: Veritabanı & API](moodkit_faz2.md)*
+
+---
+
+## 14. Dashboard — Detaylı UX/UI Tanımı
+
+### 14.1 Genel Layout
+
+```
+Sayfa padding:        20px (tüm kenarlar)
+Topbar yüksekliği:    48px — sticky, z-index:50
+Sidebar genişliği:    204px — fixed
+Bölümler arası gap:   24px
+Sec-hd → grid arası:  12px
+Pg-hd → ilk kart:     16px
+```
+
+### 14.2 Topbar
+
+```
+height: 48px, padding: 0 16px, background: --bg, border-bottom: 0.5px --bdr
+
+Sol: logo (15px/500, letter-spacing:-.4px) + ayraç + breadcrumb (11px)
+  .bcr = tıklanabilir: --txt3, hover --txt2
+  .bcu = aktif sayfa: --txt, font-weight 500
+
+Sağ: bildirim zili (28px, border-radius 50%) + kırmızı nokta (6px) + avatar (26px) + rol badge
+```
+
+### 14.3 Stat Kartları
+
+```
+Grid: repeat(4, 1fr), gap 10px, margin-bottom 20px
+
+Her kart:
+  bg: --bg, border: 0.5px --bdr, radius: 10px, padding: 14px 16px
+  Etiket:  10px/500, --txt3, uppercase, letter-spacing .5px
+  Değer:   22px/500, --txt
+  Değişim: 10px — artış: --grn "↑" / azalış: --red "↓"
+
+4 metrik:
+  Aktif Firmalar    → firms.length
+  Bekleyen Onay     → tüm briflerdeki PENDING kart sayısı
+  Aktif Görev       → status=TODO task sayısı
+  IG İçerik Onayı   → (onaylı / toplam IG hücre) × 100 → "%74"
+```
+
+### 14.4 Firma Kartları
+
+```
+Grid: repeat(auto-fill, minmax(220px, 1fr)), gap 12px
+
+Her kart (.fc):
+  bg: --bg, border: 0.5px --bdr, radius: 12px, overflow: hidden
+  Hover: translateY(-2px), border-color --bdr2
+  onclick: openBrief('${f.id}', '${f.briefs[0]?.id||""}')
+
+Kapak (.fc-cover) — height: 80px:
+  bg: linear-gradient(135deg, firma.color, firma.color+"99")
+  Overlay: gradient to top rgba(0,0,0,.55) → transparent
+  Firma adı: #fff, 13px/500
+  Sektör: rgba(255,255,255,.65), 10px
+
+Gövde (.fc-body) — padding: 10px 12px:
+  Üst satır: brief dönem badge (sol) + aşama badge (sağ)
+  Progress bar: 4px, --bg2 bg, --acc dolum
+  Etiket: "9/15 kart onaylı · 3 bekliyor" — 9px, --txt3
+
+Aşama → badge eşleşmesi:
+  brief    → .b-gr  "Brief"
+  mb_ig    → .b-pu  "IG Moodboard"
+  mb_kamp  → .b-am  "Kampanya MB"
+  tasks    → .b-bl  "Görevler"
+  yayin    → .b-gn  "Yayın"
+
++ Firma Ekle kartı (son kart):
+  border-style: dashed, min-height: 142px
+  SVG + ikonu (opacity .4) + "Firma ekle" 12px
+  Hover: color + border-color → --acc
+```
+
+### 14.5 Moodboard Önizleme
+
+```
+Layout: grid-template-columns: 1fr 340px, gap 16px
+
+Sol — Kart Grid (.mb-grid):
+  grid-template-columns: repeat(3,1fr), gap 8px (6 kart gösterilir)
+
+  Her mini kart (.mb-card):
+    border: 0.5px --bdr, radius: 10px, overflow: hidden
+    Hover: translateY(-1px), border-color --bdr2
+
+    Thumbnail (90px yükseklik):
+      YouTube/Vimeo → siyah bg + ▶ oynat (30px) + "VIDEO" badge
+      Instagram     → gradient + IG ikonu
+      TikTok        → siyah + TT ikonu
+      Pinterest     → #E60023 + Pi ikonu
+      Görsel        → <img object-fit:cover>
+      Versiyon pill → .badge .b-pu, 8px (sağ üst)
+      Hover overlay → rgba .3, opacity 0→1, [↗][✕] butonlar
+
+    Gövde (7px 8px padding):
+      Başlık: 11px/500, ellipsis single line
+      Tür + durum: 9px — ✓ Onaylı(--grn) / ● İnceleme(--acc) / ⏳ Bekliyor(--amb) / ✗ Revize(--red)
+```
+
+### 14.6 Video Player Modal
+
+```
+Tetikleyen: moodboard medya alanı / IG Grid hücre / Personel Panel referans görsel
+
+Overlay: .mov { background: rgba(0,0,0,.72); min-height:100vh; display:flex; align-items:center }
+Kutu (.mbox): bg #111, radius 16px, width min(680px, 90vw)
+
+Header (bg #1a1a1a):
+  Platform ikonu (16px rounded) + başlık (10px rgba beyaz) + [✕] kapat
+
+İçerik (platform bazlı):
+  YouTube/Vimeo → padding-bottom 56.25% trick, iframe inset-0
+  MP4/MOV/WebM  → <video controls style="width:100%">
+  TikTok        → aspect-ratio 9/16, backend oEmbed iframe
+  Instagram     → aspect-ratio 9/16, instagram.com/reel/ID/embed/ dener
+                  onerror → fallback UI + [Instagram'da Aç ↗]
+  Pinterest/Web → önizleme kartı + [Siteyi Aç ↗]
+
+Backend endpoint:
+  GET /api/oembed?url=...
+  → TikTok: www.tiktok.com/oembed?url=... (ücretsiz, token yok)
+  ← iframe src döner
+```
+
+### 14.7 IG Grid Telefon Mockup
+
+```
+.ig-mock: bg #fff, border 0.5px #dbdbdb, radius 14px
+  (her zaman beyaz — Instagram görünümü)
+
+Status bar: 8px/700, #1a1a1a, "9:41" + "●●●"
+Profil header: 26px avatar (firma rengi) + kullanıcı adı 10px/700
+Grid (.ig-grid): repeat(3,1fr), gap 1.5px, padding 1.5px
+
+Her hücre (.igc): aspect-ratio:1
+  Dolu: <img> object-fit:cover
+  Onaylı: sol alt ✓ (beyaz, drop-shadow)
+  Reels: sağ üst ▶  |  Carousel: sağ üst ⧉
+  Bekliyor: ortada ⏳ (rgba .3)
+  Boş: dashed border + "+" merkez
+```
+
+### 14.8 Aktivite Feed
+
+```
+Her item (.act-item): flex, gap 9px, padding 8px 0, border-bottom 0.5px --bdr
+  Nokta: 7px, renk olaya göre (onay=--acc, red=--red, yükleme=--grn, güncelleme=--amb)
+  Metin: 11px, --txt2 — "<strong>Kart adı</strong> — ne oldu"
+  Zaman: 9px, --txt3 — "2 dk" / "14 dk" / "1 sa" / "Dün"
+```
+
+### 14.9 Kanban Önizleme
+
+```
+3 sütun (.kb-cols): repeat(3,1fr), gap 8px
+
+Sütun: bg --bg2, radius 10px, padding 8px
+  Başlık + sayı badge (bam/bpu/bgn)
+
+Task kartı (.tc): bg --bg, border 0.5px --bdr, radius 8px, padding 8px 9px
+  Sol şerit (3px): Video=#E24B4A / Grafik=#534AB7 / Fotoğraf=#378ADD / Metin=#639922
+  Başlık 11px/500 + tür badge (padding-left 8px)
+  Açıklama: 11px --txt2, max 3 satır clamp (padding-left 8px)
+  Checklist bar: 3px, --bg3 → --acc dolum
+  Footer: avatar(18px) + ad(9px) | deadline(9px --txt3)
+  Tamamlanan: opacity .6, text-decoration line-through
+```
+
+### 14.10 Boş Durumlar
+
+| Durum | Gösterilen | Aksiyon |
+|-------|------------|---------|
+| Hiç firma yok | Bina ikonu (opacity .3) + açıklama metni | `[+ Firma Ekle]` |
+| Brief yok | Kart içi "Brief yok" 10px --txt3 | `+ Brief` linki |
+| Kart yok | "Moodboard bekleniyor" | IG Moodboard linki |
+| Görev yok | Dashed sütun + "Kart sürükle" | Görev Ekle butonu |
+| IG hücresi boş | Dashed hücre + "+" | `showMod('add-ig')` |
+
+### 14.11 Responsive
+
+```
+> 1200px: 4 stat yan yana, 3+ kolon firma, 2 kolon layout
+900–1200px: 2x2 stat, 2 kolon firma, sağ panel alta
+< 900px: dikey stat, tek kolon firma, sağ panel yok
+< 768px: sidebar gizlenir
+```
+
+---
+
+*← [Faz 2: Veritabanı & API](moodkit_faz2.md)*
