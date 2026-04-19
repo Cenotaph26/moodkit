@@ -741,6 +741,7 @@ const STAGE_LABELS={brief:'Brief',mb_ig:'IG Moodboard',mb_kamp:'Kampanya MB',tas
 const STAGE_BADGES={brief:'bam',mb_ig:'bpu',mb_kamp:'bcor',tasks:'bgr',yayin:'bgn'};
 const STATUS_LABELS={approved:'✓ Onaylı',review:'İncelemede',pending:'Bekliyor',rejected:'✗ Reddedildi'};
 const STATUS_BADGES={approved:'bgn',review:'bpu',pending:'bgr',rejected:'brd'};
+function statusText(status){return `<span class="badge ${STATUS_BADGES[status]||'bgr'}" style="font-size:9px">${STATUS_LABELS[status]||'Bekliyor'}</span>`;}
 const NOW_M=4, NOW_Y=2026;
 
 // ── STATE ────────────────────────────────────────────────
@@ -1208,6 +1209,7 @@ async function saveBrief(fid,bid){
 
 async function delBrief(fid,bid){
   const f=gF(fid);if(f.briefs.length<=1){toast('En az 1 brief olmalı');return;}
+  if(!confirm('Bu brief\'i silmek istiyor musunuz? Bu işlem geri alınamaz.'))return;
   try{await apiFetch(`/api/firms/${fid}/briefs/${bid}`,{method:'DELETE'});}catch(e){}
   f.briefs=f.briefs.filter(x=>x.id!==bid);
   toast('Brief silindi');renderSB();goHome();
@@ -1313,6 +1315,7 @@ function renderMBG(gridId,fid,bid,which){
 }
 
 function delMBC(fid,bid,which,cid){
+  if(!confirm('Bu kartı silmek istiyor musunuz? Bu işlem geri alınamaz.'))return;
   const b=gB(fid,bid);
   if(which==='ig')b.mbIG=b.mbIG.filter(x=>x.id!==cid);
   else b.mbKamp=b.mbKamp.filter(x=>x.id!==cid);
@@ -1517,12 +1520,24 @@ function renderTC(fid,bid){
           <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt2)">
             <div class="tcav">${ini}</div>${m?m.name.split(' ')[0]:'—'}
           </div>
-          <span style="font-size:10px;color:var(--txt3)">${t.deadline||'—'}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;color:var(--txt3)">${t.deadline||'—'}</span>
+            <span style="font-size:11px;color:var(--red);cursor:pointer;opacity:.6" onclick="event.stopPropagation();delTask('${fid}','${bid}','${t.id}')" title="Sil">✕</span>
+          </div>
         </div>
       </div>`;
     }).join('');
     if(empt)empt.style.display=ts.length?'none':'flex';
   });
+}
+
+async function delTask(fid,bid,tid){
+  if(!confirm('Bu görevi silmek istiyor musunuz?'))return;
+  const b=gB(fid,bid);if(!b)return;
+  b.tasks=b.tasks.filter(x=>x.id!==tid);
+  renderTC(fid,bid);
+  try{await apiFetch(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'DELETE'});}catch(e){console.error(e);}
+  toast('Görev silindi');
 }
 
 function startDT(e,tid){
