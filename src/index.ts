@@ -22,6 +22,7 @@ import searchRouter from './routes/search'
 import analyticsRouter from './routes/analytics'
 import templatesRouter from './routes/templates'
 import myTasksRouter from './routes/mytasks'
+import oembedRouter from './routes/oembed'
 
 import { startNotifWorker } from './lib/notifWorker'
 import { getSession } from './lib/redis'
@@ -59,6 +60,7 @@ app.use('/api/search', searchRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/templates', templatesRouter)
 app.use('/api/tasks', myTasksRouter)
+app.use('/api/oembed', oembedRouter)
 app.use('/api/firms', firmsRouter)
 
 app.use('/api/firms/:firmId/briefs', briefsRouter)

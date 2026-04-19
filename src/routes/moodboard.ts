@@ -78,6 +78,9 @@ router.post('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: R
       include: { versions: true }
     })
 
+    // Otomatik aşama geçişi
+    await autoAdvanceStageOnCardAdd(req.params.briefId, req.params.firmId, data.which)
+
     await cacheDelete(`brief:${req.params.briefId}`)
     res.status(201).json(card)
   } catch (err) {
@@ -187,6 +190,32 @@ router.post('/:cardId/versions', requireAuth, requireFirmAccess, async (req: Aut
   }
 })
 
+// ── Otomatik aşama geçiş: ilk IG/KAMP kartı eklenince ────
+async function autoAdvanceStageOnCardAdd(briefId: string, firmId: string, which: 'IG' | 'KAMP') {
+  const brief = await db.brief.findUnique({ where: { id: briefId } })
+  if (!brief) return
+
+  let nextStage: 'MB_IG' | 'MB_KAMP' | null = null
+  if (which === 'IG' && brief.stage === 'BRIEF') nextStage = 'MB_IG'
+  else if (which === 'KAMP' && brief.stage === 'MB_IG') nextStage = 'MB_KAMP'
+
+  if (!nextStage) return
+
+  await db.brief.update({ where: { id: briefId }, data: { stage: nextStage } })
+  await cacheDelete(`briefs:${firmId}`)
+
+  const firm = await db.firm.findUnique({ where: { id: firmId }, include: { members: true } })
+  if (!firm) return
+  const stageLabels: Record<string, string> = { MB_IG: 'IG Moodboard', MB_KAMP: 'Kampanya MB' }
+  for (const member of firm.members) {
+    await pushNotification({
+      userId: member.userId, briefId,
+      title: `${brief.month} ${brief.year} → ${stageLabels[nextStage]}`,
+      sub: firm.name + ' · Az önce'
+    })
+  }
+}
+
 // ── Onay handler ──────────────────────────────────────────
 async function handleApproval(card: any, briefId: string, approverId: string) {
   const tasks = []
@@ -238,10 +267,10 @@ async function handleApproval(card: any, briefId: string, approverId: string) {
     }
   }
 
-  // Bildirim
+  // Bildirim + otomatik TASKS geçişi
   const brief = await db.brief.findUnique({
     where: { id: briefId },
-    include: { firm: { include: { members: true } } }
+    include: { firm: { include: { members: true } }, moodboardCards: true }
   })
   if (brief) {
     for (const member of brief.firm.members) {
@@ -251,6 +280,23 @@ async function handleApproval(card: any, briefId: string, approverId: string) {
         title: `${card.label} onaylandı`,
         sub: brief.firm.name + ' · Az önce'
       })
+    }
+
+    // %80 kart onaylandıysa → TASKS aşamasına geç
+    if (brief.stage === 'MB_IG' || brief.stage === 'MB_KAMP') {
+      const total = brief.moodboardCards.length
+      const approved = brief.moodboardCards.filter(c => c.status === 'APPROVED').length
+      if (total > 0 && approved / total >= 0.8) {
+        await db.brief.update({ where: { id: briefId }, data: { stage: 'TASKS' } })
+        await cacheDelete(`briefs:${brief.firmId}`)
+        for (const member of brief.firm.members) {
+          await pushNotification({
+            userId: member.userId, briefId,
+            title: `${brief.month} ${brief.year} → Görevler`,
+            sub: brief.firm.name + ' · Kartların %80\'i onaylandı'
+          })
+        }
+      }
     }
   }
 }

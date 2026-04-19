@@ -105,14 +105,6 @@ router.post('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: R
       include: { moodboardCards: true, tasks: true, igCells: true }
     })
 
-    // 9 boş IG hücresi oluştur
-    await db.iGCell.createMany({
-      data: Array.from({ length: 9 }, (_, i) => ({
-        briefId: brief.id,
-        cellIndex: i
-      }))
-    })
-
     await cacheDelete(`briefs:${req.params.firmId}`)
     res.status(201).json(brief)
   } catch (err) {
@@ -166,7 +158,7 @@ router.put('/:briefId', requireAuth, requireFirmAccess, async (req: AuthRequest,
 })
 
 // DELETE /api/firms/:firmId/briefs/:briefId
-router.delete('/:briefId', requireAuth, requireRole('ADMIN', 'EDITOR'), async (req: AuthRequest, res: Response) => {
+router.delete('/:briefId', requireAuth, requireRole('ADMIN'), async (req: AuthRequest, res: Response) => {
   try {
     // Kaç brief var kontrol et
     const count = await db.brief.count({ where: { firmId: req.params.firmId } })

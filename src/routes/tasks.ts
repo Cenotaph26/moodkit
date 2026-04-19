@@ -2,7 +2,7 @@
 import { Router, Response } from 'express'
 import { z } from 'zod'
 import { db } from '../lib/db'
-import { cacheDelete } from '../lib/redis'
+import { cacheDelete, pushNotification } from '../lib/redis'
 import { requireAuth, requireFirmAccess, AuthRequest } from '../middleware/auth'
 import { logActivity } from '../lib/activity'
 
@@ -76,6 +76,27 @@ router.put('/:taskId', requireAuth, requireFirmAccess, async (req: AuthRequest, 
         action: 'task.status_changed', entity: 'Task', entityId: task.id,
         meta: { from: prev?.status, to: data.status, desc: task.desc }
       })
+
+      // Tüm görevler DONE → YAYIN aşamasına geç
+      if (data.status === 'DONE') {
+        const allTasks = await db.task.findMany({ where: { briefId: req.params.briefId } })
+        const allDone = allTasks.length > 0 && allTasks.every(t => t.status === 'DONE')
+        if (allDone) {
+          await db.brief.update({ where: { id: req.params.briefId }, data: { stage: 'YAYIN' } })
+          await cacheDelete(`briefs:${req.params.firmId}`)
+          const firm = await db.firm.findUnique({ where: { id: req.params.firmId }, include: { members: true } })
+          const brief = await db.brief.findUnique({ where: { id: req.params.briefId } })
+          if (firm && brief) {
+            for (const member of firm.members) {
+              await pushNotification({
+                userId: member.userId, briefId: req.params.briefId,
+                title: `${brief.month} ${brief.year} → Yayın`,
+                sub: firm.name + ' · Tüm görevler tamamlandı'
+              })
+            }
+          }
+        }
+      }
     }
     await cacheDelete(`brief:${req.params.briefId}`)
     res.json(task)
