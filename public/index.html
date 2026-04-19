@@ -919,18 +919,33 @@ function mbThumbHtml(card){
   const cv=card.versions?.[card.versions.length-1];
   const url=cv?.url||card.url||'';
   const img=cv?.img||card.img;
+  const isUploadedVideo=/\.(mp4|mov|webm|ogg)(\?|$)/i.test(url)||url.startsWith('data:video');
   const plat=getLinkPlatform(url);
-  if(url&&plat&&plat.embed!==false){
+  // Yüklenen video dosyası → thumbnail + play ikonu göster
+  if(isUploadedVideo){
     return `<div style="position:absolute;inset:0;background:#0f0f0f;display:flex;align-items:center;justify-content:center">
       ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6">`:''}
       <div style="position:relative;z-index:1;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center">
         <svg width="10" height="10" viewBox="0 0 12 12" fill="white"><polygon points="4,2 10,6 4,10"/></svg>
       </div></div>
+      <div style="position:absolute;top:6px;right:6px;z-index:2"><span class="badge bgr" style="font-size:8px">Video</span></div>`;
+  }
+  // Platform embed destekli link
+  if(url&&plat&&plat.embed!==false){
+    const thumb=img||(url.includes('youtu')?ytThumb(url):null);
+    return `<div style="position:absolute;inset:0;background:${plat.embed==='oembed'||plat.name==='TikTok'?'#010101':plat.name==='Instagram'?'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)':'#0f0f0f'};display:flex;align-items:center;justify-content:center">
+      ${thumb?`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55">`:''}
+      <div style="position:relative;z-index:1;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="white"><polygon points="4,2 10,6 4,10"/></svg>
+      </div></div>
       <div style="position:absolute;top:6px;right:6px;z-index:2"><span class="badge bgr" style="font-size:8px">${plat.name}</span></div>`;
   }
-  if(url&&plat&&!img){
+  // Embed desteksiz link (Pinterest, Behance, web)
+  if(url&&plat&&plat.embed===false){
+    if(img) return `<img src="${img}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
     return `<div style="position:absolute;inset:0;background:${plat.color};display:flex;align-items:center;justify-content:center">
-      <span style="color:rgba(255,255,255,.8);font-size:16px;font-weight:600">${plat.icon}</span></div>`;
+      <span style="color:rgba(255,255,255,.8);font-size:16px;font-weight:600">${plat.icon}</span></div>
+      <div style="position:absolute;top:6px;right:6px;z-index:2"><span class="badge bgr" style="font-size:8px">${plat.name}</span></div>`;
   }
   if(img) return `<img src="${img}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
   return `<div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2d1f08)"></div>`;
@@ -2360,10 +2375,15 @@ function showMod(type,...args){
         <div><label class="fl">Başlık *</label><input class="inp" id="mbc-label" placeholder="Kart başlığı"></div>
       </div>
       <div class="fg"><label class="fl">Açıklama</label><textarea class="inp ta" id="mbc-desc" placeholder="Detaylı açıklama..." style="min-height:72px"></textarea></div>
-      <div class="fg"><label class="fl">Video / Referans URL (YouTube, Vimeo, Instagram...)</label><input class="inp" id="mbc-url" placeholder="https://..."></div>
-      <div class="fg"><label class="fl">Görsel / Video yükle</label>
+      <div class="fg">
+        <label class="fl">Video / Referans URL</label>
+        <input class="inp" id="mbc-url" placeholder="YouTube, Vimeo, TikTok, Instagram, Pinterest..." oninput="onMbcUrlChange(this)">
+        <div id="mbc-url-hint" style="margin-top:4px;min-height:16px"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Kapak Görseli / Video Yükle <span style="color:var(--txt3);font-weight:400">(video dosyası → Reels olarak oynatılır)</span></label>
         <div style="border:1.5px dashed var(--bdr2);border-radius:8px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('mbc-f').click()">
-          <div id="mbc-fp" style="font-size:11px;color:var(--txt3)">Dosya seç (görsel veya video)</div>
+          <div id="mbc-fp" style="font-size:11px;color:var(--txt3)">Dosya seç (görsel veya video, max 5MB)</div>
           <input type="file" id="mbc-f" accept="image/*,video/*" style="display:none" onchange="prevFile('mbc-fp',this,'_mbc')">
         </div>
       </div>
@@ -2379,7 +2399,7 @@ function showMod(type,...args){
         <div class="fg"><label class="fl">Görev açıklaması</label><textarea class="inp ta" id="mbc-tdesc" placeholder="Format, boyut, teknik detay..." style="min-height:56px"></textarea></div>
         <div class="fr2 fg">
           <div><label class="fl">Format</label><input class="inp" id="mbc-fmt" placeholder="9:16 · 30 sn · 4K"></div>
-          <div><label class="fl">Deadline</label><input class="inp" id="mbc-dl" placeholder="20 Nisan"></div>
+          <div><label class="fl">Deadline</label><input type="date" class="inp" id="mbc-dl" min="${todayStr()}"></div>
         </div>
         ${which==='ig'?`<div class="fg" style="margin:0"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" placeholder="1"></div>`:''}
       </div>
@@ -2400,10 +2420,15 @@ function showMod(type,...args){
         <div><label class="fl">Başlık *</label><input class="inp" id="mbc-label" value="${c.label||''}"></div>
       </div>
       <div class="fg"><label class="fl">Açıklama</label><textarea class="inp ta" id="mbc-desc" style="min-height:64px">${cv?.desc||c.desc||''}</textarea></div>
-      <div class="fg"><label class="fl">Video / Referans URL</label><input class="inp" id="mbc-url" value="${cv?.url||c.url||''}" placeholder="https://..."></div>
-      <div class="fg"><label class="fl">Görsel değiştir (opsiyonel)</label>
+      <div class="fg">
+        <label class="fl">Video / Referans URL</label>
+        <input class="inp" id="mbc-url" value="${cv?.url||c.url||''}" placeholder="YouTube, Vimeo, TikTok..." oninput="onMbcUrlChange(this)">
+        <div id="mbc-url-hint" style="margin-top:4px;min-height:16px"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Kapak Görseli / Video Değiştir (opsiyonel)</label>
         <div style="border:1.5px dashed var(--bdr2);border-radius:8px;padding:10px;text-align:center;cursor:pointer" onclick="document.getElementById('mbc-f2').click()">
-          <div id="mbc-fp2" style="font-size:11px;color:var(--txt3)">${c.img?'Görsel var · Değiştir':'Görsel seç'}</div>
+          <div id="mbc-fp2" style="font-size:11px;color:var(--txt3)">${c.img?'Görsel var · Değiştir':'Görsel veya video seç'}</div>
           <input type="file" id="mbc-f2" accept="image/*,video/*" style="display:none" onchange="prevFile('mbc-fp2',this,'_mbc')">
         </div>
       </div>
@@ -2418,13 +2443,18 @@ function showMod(type,...args){
     html=`<div style="font-size:14px;font-weight:600;margin-bottom:14px">Yeni Versiyon Ekle</div>
       <div class="fg"><label class="fl">Versiyon notu *</label><input class="inp" id="ver-note" placeholder="Ne değişti?"></div>
       <div class="fg"><label class="fl">Açıklama</label><textarea class="inp ta" id="ver-desc" placeholder="Bu versiyona ait açıklama..."></textarea></div>
-      <div class="fg"><label class="fl">Görsel / Video yükle (opsiyonel)</label>
+      <div class="fg">
+        <label class="fl">Kapak Görseli / Video Yükle (opsiyonel)</label>
         <div style="border:1.5px dashed var(--bdr2);border-radius:8px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('ver-f').click()">
-          <div id="ver-fp" style="font-size:11px;color:var(--txt3)">Dosya seç</div>
+          <div id="ver-fp" style="font-size:11px;color:var(--txt3)">Dosya seç (görsel veya video)</div>
           <input type="file" id="ver-f" accept="image/*,video/*" style="display:none" onchange="prevFile('ver-fp',this,'_ver')">
         </div>
       </div>
-      <div class="fg"><label class="fl">Video / Referans URL</label><input class="inp" id="ver-url" placeholder="https://..."></div>
+      <div class="fg">
+        <label class="fl">Video / Referans URL</label>
+        <input class="inp" id="ver-url" placeholder="YouTube, Vimeo, TikTok..." oninput="onVerUrlChange(this)">
+        <div id="ver-url-hint" style="margin-top:4px;min-height:14px"></div>
+      </div>
       <div style="display:flex;gap:7px;justify-content:flex-end">
         <div class="btn bg0" onclick="closeMod()">İptal</div>
         <div class="btn bp" onclick="saveVer('${fid}','${bid}','${which}','${cid}')">Kaydet</div>
@@ -2443,7 +2473,7 @@ function showMod(type,...args){
       <div class="fg"><label class="fl">Açıklama</label><textarea class="inp ta" id="nt-desc" placeholder="Ne yapılacak, nasıl..."></textarea></div>
       <div class="fr2 fg">
         <div><label class="fl">Format</label><input class="inp" id="nt-fmt" placeholder="9:16 · 30 sn · 4K"></div>
-        <div><label class="fl">Deadline</label><input class="inp" id="nt-dl" placeholder="20 Nisan"></div>
+        <div><label class="fl">Deadline</label><input type="date" class="inp" id="nt-dl" min="${todayStr()}"></div>
       </div>
       <div style="display:flex;gap:7px;justify-content:flex-end">
         <div class="btn bg0" onclick="closeMod()">İptal</div>
@@ -2453,19 +2483,35 @@ function showMod(type,...args){
     const [fid,bid,idx]=args;
     const b=gB(fid,bid);const cell=idx!==undefined?b.igCells[idx]:null;
     window._nic={img:null,blob:null,isVid:false};
+    const initType=cell?.type||'post';
+    window._slides=cell?.slides?.length?[...cell.slides]:[];
+    const minNow=nowStr();
     html=`<div style="font-size:14px;font-weight:600;margin-bottom:14px">${type==='edit-ig'?'İçerik Düzenle':'IG İçerik Ekle'}</div>
       <div class="fr2 fg">
-        <div><label class="fl">Tür</label><select class="inp sel" id="nic-t">
-          ${['post','reels','carousel'].map(v=>`<option value="${v}" ${cell?.type===v?'selected':''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`).join('')}
+        <div><label class="fl">Tür</label><select class="inp sel" id="nic-t" onchange="onNicTypeChange(this.value)">
+          ${['post','reels','carousel'].map(v=>`<option value="${v}" ${initType===v?'selected':''}>${v==='post'?'Post':v==='reels'?'Reels':'Carousel'}</option>`).join('')}
         </select></div>
-        <div><label class="fl">Tarih & Saat</label><input class="inp" id="nic-d" value="${cell?.date||''}" placeholder="10 Nis 10:00"></div>
+        <div><label class="fl">Yayın Tarihi</label><input type="datetime-local" class="inp" id="nic-d" value="${cell?.date||''}" min="${minNow}"></div>
       </div>
-      <div class="fg"><label class="fl">Video URL (YouTube, Vimeo...)</label><input class="inp" id="nic-v" value="${cell?.videoUrl||''}" placeholder="https://..."></div>
-      <div class="fg"><label class="fl">Görsel / Video yükle</label>
+      <div class="fg" id="nic-v-section" style="display:${initType==='carousel'?'none':'block'}">
+        <label class="fl">Video URL (YouTube, Vimeo, TikTok...)</label>
+        <input class="inp" id="nic-v" value="${cell?.videoUrl||''}" placeholder="https://...">
+      </div>
+      <div class="fg" id="nic-media-section" style="display:${initType==='carousel'?'none':'block'}">
+        <label class="fl">${initType==='reels'?'Video yükle':'Görsel / Video yükle'}</label>
         <div style="border:1.5px dashed var(--bdr2);border-radius:8px;padding:12px;text-align:center;cursor:pointer" onclick="document.getElementById('nic-f').click()">
           <div id="nic-fp" style="font-size:11px;color:var(--txt3)">${cell?.src?'Mevcut var · Değiştir':'Dosya seç'}</div>
           <input type="file" id="nic-f" accept="image/*,video/*" style="display:none" onchange="prevFile('nic-fp',this,'_nic')">
         </div>
+      </div>
+      <div id="carousel-section" style="display:${initType==='carousel'?'block':'none'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="fl" style="margin:0">Carousel Görselleri</label>
+          <span id="carousel-count" style="font-size:10px;color:var(--txt3)">${window._slides.length}/20</span>
+        </div>
+        <div id="carousel-slides" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:62px;padding:4px 0"></div>
+        <button class="btn" id="carousel-add-btn" onclick="addCarouselSlide()" style="${window._slides.length>=20?'display:none':''}">+ Görsel Ekle</button>
+        <div style="font-size:10px;color:var(--txt3);margin-top:5px">JPG/PNG · Her biri max 5MB · Sıralama eklenme sırasına göre</div>
       </div>
       <div class="fg"><label class="fl">Caption</label><textarea class="inp ta" id="nic-cap">${cell?.cap||''}</textarea></div>
       <div class="fg"><label class="fl">Hashtags</label><input class="inp" id="nic-hash" value="${cell?.hash||''}" placeholder="#marka #kampanya"></div>
@@ -2543,6 +2589,8 @@ function showMod(type,...args){
   }
   document.getElementById('v-modal').innerHTML=`<div class="mov"><div class="mbox">${html}</div></div>`;
   showV('modal');
+  // Carousel slaytlarını modal DOM'u hazır olduktan sonra render et
+  if(type==='add-ig'||type==='edit-ig') requestAnimationFrame(()=>renderCarouselSlides());
 }
 
 function closeMod(){
@@ -2555,6 +2603,99 @@ function closeMod(){
   else if(lastView==='cal'&&curFid&&curBid)openCal(curFid,curBid);
   else if(curFid&&curBid)openBrief(curFid,curBid);
   else goHome();
+}
+
+// ── TARİH YARDIMCILARı ───────────────────────────────────
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function nowStr(){return new Date().toISOString().slice(0,16);}
+
+// ── URL HİNT SİSTEMİ (Moodboard Kart) ───────────────────
+function onMbcUrlChange(inp){
+  const url=inp.value.trim();
+  const p=getLinkPlatform(url);
+  const hint=document.getElementById('mbc-url-hint');
+  if(!hint)return;
+  if(!p||!url){hint.innerHTML='';return;}
+  if(p.embed===false){
+    hint.innerHTML=`<span style="color:var(--amb);font-size:10px">⚠ ${p.name} embed desteklenmiyor — aşağıdan kapak görseli yükleyin.</span>`;
+  }else if(p.embed==='oembed'||p.embed==='try'){
+    hint.innerHTML=`<span style="color:var(--acc);font-size:10px">✓ ${p.name} player destekleniyor.</span>`;
+  }else{
+    hint.innerHTML=`<span style="color:var(--grn);font-size:10px">✓ ${p.name} — otomatik embed.</span>`;
+  }
+  // YouTube: kapağı otomatik çek
+  if((url.includes('youtu.be')||url.includes('youtube.com'))&&window._mbc&&!window._mbc.url){
+    const thumb=ytThumb(url);
+    if(thumb){
+      window._mbc.autoThumb=thumb;
+      const fp=document.getElementById('mbc-fp');
+      if(fp&&!window._mbc.img)fp.innerHTML=`<img src="${thumb}" style="height:60px;border-radius:5px;object-fit:cover"><div style="font-size:9px;color:var(--acc);margin-top:2px">YouTube kapağı otomatik ✓</div>`;
+    }
+  }
+}
+
+function onVerUrlChange(inp){
+  const url=inp.value.trim();
+  const p=getLinkPlatform(url);
+  const hint=document.getElementById('ver-url-hint');
+  if(!hint)return;
+  if(!p||!url){hint.innerHTML='';return;}
+  if(p.embed===false){hint.innerHTML=`<span style="color:var(--amb);font-size:10px">⚠ ${p.name} embed desteklenmiyor — kapak görseli yükleyin.</span>`;}
+  else{hint.innerHTML=`<span style="color:var(--grn);font-size:10px">✓ ${p.name} embed aktif.</span>`;}
+  if((url.includes('youtu.be')||url.includes('youtube.com'))&&window._ver&&!window._ver.url){
+    const thumb=ytThumb(url);
+    if(thumb){window._ver.autoThumb=thumb;const fp=document.getElementById('ver-fp');if(fp&&!window._ver.img)fp.innerHTML=`<img src="${thumb}" style="height:60px;border-radius:5px;object-fit:cover"><div style="font-size:9px;color:var(--acc);margin-top:2px">YouTube kapağı otomatik ✓</div>`;}
+  }
+}
+
+// ── CAROUSEL SLAYT YÖNETİMİ ──────────────────────────────
+window._slides=[];
+
+function onNicTypeChange(val){
+  const cs=document.getElementById('carousel-section');
+  const vs=document.getElementById('nic-v-section');
+  if(cs)cs.style.display=val==='carousel'?'block':'none';
+  if(vs)vs.style.display=val==='reels'?'block':'none';
+  if(val==='carousel')renderCarouselSlides();
+}
+
+function renderCarouselSlides(){
+  const container=document.getElementById('carousel-slides');
+  if(!container)return;
+  container.innerHTML=window._slides.map((s,i)=>
+    `<div style="position:relative;width:62px;height:62px;flex-shrink:0">
+      <img src="${s}" style="width:62px;height:62px;object-fit:cover;border-radius:6px;border:.5px solid var(--bdr2)">
+      <button onclick="removeCarouselSlide(${i})" style="position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;z-index:1">✕</button>
+    </div>`
+  ).join('');
+  const addBtn=document.getElementById('carousel-add-btn');
+  const countEl=document.getElementById('carousel-count');
+  if(addBtn)addBtn.style.display=window._slides.length>=20?'none':'inline-flex';
+  if(countEl)countEl.textContent=`${window._slides.length}/20`;
+}
+
+function removeCarouselSlide(i){
+  window._slides.splice(i,1);
+  renderCarouselSlides();
+}
+
+async function addCarouselSlide(){
+  if(window._slides.length>=20){toast('Maksimum 20 slayt eklenebilir');return;}
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=async(e)=>{
+    const f=e.target.files[0];if(!f)return;
+    const localUrl=URL.createObjectURL(f);
+    const idx=window._slides.length;
+    window._slides.push(localUrl);
+    renderCarouselSlides();
+    try{
+      const fd=new FormData();fd.append('file',f);
+      const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
+      if(res.ok){const d=await res.json();window._slides[idx]=d.url;renderCarouselSlides();}
+    }catch(err){toast('Yükleme hatası: '+err.message);}
+  };
+  input.click();
 }
 
 async function prevFile(fpId,input,key){
@@ -2593,14 +2734,17 @@ async function addMbCard(fid,bid,which){
   const mbc=window._mbc||{img:null,isVid:false};
   const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
   const assigneeId=document.getElementById('mbc-ass')?.value||undefined;
+  // Video dosyası yüklendiyse videoUrl'ye yönlendir; link yoksa YouTube kapağını mediaUrl olarak kullan
+  const uploadedVideoUrl=mbc.isVid?(mbc.url||undefined):undefined;
+  const uploadedMediaUrl=mbc.isVid?undefined:(mbc.url||mbc.img||mbc.autoThumb||undefined);
   try{
     await apiAddCard(fid,bid,{
       which:which.toUpperCase()==='IG'?'IG':'KAMP',
       type:document.getElementById('mbc-type').value,
       label,
       desc:document.getElementById('mbc-desc')?.value||'',
-      mediaUrl:mbc.url||mbc.img||undefined,
-      videoUrl:url||undefined,
+      mediaUrl:uploadedMediaUrl,
+      videoUrl:url||uploadedVideoUrl||undefined,
       taskType:document.getElementById('mbc-tt')?.value||'Grafik',
       taskDesc:document.getElementById('mbc-tdesc')?.value||'',
       taskFormat:document.getElementById('mbc-fmt')?.value||'',
@@ -2636,8 +2780,10 @@ async function saveVer(fid,bid,which,cid){
   const ver=window._ver||{img:null,isVid:false};
   const url=document.getElementById('ver-url')?.value.trim()||'';
   const desc=document.getElementById('ver-desc')?.value||'';
+  const verVideoUrl=ver.isVid?(ver.url||undefined):undefined;
+  const verMediaUrl=ver.isVid?undefined:(ver.url||ver.img||ver.autoThumb||undefined);
   try{
-    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:ver.url||ver.img||undefined,videoUrl:url||undefined});
+    await apiAddVersion(fid,bid,cid,{note,desc,mediaUrl:verMediaUrl,videoUrl:url||verVideoUrl||undefined});
     toast('Versiyon eklendi ✓');
     addN('Yeni versiyon yüklendi',gF(fid)?.name+' · Az önce',fid);
     await loadCards(fid,bid,which);
@@ -2667,22 +2813,26 @@ async function addIGCell(fid,bid){
   const nic=window._nic||{img:null,blob:null,isVid:false};
   let type=document.getElementById('nic-t').value;
   if(isVidUrl(urlVal)||nic.isVid)type='reels';
+  const nicVideoUrl=nic.isVid?(nic.url||undefined):undefined;
+  const nicMediaUrl=nic.isVid?undefined:(nic.url||nic.img||undefined);
+  const slides=type==='carousel'?(window._slides||[]).filter(Boolean):[];
   try{
     const cell=await apiFetch(`/api/firms/${fid}/briefs/${bid}/ig`,{method:'POST',body:{
       type:type.toUpperCase(),
-      mediaUrl:nic.url||nic.img||undefined,
-      videoUrl:urlVal||undefined,
+      mediaUrl:nicMediaUrl||undefined,
+      videoUrl:urlVal||nicVideoUrl||undefined,
       caption:document.getElementById('nic-cap')?.value||'',
       hashtags:document.getElementById('nic-hash')?.value||'',
-      publishDate:document.getElementById('nic-d')?.value||''
+      publishDate:document.getElementById('nic-d')?.value||'',
+      slides
     }});
     const b=gB(fid,bid);
     b.igCells.push({
       id:cell.id,cellIndex:cell.cellIndex,type:(cell.type||'POST').toLowerCase(),
       src:cell.mediaUrl||null,cap:cell.caption||'',hash:cell.hashtags||'',
-      date:cell.publishDate||'',videoUrl:cell.videoUrl||'',slides:[],approved:null,likes:'0',cmts:'0'
+      date:cell.publishDate||'',videoUrl:cell.videoUrl||'',slides:cell.slides||[],approved:null,likes:'0',cmts:'0'
     });
-    toast(type==='reels'?'Reels eklendi ✓':'İçerik eklendi ✓');openIG(fid,bid);
+    toast(type==='reels'?'Reels eklendi ✓':type==='carousel'?`Carousel eklendi ✓ (${slides.length} slayt)`:'İçerik eklendi ✓');openIG(fid,bid);
   }catch(e){toast('Hata: '+e.message);}
 }
 
@@ -2690,12 +2840,25 @@ async function saveIGCell(fid,bid,idx){
   const b=gB(fid,bid);const cell=b.igCells[idx];if(!cell)return;
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
-  if(nic.url||nic.img||nic.blob)cell.src=nic.url||nic.img||nic.blob||cell.src;
   cell.type=document.getElementById('nic-t').value;
   if(isVidUrl(urlVal)||nic.isVid)cell.type='reels';
-  cell.videoUrl=urlVal;cell.cap=document.getElementById('nic-cap')?.value||cell.cap;
-  cell.hash=document.getElementById('nic-hash')?.value||cell.hash;cell.date=document.getElementById('nic-d')?.value||cell.date;
-  try{await apiUpdateIGCell(fid,bid,cell.id,{type:cell.type.toUpperCase(),mediaUrl:cell.src||null,videoUrl:cell.videoUrl||null,caption:cell.cap,hashtags:cell.hash,publishDate:cell.date});}catch(e){console.error(e);}
+  const nicVideoUrl=nic.isVid?(nic.url||undefined):undefined;
+  const nicMediaUrl=nic.isVid?undefined:(nic.url||nic.img||undefined);
+  if(nicMediaUrl)cell.src=nicMediaUrl;
+  if(nicVideoUrl)cell.videoUrl=nicVideoUrl;
+  if(urlVal)cell.videoUrl=urlVal;
+  cell.cap=document.getElementById('nic-cap')?.value||cell.cap;
+  cell.hash=document.getElementById('nic-hash')?.value||cell.hash;
+  cell.date=document.getElementById('nic-d')?.value||cell.date;
+  const slides=cell.type==='carousel'?(window._slides||[]).filter(Boolean):cell.slides||[];
+  if(cell.type==='carousel')cell.slides=slides;
+  try{
+    await apiUpdateIGCell(fid,bid,cell.id,{
+      type:cell.type.toUpperCase(),mediaUrl:cell.src||null,
+      videoUrl:cell.videoUrl||null,caption:cell.cap,
+      hashtags:cell.hash,publishDate:cell.date,slides
+    });
+  }catch(e){console.error(e);}
   toast('Kaydedildi ✓');openIG(fid,bid);
 }
 
