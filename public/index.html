@@ -657,11 +657,13 @@ async function initApp() {
   }
 }
 
+let _ws = null;
 function initWS() {
   if (!_token) return;
+  if (_ws && (_ws.readyState === WebSocket.CONNECTING || _ws.readyState === WebSocket.OPEN)) return;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}?token=${_token}`);
-  ws.onmessage = (e) => {
+  _ws = new WebSocket(`${proto}://${location.host}/?token=${_token}`);
+  _ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
       if (msg.type === 'notif') {
@@ -670,7 +672,8 @@ function initWS() {
       }
     } catch(_) {}
   };
-  ws.onclose = () => { setTimeout(initWS, 5000); };
+  _ws.onclose = () => { _ws = null; setTimeout(initWS, 5000); };
+  _ws.onerror = () => { _ws = null; };
 }
 
 function renderClientPortal() {
@@ -2095,7 +2098,12 @@ function openReels(fid,bid,startIdx=0){
 // ── CUSTOMER PORTAL ──────────────────────────────────────
 async function openCustMB(fid,bid,which){
   curFid=fid;curBid=bid;
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  let b=gB(fid,bid);if(!b)return;
+  // Kartlar henüz yüklenmemişse yükle
+  const arrKey=which==='ig'?'mbIG':'mbKamp';
+  if(!b[arrKey]||!b[arrKey].length)await loadCards(fid,bid,which);
+  b=gB(fid,bid);
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const title=which==='ig'?'IG Moodboard Onayı':'Kampanya Moodboard Onayı';
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:title}]);
@@ -2188,7 +2196,7 @@ function openCustCard(fid,bid,which,cid){
       <div class="card cp">
         <div style="font-size:12px;font-weight:600;margin-bottom:8px">Yorum</div>
         <textarea class="inp ta" id="card-cmt" placeholder="Bu kart hakkında..." style="margin-bottom:8px"></textarea>
-        <div class="btn bp bs" onclick="addN('Müşteri yorum yaptı','${f.name} · Az önce','${fid}');toast('Gönderildi ✓')">Gönder</div>
+        <div class="btn bp bs" onclick="sendCardCmt('${fid}','${bid}','${c.label}')">Gönder</div>
       </div>
     </div>`;
 }
@@ -2201,7 +2209,34 @@ function custAp(fid,bid,which,cid,v){
   toast(v?'✓ Onaylandı':'✗ Revize istendi');
   openCustMB(fid,bid,which);
 }
-function sendCmt(fid,bid){const v=document.getElementById('cust-cmt')?.value.trim();if(!v)return;addN('Müşteri genel yorum',gF(fid)?.name,fid);toast('Gönderildi ✓');}
+async function sendCmt(fid,bid){
+  const el=document.getElementById('cust-cmt');
+  const v=el?.value.trim();if(!v){toast('Yorum yazın','warning');return;}
+  const f=gF(fid);
+  try{
+    await apiFetch('/api/notifications',{method:'POST',body:{
+      title:`💬 ${f?.name||'Müşteri'} genel yorum bıraktı`,
+      sub:v.length>80?v.slice(0,80)+'…':v,
+      briefId:bid
+    }});
+    if(el)el.value='';
+    toast('Yorum gönderildi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
+async function sendCardCmt(fid,bid,cardLabel){
+  const el=document.getElementById('card-cmt');
+  const v=el?.value.trim();if(!v){toast('Yorum yazın','warning');return;}
+  const f=gF(fid);
+  try{
+    await apiFetch('/api/notifications',{method:'POST',body:{
+      title:`💬 ${f?.name||'Müşteri'} "${cardLabel}" kartına yorum yaptı`,
+      sub:v.length>80?v.slice(0,80)+'…':v,
+      briefId:bid
+    }});
+    if(el)el.value='';
+    toast('Yorum gönderildi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
+}
 
 async function openCustIG(fid,bid){
   const f=gF(fid),b=gB(fid,bid);
@@ -2231,7 +2266,7 @@ async function openCustIG(fid,bid){
       </div>
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <div class="btn bgn-btn" style="flex:1;justify-content:center" onclick="approveAllIG('${fid}','${bid}')">Tümünü Onayla</div>
-        <div class="btn bp" style="flex:1;justify-content:center" onclick="toast('Onay gönderildi ✓')">Onayla & Gönder</div>
+        <div class="btn bp" style="flex:1;justify-content:center" onclick="sendAllIGApproval('${fid}','${bid}')">Onayla & Gönder</div>
       </div>
     </div>`;
   showV('cust');
@@ -2240,7 +2275,25 @@ async function approveAllIG(fid,bid){
   const b=gB(fid,bid);
   b.igCells.forEach(c=>c.approved=true);
   try{await apiApproveAllIG(fid,bid);}catch(e){console.error(e);}
-  toast('Tümü onaylandı ✓');openCustIG(fid,bid);
+  toast('Tümü onaylandı ✓','success');openCustIG(fid,bid);
+}
+async function sendAllIGApproval(fid,bid){
+  const b=gB(fid,bid);if(!b)return;
+  b.igCells.forEach(c=>c.approved=true);
+  try{
+    await apiApproveAllIG(fid,bid);
+    // Brief aşamasını YAYIN'a ilerlet
+    await apiSaveBrief(fid,bid,{stage:'YAYIN'});
+    const brief=gB(fid,bid);if(brief)brief.stage='yayin';
+    // Ekip üyelerine bildirim gönder
+    await apiFetch('/api/notifications',{method:'POST',body:{
+      title:`✅ ${gF(fid)?.name||'Müşteri'} IG Grid onayını tamamladı`,
+      sub:`${b.month} ${b.year} — Yayın aşamasına geçildi`,
+      briefId:bid
+    }}).catch(()=>{});
+    toast('Onay gönderildi — Yayın aşamasına geçildi ✓','success');
+    openCustIG(fid,bid);
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 // ── YAYIN ────────────────────────────────────────────────
@@ -3003,11 +3056,13 @@ function handleFileSelect(input,fpId,keyName){
   processFiles(Array.from(input.files),fpId,keyName);
   input.value='';
 }
+const MAX_FILE_MB=50;
 function processFiles(files,fpId,keyName){
   if(!files.length)return;
   const isCarouselMode=document.getElementById('nic-t')?.value==='carousel'||document.getElementById('mbc-type')?.value==='Carousel';
   if(isCarouselMode&&files.length>1){processCarouselFilesNew(files,fpId,keyName);return;}
   const file=files[0];
+  if(file.size>MAX_FILE_MB*1024*1024){toast(`Dosya çok büyük (maks ${MAX_FILE_MB}MB)`,'error');return;}
   const url=URL.createObjectURL(file);
   const isVid=isVidFile(file);
   window[keyName]={img:isVid?null:url,blob:isVid?url:null,isVid,url:'',file};
@@ -3045,7 +3100,11 @@ async function uploadFile(file,fpId,keyName){
   }catch(e){if(pct)pct.textContent='Yükleme hatası';console.warn('Upload hatası',e);}
 }
 function processCarouselFilesNew(files,fpId,keyName){
-  const limited=files.slice(0,20);
+  const CAROUSEL_MAX_MB=5;
+  const valid=files.filter(f=>f.size<=CAROUSEL_MAX_MB*1024*1024);
+  if(valid.length<files.length)toast(`${files.length-valid.length} dosya 5MB sınırını aştı, atlandı`,'warning');
+  const limited=valid.slice(0,20);
+  if(!limited.length){toast('Geçerli dosya bulunamadı','error');return;}
   const slides=limited.map(f=>({url:URL.createObjectURL(f),name:f.name,size:f.size,file:f}));
   window[keyName]={img:slides[0].url,slides:slides.map(s=>s.url),isCarousel:true,slideCount:slides.length,_slideFiles:slides.map(s=>s.file)};
   const preview=document.getElementById(fpId+'-preview');
@@ -3073,7 +3132,9 @@ function processCarouselFilesNew(files,fpId,keyName){
 
 async function prevFile(fpId,input,key){
   if(!input.files||!input.files[0])return;
-  const f=input.files[0];const localUrl=URL.createObjectURL(f);const isV=isVidFile(f);
+  const f=input.files[0];
+  if(f.size>MAX_FILE_MB*1024*1024){toast(`Dosya çok büyük (maks ${MAX_FILE_MB}MB)`,'error');input.value='';return;}
+  const localUrl=URL.createObjectURL(f);const isV=isVidFile(f);
   window[key]={img:isV?null:localUrl,blob:isV?localUrl:null,isVid:isV,url:''};
   document.getElementById(fpId).innerHTML=isV?
     `<video src="${localUrl}" style="height:60px;border-radius:5px" muted></video><div style="font-size:9px;color:var(--acc);margin-top:3px">Video → Reels · Yükleniyor...</div>`:
@@ -3095,7 +3156,7 @@ async function addFirm(){
   const name=document.getElementById('nf-n')?.value.trim();if(!name){toast('Firma adı zorunlu');return;}
   try{
     const f=await apiAddFirmAPI({name,sector:document.getElementById('nf-s').value,color:window._nfc||'#1a1a2e'});
-    firms.push({id:f.id,name:f.name,sector:f.sector||'',color:f.color||'#1a1a2e',briefs:[]});
+    firms.push({id:f.id,name:f.name,sector:f.sector||'',color:f.color||'#1a1a2e',briefs:[],memberIds:[]});
     toast('Firma eklendi ✓');renderSB();goHome();
   }catch(e){toast('Hata: '+e.message);}
 }
@@ -3104,7 +3165,7 @@ async function addMbCard(fid,bid,which){
   const label=document.getElementById('mbc-label')?.value.trim();if(!label){toast('Başlık zorunlu');return;}
   const url=document.getElementById('mbc-url')?.value.trim()||'';
   const mbc=window._mbc||{img:null,isVid:false};
-  const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
+  const cellNum=Math.max(0,parseInt(document.getElementById('mbc-cell')?.value||'1')-1);
   const assigneeId=document.getElementById('mbc-ass')?.value||undefined;
   // Video dosyası yüklendiyse videoUrl'ye yönlendir; link yoksa YouTube kapağını mediaUrl olarak kullan
   const uploadedVideoUrl=mbc.isVid?(mbc.url||undefined):undefined;
@@ -3137,7 +3198,7 @@ function updateMbCard(fid,bid,which,cid){
   const url=document.getElementById('mbc-url')?.value.trim()||c.url||'';
   const desc=document.getElementById('mbc-desc')?.value||c.desc||'';
   const mbc=window._mbc||{img:null,isVid:false};
-  const cellNum=parseInt(document.getElementById('mbc-cell')?.value||'1')-1;
+  const cellNum=Math.max(0,parseInt(document.getElementById('mbc-cell')?.value||'1')-1);
   c.label=label;c.type=document.getElementById('mbc-type')?.value||c.type;c.desc=desc;c.url=url;
   if(mbc.img)c.img=mbc.img;
   if(c.versions?.length){c.versions[c.versions.length-1].url=url;c.versions[c.versions.length-1].desc=desc;}
@@ -3235,7 +3296,7 @@ async function saveIGCell(fid,bid,idx){
 }
 
 async function addMember(){
-  const name=document.getElementById('nm-n')?.value.trim();if(!name)return;
+  const name=document.getElementById('nm-n')?.value.trim();if(!name){toast('Ad Soyad zorunlu','warning');return;}
   const email=document.getElementById('nm-e')?.value.trim()||'';if(!email){toast('E-posta zorunlu');return;}
   const pw=document.getElementById('nm-pw')?.value||'';
   const pw2=document.getElementById('nm-pw2')?.value||'';

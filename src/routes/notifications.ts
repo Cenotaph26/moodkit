@@ -45,4 +45,45 @@ router.put('/:id/read', requireAuth, async (req: AuthRequest, res: Response) => 
   }
 })
 
+// POST /api/notifications — müşteri yorum/mesaj bildirimi oluştur
+router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, sub, briefId, targetUserIds } = req.body as {
+      title: string
+      sub?: string
+      briefId?: string
+      targetUserIds?: string[]
+    }
+    if (!title) return res.status(400).json({ error: 'title zorunlu' })
+
+    // targetUserIds verilmişse onlara, yoksa ADMIN rolündeki tüm kullanıcılara bildir
+    let recipientIds: string[] = targetUserIds || []
+    if (!recipientIds.length) {
+      const admins = await db.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } })
+      recipientIds = admins.map(a => a.id)
+    }
+    // Göndereni de ekle (kendi bildirimi değilse)
+    if (!recipientIds.includes(req.user!.id)) recipientIds.push(req.user!.id)
+
+    const created = await db.notification.createMany({
+      data: recipientIds.map(uid => ({
+        userId: uid,
+        briefId: briefId || null,
+        title,
+        sub: sub || null,
+      }))
+    })
+
+    // WebSocket push
+    try {
+      const { sendWS } = await import('../index')
+      for (const uid of recipientIds) sendWS(uid, { type: 'notif', title, sub: sub || null, briefId })
+    } catch (_) {}
+
+    res.status(201).json({ count: created.count })
+  } catch (err) {
+    res.status(500).json({ error: 'Bildirim oluşturulamadı' })
+  }
+})
+
 export default router
