@@ -234,6 +234,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
 @media(max-width:768px){.sidebar{display:none}.firma-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){.firma-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+/* ── SPRINT 2+3 ── */
+/* Skeleton */
+@keyframes skel{0%,100%{opacity:.6}50%{opacity:.3}}
+.skel{background:var(--bg2);border-radius:6px;animation:skel 1.4s ease-in-out infinite}
+/* Upload area */
+.upload-area{border:1.5px dashed var(--bdr2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;min-height:90px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
+.upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:var(--abg)}
+.upload-prog-bar{height:4px;background:var(--bg2);border-radius:4px;overflow:hidden;width:180px;margin:4px auto 0}
+.upload-prog-fill{height:100%;background:var(--acc);border-radius:4px;transition:width .3s}
+/* Moodboard kart sol kenar durum rengi */
+.mbc{position:relative}
+.mbc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;transition:background .2s;z-index:5}
+.mbc[data-status="approved"]::before{background:#27500A}
+.mbc[data-status="review"]::before{background:#534AB7}
+.mbc[data-status="rejected"]::before{background:#A32D2D}
+.mbc[data-status="pending"]::before{background:transparent}
+/* Platform rozeti */
+.mb-plat{position:absolute;top:7px;left:10px;z-index:3;padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;color:#fff;letter-spacing:.3px}
+/* IG date bar */
+.igc-date-bar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:14px 4px 3px;opacity:0;transition:opacity .15s;z-index:3}
+.igc:hover .igc-date-bar{opacity:1}
+/* Kart ekleme animasyonu */
+@keyframes cardIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes cardHighlight{0%{box-shadow:0 0 0 2px #27500A}100%{box-shadow:0 0 0 0 transparent}}
+.mb-card-new{animation:cardIn .25s ease,cardHighlight 1.5s ease .25s}
+/* Çoklu seçim overlay */
+.igc-sel{position:absolute;inset:0;background:rgba(83,74,183,.4);border:2px solid #534AB7;z-index:5;display:none}
+.igc.selected .igc-sel{display:block}
+/* Toast tipler */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:10px;font-size:12px;font-weight:500;z-index:9999;display:none;border:.5px solid;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:140px;text-align:center;pointer-events:none}
+
 @media print{
   .sidebar,.tb,.no-print,#toast,.mov{display:none!important}
   .app{display:block!important;height:auto!important;overflow:visible!important}
@@ -612,11 +643,12 @@ async function initApp() {
       document.querySelector('.tb > div:last-child').appendChild(lb);
     }
   }
-  await loadMembers();
-  await loadFirms();
-  for (const f of firms) {
-    await loadBriefs(f.id);
-  }
+  // Skeleton dashboard anında göster
+  const hg=document.getElementById('v-home');
+  if(hg)hg.innerHTML=`<div style="padding:16px"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">${Array(4).fill(0).map(firmaSkeleton).join('')}</div></div>`;
+  showV('home');
+  await Promise.all([loadMembers(), loadFirms()]);
+  await Promise.all(firms.map(f => loadBriefs(f.id)));
   initWS();
   if (_me?.role === 'CLIENT') {
     renderClientPortal();
@@ -761,7 +793,38 @@ function setBC(items){
 }
 function setSBI(id){document.querySelectorAll('.sbi').forEach(e=>e.classList.remove('act'));document.getElementById('sbi-'+id)?.classList.add('act');}
 function openAcc(fid){document.querySelectorAll('.aw').forEach(e=>e.classList.remove('open'));document.getElementById(`aw-${fid}`)?.classList.add('open');}
-function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur);}
+function toast(msg,type='info',dur=2400){
+  const t=document.getElementById('toast');
+  const c={
+    info:{bg:'var(--bg)',text:'var(--txt)',border:'var(--bdr2)'},
+    success:{bg:'var(--gbg)',text:'var(--grn)',border:'#C0DD97'},
+    error:{bg:'var(--rbg)',text:'var(--red)',border:'#F09595'},
+    warning:{bg:'var(--ambg)',text:'var(--amb)',border:'#FAC775'},
+  }[type]||{bg:'var(--bg)',text:'var(--txt)',border:'var(--bdr2)'};
+  t.style.cssText=`display:block;background:${c.bg};color:${c.text};border:.5px solid ${c.border};`;
+  t.textContent=msg;clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur);
+}
+function emptyState(icon,title,desc,btnText,btnFn){
+  return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;text-align:center;gap:10px">
+    <div style="font-size:32px;opacity:.25">${icon}</div>
+    <div style="font-size:13px;font-weight:500;color:var(--txt2)">${title}</div>
+    <div style="font-size:11px;color:var(--txt3);max-width:240px;line-height:1.5">${desc}</div>
+    ${btnText?`<button class="btn bp" onclick="${btnFn}" style="margin-top:6px">${btnText}</button>`:''}
+  </div>`;
+}
+function firmaSkeleton(){
+  return `<div class="fc" style="pointer-events:none">
+    <div class="fc-cover"><div class="skel" style="position:absolute;inset:0"></div></div>
+    <div class="fc-body">
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <div class="skel" style="width:70px;height:16px;border-radius:20px"></div>
+        <div class="skel" style="width:90px;height:16px;border-radius:20px"></div>
+      </div>
+      <div class="skel" style="height:4px;border-radius:4px;margin-bottom:4px"></div>
+      <div class="skel" style="width:100px;height:10px;border-radius:4px"></div>
+    </div>
+  </div>`;
+}
 function tbadge(type){return `<span class="badge ${TASK_BADGES[type]||'bgr'}">${type}</span>`;}
 function mname(id){return members.find(m=>m.id===id)?.name||'Atanmadı';}
 function isVidUrl(u){return u&&(u.includes('youtube')||u.includes('youtu.be')||u.includes('vimeo')||u.includes('tiktok')||/\.(mp4|mov|webm)$/i.test(u));}
@@ -1254,7 +1317,6 @@ async function openMbK(fid,bid){
 }
 
 function renderMbView(viewId,title,subtitle,fid,bid,which,cards){
-  const b=gB(fid,bid);
   const ap=(cards||[]).filter(k=>k.status==='approved').length;
   const tot=(cards||[]).length;
   const gridId=which==='ig'?'mb-ig-grid':'mb-k-grid';
@@ -1264,7 +1326,11 @@ function renderMbView(viewId,title,subtitle,fid,bid,which,cards){
         <div style="font-size:16px;font-weight:600">${title}</div>
         <div style="font-size:11px;color:var(--txt3);margin-top:3px">${subtitle}</div>
       </div>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="display:flex;gap:2px;border:.5px solid var(--bdr2);border-radius:7px;padding:2px;background:var(--bg2)">
+          <button class="btn bs" data-mbvm="grid" onclick="setMbViewMode('${fid}','${bid}','${which}','grid')" style="border-radius:5px;padding:3px 7px;background:${_mbViewMode==='grid'?'var(--bg)':'transparent'};border-color:${_mbViewMode==='grid'?'var(--bdr2)':'transparent'};color:${_mbViewMode==='grid'?'var(--txt)':'var(--txt3)'}">⊞</button>
+          <button class="btn bs" data-mbvm="list" onclick="setMbViewMode('${fid}','${bid}','${which}','list')" style="border-radius:5px;padding:3px 7px;background:${_mbViewMode==='list'?'var(--bg)':'transparent'};border-color:${_mbViewMode==='list'?'var(--bdr2)':'transparent'};color:${_mbViewMode==='list'?'var(--txt)':'var(--txt3)'}">☰</button>
+        </div>
         <div class="btn bpu-btn" onclick="openCustMB('${fid}','${bid}','${which}')">Müşteri Görünümü</div>
         <div class="btn bp" onclick="showMod('add-mb','${fid}','${bid}','${which}')">+ Kart Ekle</div>
       </div>
@@ -1274,7 +1340,24 @@ function renderMbView(viewId,title,subtitle,fid,bid,which,cards){
       <span style="font-size:11px;color:var(--txt3)">${ap}/${tot} onaylı</span>
     </div>`:''}
     <div class="mbg" id="${gridId}"></div>
-    ${!tot?`<div class="empty-st"><p>Henüz kart yok.</p><div class="btn bp" onclick="showMod('add-mb','${fid}','${bid}','${which}')">+ İlk Kartı Ekle</div></div>`:''}`;
+    ${!tot?emptyState('🎨','Henüz kart yok','Referans görsel veya video ekleyerek başla','+ Kart Ekle',`showMod('add-mb','${fid}','${bid}','${which}')`):''}`;
+}
+
+let _mbViewMode='grid';
+
+function setMbViewMode(fid,bid,which,mode){
+  _mbViewMode=mode;
+  const gridId=which==='ig'?'mb-ig-grid':'mb-k-grid';
+  const grid=document.getElementById(gridId);
+  if(grid){
+    grid.style.gridTemplateColumns=mode==='list'?'1fr':'';
+  }
+  document.querySelectorAll('[data-mbvm]').forEach(b=>{
+    b.style.background=b.dataset.mbvm===mode?'var(--bg)':'transparent';
+    b.style.color=b.dataset.mbvm===mode?'var(--txt)':'var(--txt3)';
+    b.style.borderColor=b.dataset.mbvm===mode?'var(--bdr2)':'transparent';
+  });
+  renderMBG(gridId,fid,bid,which);
 }
 
 function renderMBG(gridId,fid,bid,which){
@@ -1282,32 +1365,63 @@ function renderMBG(gridId,fid,bid,which){
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const grid=document.getElementById(gridId);if(!grid)return;
   if(!cards.length){grid.innerHTML='';return;}
+
+  if(_mbViewMode==='list'){
+    grid.style.gridTemplateColumns='1fr';
+    grid.innerHTML=cards.map(c=>{
+      const cv=c.versions?.[c.versions.length-1];
+      const img=cv?.img||c.img;
+      return `<div style="display:flex;gap:12px;padding:10px;border:.5px solid var(--bdr);border-radius:10px;background:var(--bg);cursor:pointer;margin-bottom:6px;transition:border-color .15s" data-status="${c.status}" onclick="openMBDet('${fid}','${bid}','${which}','${c.id}')" onmouseover="this.style.borderColor='var(--bdr2)'" onmouseout="this.style.borderColor='var(--bdr)'">
+        <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;background:var(--bg2);position:relative">
+          ${img?`<img src="${img}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:cv?.url?`<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:18px">▶</div>`:''}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.label}</span>
+            <span class="badge ${STATUS_BADGES[c.status]||'bgr'}" style="font-size:9px;flex-shrink:0">${STATUS_LABELS[c.status]||'Bekliyor'}</span>
+          </div>
+          <div style="font-size:10px;color:var(--txt3)">${c.type} · v${c.versions?.length||1}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <div class="btn bgn-btn bs" onclick="event.stopPropagation();setMBS('${fid}','${bid}','${which}','${c.id}','approved')">✓</div>
+          <div class="btn brd-btn bs" onclick="event.stopPropagation();setMBS('${fid}','${bid}','${which}','${c.id}','rejected')">✗</div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Grid modu
+  grid.style.gridTemplateColumns='';
   grid.innerHTML=cards.map(c=>{
     const cv=c.versions?.[c.versions.length-1];
     const cardUrl=cv?.url||c.url||'';
     const img=cv?.img||c.img||ytThumb(cardUrl);
     const isVid=isEmbedUrl(cardUrl);
-    return `<div class="mbc" onclick="openMBDet('${fid}','${bid}','${which}','${c.id}')">
+    const plat=getLinkPlatform(cardUrl);
+    const platBg=plat?.color||'#534AB7';
+    const verNum=c.versions?.length||1;
+    return `<div class="mbc" data-status="${c.status}" onclick="openMBDet('${fid}','${bid}','${which}','${c.id}')">
       <div class="mbth">
         ${isVid?`<div style="position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center">
-          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75">`:''}
+          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75" loading="lazy">`:''}
           <div style="position:relative;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:14px">▶</div>
         </div>`:img?`<img src="${img}" loading="lazy">`:`<div style="position:absolute;inset:0;background:${GR[0][0]}"></div>`}
+        ${plat?`<div class="mb-plat" style="background:${platBg}">${plat.icon||plat.name.slice(0,2)}</div>`:''}
+        <div style="position:absolute;top:7px;right:7px;z-index:3;cursor:pointer" onclick="event.stopPropagation();openMBDet('${fid}','${bid}','${which}','${c.id}')">
+          <span class="badge bpu" style="font-size:8px">v${verNum}</span>
+        </div>
         <div class="mbov">
           <div class="ovb">↗</div>
           <div class="ovb" onclick="event.stopPropagation();delMBC('${fid}','${bid}','${which}','${c.id}')" style="color:var(--red)">✕</div>
         </div>
-        <div style="position:absolute;top:8px;right:8px;z-index:3"><span class="badge bpu" style="font-size:9px">v${c.versions?.length||1}</span></div>
-        ${isVid?'<div style="position:absolute;top:8px;left:8px;z-index:3"><span class="badge brd" style="font-size:9px">VİDEO</span></div>':''}
       </div>
       <div class="mbb">
         <div class="mbt">${c.label}</div>
         <div class="mbsub">${c.type}</div>
-        <div class="mbdesc">${cv?.desc||c.desc||'Açıklama yok.'}</div>
         <div class="mbft">
           <span class="badge ${STATUS_BADGES[c.status]||'bgr'}" style="font-size:9px">${STATUS_LABELS[c.status]||'Bekliyor'}</span>
           ${c.task?tbadge(c.task.type):''}
-          ${c.task?.assignee?`<span style="font-size:10px;color:var(--txt3)">${mname(c.task.assignee)}</span>`:''}
         </div>
       </div>
     </div>`;
@@ -1636,14 +1750,21 @@ async function openIG(fid,bid){
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px" id="ig-cells-${bid}"></div>
           </div>
         </div>
-        <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:6px">Hücreye tıkla · Sürükle ile sırala</div>
+        <div id="ig-select-bar" style="display:none;align-items:center;gap:6px;margin-top:8px;padding:7px 10px;background:var(--abg);border-radius:8px;border:.5px solid var(--abdr)"></div>
+        <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:6px">Hücreye tıkla · Sürükle ile sırala · Shift+tıkla çoklu seçim</div>
       </div>
-      <div class="card cp">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px">İçerik Listesi</div>
-        <div style="max-height:420px;overflow-y:auto" id="ig-list-${bid}"></div>
+      <div>
+        <div id="ig-filter-bar-${bid}"></div>
+        <div class="card cp">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px">İçerik Listesi</div>
+          <div style="max-height:380px;overflow-y:auto" id="ig-list-${bid}"></div>
+        </div>
       </div>
     </div>`;
   showV('ig');
+  _igSelected.clear();
+  _igFilter='all';
+  renderIGFilterBar(fid,bid);
   renderIGCells(fid,bid);
   renderIGList(fid,bid);
 }
@@ -1652,41 +1773,61 @@ function renderIGCells(fid,bid){
   const b=gB(fid,bid);const f=gF(fid);
   const g=document.getElementById(`ig-cells-${bid}`);if(!g)return;
   g.innerHTML='';
-  b.igCells.forEach((cell,idx)=>{
+  const cells=_igFilter==='all'?b.igCells:b.igCells.filter(c=>c.type===_igFilter);
+  cells.forEach((cell,idx)=>{
+    const realIdx=b.igCells.indexOf(cell);
     const d=document.createElement('div');
+    d.className='igc';
+    d.dataset.igid=cell.id;
     const cellThumb=cell.src||ytThumb(cell.videoUrl||'');
     d.style.cssText='aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer;background:'+GR[idx%9][0];
     if(cell.src||cell.videoUrl)d.draggable=true;
-    if(cellThumb){const img=document.createElement('img');img.src=cellThumb;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';d.appendChild(img);}
+    if(cellThumb){const img=document.createElement('img');img.src=cellThumb;img.loading='lazy';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';d.appendChild(img);}
     else if(cell.videoUrl&&isEmbedUrl(cell.videoUrl)){const pl=document.createElement('div');pl.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2;font-size:22px;color:#fff';pl.textContent='▶';d.appendChild(pl);}
+    // Tip ikonu
+    if(cell.type==='reels'){const rv=document.createElement('div');rv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';rv.textContent='▶';d.appendChild(rv);}
+    if(cell.type==='carousel'){const cv=document.createElement('div');cv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';cv.textContent='⧉';d.appendChild(cv);}
+    // Onay işareti
+    if(cell.approved===true){const ok=document.createElement('div');ok.style.cssText='position:absolute;bottom:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';ok.textContent='✓';d.appendChild(ok);}
+    if(cell.approved===false){const rj=document.createElement('div');rj.style.cssText='position:absolute;bottom:3px;right:3px;z-index:3;color:#ff6b6b;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';rj.textContent='✗';d.appendChild(rj);}
+    // Tarih etiketi (hover'da görünür)
+    if(cell.date){
+      const db2=document.createElement('div');
+      db2.className='igc-date-bar';
+      db2.innerHTML=`<div style="font-size:8px;color:#fff;text-align:center">${formatIGDate(cell.date)}</div>`;
+      d.appendChild(db2);
+    }
+    // Çoklu seçim overlay
+    const selOv=document.createElement('div');selOv.className='igc-sel';selOv.style.display='none';
+    selOv.innerHTML=`<div style="position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#534AB7;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff">✓</div>`;
+    d.appendChild(selOv);
+    // Hover overlay
     const ov=document.createElement('div');
     ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px;z-index:4';
     ov.innerHTML=`<button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">✎</button>
       <button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px">▶</button>
       <button style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;font-size:11px;color:#A32D2D">✕</button>`;
-    ov.children[0].onclick=e=>{e.stopPropagation();showMod('edit-ig',fid,bid,idx);};
-    ov.children[1].onclick=e=>{e.stopPropagation();viewCell(fid,bid,idx);};
-    ov.children[2].onclick=e=>{e.stopPropagation();deleteIGCell(fid,bid,idx);};
+    ov.children[0].onclick=e=>{e.stopPropagation();showMod('edit-ig',fid,bid,realIdx);};
+    ov.children[1].onclick=e=>{e.stopPropagation();viewCell(fid,bid,realIdx);};
+    ov.children[2].onclick=e=>{e.stopPropagation();deleteIGCell(fid,bid,realIdx);};
     d.appendChild(ov);
     d.onmouseover=()=>ov.style.opacity='1';
     d.onmouseout=()=>ov.style.opacity='0';
-    d.onclick=()=>viewCell(fid,bid,idx);
+    d.onclick=(e)=>{igCellClick(e,fid,bid,cell.id);if(!e.shiftKey&&!e.ctrlKey&&!e.metaKey)viewCell(fid,bid,realIdx);};
     // Drag
-    d.addEventListener('dragstart',e=>{dragCell=idx;d.style.opacity='.3';e.dataTransfer.setData('text/plain',idx);});
-    d.addEventListener('dragover',e=>{e.preventDefault();if(idx!==dragCell)d.style.outline='2.5px solid var(--acc)';});
+    d.addEventListener('dragstart',e=>{dragCell=realIdx;d.style.opacity='.3';e.dataTransfer.setData('text/plain',realIdx);});
+    d.addEventListener('dragover',e=>{e.preventDefault();if(realIdx!==dragCell)d.style.outline='2.5px solid var(--acc)';});
     d.addEventListener('dragleave',()=>d.style.outline='');
-    d.addEventListener('dragend',()=>{d.style.opacity='1';d.style.outline='';document.querySelectorAll('[data-igcell]').forEach(c=>{c.style.outline='';c.style.opacity='1';});dragCell=null;});
+    d.addEventListener('dragend',()=>{d.style.opacity='1';d.style.outline='';dragCell=null;});
     d.addEventListener('drop',e=>{
       e.preventDefault();d.style.outline='';
-      if(dragCell===null||dragCell===idx)return;
-      [b.igCells[dragCell],b.igCells[idx]]=[b.igCells[idx],b.igCells[dragCell]];
+      if(dragCell===null||dragCell===realIdx)return;
+      [b.igCells[dragCell],b.igCells[realIdx]]=[b.igCells[realIdx],b.igCells[dragCell]];
       dragCell=null;
       renderIGCells(fid,bid);renderIGList(fid,bid);
-      toast(`${idx+1}. pozisyona taşındı`);
+      toast(`${realIdx+1}. pozisyona taşındı`);
       apiFetch(`/api/firms/${fid}/briefs/${bid}/ig/reorder`,{method:'POST',body:{order:b.igCells.map(c=>c.id)}}).catch(e=>console.error(e));
     });
-    if(cell.approved===true){const ok=document.createElement('div');ok.style.cssText='position:absolute;bottom:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';ok.textContent='✓';d.appendChild(ok);}
-    if(cell.type==='reels'){const rv=document.createElement('div');rv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';rv.textContent='▶';d.appendChild(rv);}
     g.appendChild(d);
   });
 }
@@ -1694,17 +1835,88 @@ function renderIGCells(fid,bid){
 function renderIGList(fid,bid){
   const b=gB(fid,bid);
   const el=document.getElementById(`ig-list-${bid}`);if(!el)return;
-  el.innerHTML=b.igCells.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:8px;border:.5px solid var(--bdr);margin-bottom:4px;cursor:pointer;background:var(--bg2)" onclick="viewCell('${fid}','${bid}',${i})">
-      <div style="width:30px;height:30px;border-radius:5px;overflow:hidden;flex-shrink:0;background:${GR[i%9][0]};position:relative">
+  const cells=_igFilter==='all'?b.igCells:b.igCells.filter(c=>c.type===_igFilter);
+  if(!cells.length){el.innerHTML=`<div style="text-align:center;padding:16px;font-size:11px;color:var(--txt3)">${_igFilter==='all'?'Henüz içerik yok.':'Bu türde içerik yok.'}</div>`;return;}
+  el.innerHTML=cells.map((c,i)=>{
+    const realIdx=b.igCells.indexOf(c);
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:8px;border:.5px solid var(--bdr);margin-bottom:4px;cursor:pointer;background:var(--bg2)" onclick="viewCell('${fid}','${bid}',${realIdx})">
+      <div style="width:30px;height:30px;border-radius:5px;overflow:hidden;flex-shrink:0;background:${GR[realIdx%9][0]};position:relative">
         ${c.src?`<img src="${c.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" loading="lazy">`:''}
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:10px;font-weight:500;color:var(--txt)">${i+1}. ${c.type==='reels'?'Reels':c.type==='carousel'?'Carousel':'Post'}${c.date?' · '+c.date:''}</div>
+        <div style="font-size:10px;font-weight:500;color:var(--txt)">${realIdx+1}. ${c.type==='reels'?'Reels':c.type==='carousel'?'Carousel':'Post'}${c.date?` · ${formatIGDate(c.date)}`:''}</div>
         <div style="font-size:9px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.cap||'—'}</div>
       </div>
       <div>${c.approved===true?'<span style="color:var(--grn);font-size:11px">✓</span>':c.approved===false?'<span style="color:var(--red);font-size:11px">✗</span>':'<span style="color:var(--txt3);font-size:11px">○</span>'}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// ── IG FİLTRE & ÇOKLU SEÇİM ─────────────────────────────
+let _igFilter='all';
+const _igSelected=new Set();
+
+function renderIGFilterBar(fid,bid){
+  const b=gB(fid,bid);if(!b)return;
+  const el=document.getElementById(`ig-filter-bar-${bid}`);if(!el)return;
+  const counts={
+    all:b.igCells.length,
+    post:b.igCells.filter(c=>c.type==='post').length,
+    reels:b.igCells.filter(c=>c.type==='reels').length,
+    carousel:b.igCells.filter(c=>c.type==='carousel').length,
+  };
+  el.innerHTML=`<div style="display:flex;gap:2px;background:var(--bg2);border-radius:8px;padding:3px;margin-bottom:10px">
+    ${['all','post','reels','carousel'].map(f=>`
+      <button class="btn bs" style="border-radius:6px;flex:1;${_igFilter===f?'background:var(--bg);border-color:var(--bdr2);color:var(--txt)':'background:transparent;border-color:transparent;color:var(--txt3)'}"
+        onclick="setIGFilter('${fid}','${bid}','${f}')">
+        ${{all:'Tümü',post:'Post',reels:'Reels',carousel:'Carousel'}[f]}
+        <span style="color:var(--txt3);font-size:9px"> ${counts[f]}</span>
+      </button>`).join('')}
+  </div>`;
+}
+function setIGFilter(fid,bid,filter){_igFilter=filter;renderIGFilterBar(fid,bid);renderIGList(fid,bid);}
+
+function igCellClick(event,fid,bid,cellId){
+  if(event.shiftKey||event.ctrlKey||event.metaKey){
+    event.stopPropagation();
+    _igSelected.has(cellId)?_igSelected.delete(cellId):_igSelected.add(cellId);
+    updateIGSelectionUI(fid,bid);
+    // Toggle visual
+    const el=document.querySelector(`[data-igid="${cellId}"]`);
+    if(el){const sel=el.querySelector('.igc-sel');if(sel)sel.style.display=_igSelected.has(cellId)?'block':'none';}
+    return;
+  }
+  _igSelected.clear();
+  document.querySelectorAll('.igc-sel').forEach(s=>s.style.display='none');
+  updateIGSelectionUI(fid,bid);
+}
+
+function updateIGSelectionUI(fid,bid){
+  const count=_igSelected.size;
+  const bar=document.getElementById('ig-select-bar');if(!bar)return;
+  if(count>0){
+    bar.style.display='flex';
+    bar.innerHTML=`<span style="font-size:11px;color:var(--atxt);flex:1">${count} seçildi</span>
+      <div class="btn bgn-btn bs" onclick="bulkIGApprove('${fid}','${bid}',true)">✓ Tümünü Onayla</div>
+      <div class="btn brd-btn bs" onclick="bulkIGApprove('${fid}','${bid}',false)">✗ Tümünü Reddet</div>
+      <div class="btn bg0 bs" onclick="_igSelected.clear();document.querySelectorAll('.igc-sel').forEach(s=>s.style.display='none');updateIGSelectionUI('${fid}','${bid}')">İptal</div>`;
+  }else{bar.style.display='none';}
+}
+
+async function bulkIGApprove(fid,bid,approved){
+  const b=gB(fid,bid);const ids=Array.from(_igSelected);
+  ids.forEach(id=>{const cell=b.igCells.find(c=>c.id===id);if(cell)cell.approved=approved;});
+  _igSelected.clear();
+  updateIGSelectionUI(fid,bid);
+  renderIGCells(fid,bid);renderIGList(fid,bid);
+  try{await apiFetch(`/api/firms/${fid}/briefs/${bid}/ig/bulk-approve`,{method:'PATCH',body:{ids,approved}});}catch(e){console.error(e);}
+  toast(`${ids.length} hücre ${approved?'onaylandı':'reddedildi'} ✓`,'success');
+}
+
+function formatIGDate(dateStr){
+  if(!dateStr)return '';
+  try{return new Date(dateStr).toLocaleDateString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
+  catch(e){return dateStr;}
 }
 
 async function deleteIGCell(fid,bid,idx){
@@ -1715,8 +1927,8 @@ async function deleteIGCell(fid,bid,idx){
     b.igCells.splice(idx,1);
     b.igCells.forEach((c,i)=>c.cellIndex=i);
     renderIGCells(fid,bid);renderIGList(fid,bid);
-    toast('İçerik silindi ✓');
-  }catch(e){toast('Hata: '+e.message);}
+    toast('İçerik silindi ✓','success');
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 function viewCell(fid,bid,idx){
@@ -2624,27 +2836,75 @@ function closeMod(){
 function todayStr(){return new Date().toISOString().split('T')[0];}
 function nowStr(){return new Date().toISOString().slice(0,16);}
 
-// ── URL HİNT SİSTEMİ (Moodboard Kart) ───────────────────
-function onMbcUrlChange(inp){
+// ── LİNK ÖNİZLEME SİSTEMİ ───────────────────────────────
+let _previewTimer=null;
+const PLAT_COLORS={YouTube:'#ff0000',Vimeo:'#1AB7EA',TikTok:'#010101',Instagram:'#E1306C',Pinterest:'#E60023',Behance:'#1769FF',Web:'#534AB7'};
+
+function onUrlInputChange(inp,previewContainerId){
+  clearTimeout(_previewTimer);
   const url=inp.value.trim();
+  const cont=document.getElementById(previewContainerId);
+  if(!cont)return;
+  if(!url||!url.startsWith('http')){cont.innerHTML='';return;}
+  // Anlık embed hint
   const p=getLinkPlatform(url);
-  const hint=document.getElementById('mbc-url-hint');
-  if(!hint)return;
-  if(!p||!url){hint.innerHTML='';return;}
-  if(p.embed===false){
-    hint.innerHTML=`<span style="color:var(--amb);font-size:10px">⚠ ${p.name} embed desteklenmiyor — aşağıdan kapak görseli yükleyin.</span>`;
-  }else if(p.embed==='oembed'||p.embed==='try'){
-    hint.innerHTML=`<span style="color:var(--acc);font-size:10px">✓ ${p.name} player destekleniyor.</span>`;
+  if(p){
+    const hintColor=p.embed===false?'var(--amb)':p.embed?'var(--grn)':'var(--txt3)';
+    const hintMsg=p.embed===false?`⚠ ${p.name} embed desteklenmiyor — görsel yükleyin.`:`✓ ${p.name} ${p.embed===true?'embed':'player'} destekleniyor.`;
+    cont.innerHTML=`<div style="font-size:10px;color:${hintColor};margin-top:4px">${hintMsg}</div>`;
   }else{
-    hint.innerHTML=`<span style="color:var(--grn);font-size:10px">✓ ${p.name} — otomatik embed.</span>`;
+    cont.innerHTML=`<div style="font-size:10px;color:var(--txt3);margin-top:4px">Önizleme yükleniyor...</div>`;
   }
-  // YouTube: kapağı otomatik çek
-  if((url.includes('youtu.be')||url.includes('youtube.com'))&&window._mbc&&!window._mbc.url){
+  _previewTimer=setTimeout(async()=>{
+    try{
+      const data=await apiFetch('/api/link-preview?url='+encodeURIComponent(url));
+      renderLinkPreview(previewContainerId,data,url);
+    }catch(e){
+      if(cont)cont.innerHTML=`<div style="font-size:10px;color:var(--amb);margin-top:4px">Önizleme alınamadı. Manuel görsel yükleyebilirsiniz.</div>`;
+    }
+  },600);
+}
+
+function renderLinkPreview(containerId,data,url){
+  const el=document.getElementById(containerId);if(!el)return;
+  const platColor=PLAT_COLORS[data.platform]||'#534AB7';
+  // YouTube thumbnail'i otomatik doldur
+  if(data.thumbnail){
+    if(!window._mbc)window._mbc={};
+    if(!window._mbc.img&&!window._mbc.url){
+      window._mbc.autoThumb=data.thumbnail;
+      const fp=document.getElementById('mbc-fp');
+      if(fp)fp.innerHTML=`<img src="${data.thumbnail}" style="height:60px;border-radius:5px;object-fit:cover" onerror="this.style.display='none'"><div style="font-size:9px;color:var(--grn);margin-top:2px">✓ Thumbnail otomatik çekildi</div>`;
+    }
+  }
+  el.innerHTML=`<div style="display:flex;gap:10px;padding:10px;border:.5px solid var(--bdr);border-radius:8px;margin-top:8px;background:var(--bg);align-items:flex-start">
+    <div style="width:3px;align-self:stretch;border-radius:2px;background:${platColor};flex-shrink:0"></div>
+    ${data.thumbnail
+      ?`<img src="${data.thumbnail}" loading="lazy" style="width:72px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">`
+      :`<div style="width:72px;height:54px;border-radius:6px;background:${platColor}22;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:${platColor};font-weight:600">${data.platform||'Web'}</div>`}
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+        <span style="font-size:9px;font-weight:700;color:${platColor}">${data.platform||'Web'}</span>
+        ${data.type==='video'?`<span class="badge brd" style="font-size:8px">Video</span>`:''}
+        ${data.embedUrl?`<span style="font-size:9px;color:var(--grn)">✓ Embed</span>`:''}
+      </div>
+      ${data.title?`<div style="font-size:11px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${data.title}</div>`:''}
+      <div style="font-size:9px;color:var(--txt3);margin-top:2px">${url.replace(/^https?:\/\//,'').slice(0,55)}</div>
+    </div>
+  </div>`;
+}
+
+// ── URL HİNT (Moodboard kart — eski sistem korundu) ──────
+function onMbcUrlChange(inp){
+  onUrlInputChange(inp,'mbc-url-hint');
+  const url=inp.value.trim();
+  // YouTube kapağı anlık
+  if(url&&(url.includes('youtu.be')||url.includes('youtube.com'))){
     const thumb=ytThumb(url);
-    if(thumb){
+    if(thumb&&window._mbc&&!window._mbc.img){
       window._mbc.autoThumb=thumb;
       const fp=document.getElementById('mbc-fp');
-      if(fp&&!window._mbc.img)fp.innerHTML=`<img src="${thumb}" style="height:60px;border-radius:5px;object-fit:cover"><div style="font-size:9px;color:var(--acc);margin-top:2px">YouTube kapağı otomatik ✓</div>`;
+      if(fp&&!window._mbc.url)fp.innerHTML=`<img src="${thumb}" style="height:60px;border-radius:5px;object-fit:cover"><div style="font-size:9px;color:var(--grn);margin-top:2px">✓ YouTube kapağı</div>`;
     }
   }
 }
@@ -2713,6 +2973,104 @@ async function addCarouselSlide(){
   input.click();
 }
 
+// ── DRAG-DROP UPLOAD ALANI ────────────────────────────────
+function renderUploadArea(keyName,fpId,accept='image/*,video/*'){
+  return `<div class="upload-area" id="${fpId}-wrap"
+    ondragover="event.preventDefault();this.classList.add('drag-over')"
+    ondragleave="this.classList.remove('drag-over')"
+    ondrop="handleDrop(event,'${fpId}','${keyName}')"
+    onclick="document.getElementById('${fpId}-inp').click()">
+    <input type="file" id="${fpId}-inp" accept="${accept}" multiple style="display:none" onchange="handleFileSelect(this,'${fpId}','${keyName}')">
+    <div id="${fpId}-empty">
+      <div style="font-size:20px;opacity:.3;margin-bottom:4px">📁</div>
+      <div style="font-size:12px;font-weight:500;color:var(--txt2)">Dosyayı sürükle veya tıkla</div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:2px">JPG, PNG, GIF, MP4, MOV — maks 50MB</div>
+    </div>
+    <div id="${fpId}-preview" style="display:none"></div>
+    <div id="${fpId}-progress" style="display:none">
+      <div class="upload-prog-bar"><div class="upload-prog-fill" id="${fpId}-fill" style="width:0%"></div></div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px" id="${fpId}-pct">Yükleniyor...</div>
+    </div>
+  </div>`;
+}
+
+function handleDrop(e,fpId,keyName){
+  e.preventDefault();
+  const wrap=document.getElementById(fpId+'-wrap');if(wrap)wrap.classList.remove('drag-over');
+  processFiles(Array.from(e.dataTransfer.files),fpId,keyName);
+}
+function handleFileSelect(input,fpId,keyName){
+  processFiles(Array.from(input.files),fpId,keyName);
+  input.value='';
+}
+function processFiles(files,fpId,keyName){
+  if(!files.length)return;
+  const isCarouselMode=document.getElementById('nic-t')?.value==='carousel'||document.getElementById('mbc-type')?.value==='Carousel';
+  if(isCarouselMode&&files.length>1){processCarouselFilesNew(files,fpId,keyName);return;}
+  const file=files[0];
+  const url=URL.createObjectURL(file);
+  const isVid=isVidFile(file);
+  window[keyName]={img:isVid?null:url,blob:isVid?url:null,isVid,url:'',file};
+  showUploadPreview(fpId,url,isVid,file);
+  uploadFile(file,fpId,keyName);
+}
+function showUploadPreview(fpId,url,isVid,file){
+  const empty=document.getElementById(fpId+'-empty');
+  const preview=document.getElementById(fpId+'-preview');
+  if(empty)empty.style.display='none';
+  if(preview){
+    preview.style.display='block';
+    preview.innerHTML=isVid
+      ?`<video src="${url}" style="max-height:140px;border-radius:8px;max-width:100%" controls muted playsinline></video>
+         <div style="font-size:10px;color:var(--txt3);margin-top:4px">${file.name} · ${(file.size/1024/1024).toFixed(1)} MB</div>`
+      :`<img src="${url}" style="max-height:140px;border-radius:8px;max-width:100%;object-fit:contain">
+        <div style="font-size:10px;color:var(--txt3);margin-top:4px">${file.name} · ${(file.size/1024/1024).toFixed(1)} MB</div>`;
+  }
+}
+async function uploadFile(file,fpId,keyName){
+  const prog=document.getElementById(fpId+'-progress');
+  const pct=document.getElementById(fpId+'-pct');
+  const fill=document.getElementById(fpId+'-fill');
+  if(prog)prog.style.display='block';
+  try{
+    const fd=new FormData();fd.append('file',file);
+    const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
+    if(res.ok){
+      const data=await res.json();
+      if(window[keyName])window[keyName].url=data.url;
+      if(fill)fill.style.width='100%';
+      if(pct)pct.textContent='✓ Yüklendi';
+      setTimeout(()=>{if(prog)prog.style.display='none';},1500);
+    }
+  }catch(e){if(pct)pct.textContent='Yükleme hatası';console.warn('Upload hatası',e);}
+}
+function processCarouselFilesNew(files,fpId,keyName){
+  const limited=files.slice(0,20);
+  const slides=limited.map(f=>({url:URL.createObjectURL(f),name:f.name,size:f.size,file:f}));
+  window[keyName]={img:slides[0].url,slides:slides.map(s=>s.url),isCarousel:true,slideCount:slides.length,_slideFiles:slides.map(s=>s.file)};
+  const preview=document.getElementById(fpId+'-preview');
+  const empty=document.getElementById(fpId+'-empty');
+  if(empty)empty.style.display='none';
+  if(preview){
+    preview.style.display='block';
+    preview.innerHTML=`<div style="font-size:11px;font-weight:500;color:var(--txt);margin-bottom:8px">${slides.length} fotoğraf seçildi${files.length>20?' (maks 20)':''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${slides.map((s,i)=>`<div style="position:relative">
+          <img src="${s.url}" loading="lazy" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:.5px solid var(--bdr)">
+          <div style="position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:7px;display:flex;align-items:center;justify-content:center">${i+1}</div>
+        </div>`).join('')}
+      </div>`;
+  }
+  // Upload all files
+  slides.forEach(async(s,i)=>{
+    try{
+      const fd=new FormData();fd.append('file',s.file);
+      const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
+      if(res.ok){const d=await res.json();if(window[keyName]?.slides)window[keyName].slides[i]=d.url;}
+    }catch(e){}
+  });
+}
+
 async function prevFile(fpId,input,key){
   if(!input.files||!input.files[0])return;
   const f=input.files[0];const localUrl=URL.createObjectURL(f);const isV=isVidFile(f);
@@ -2721,14 +3079,13 @@ async function prevFile(fpId,input,key){
     `<video src="${localUrl}" style="height:60px;border-radius:5px" muted></video><div style="font-size:9px;color:var(--acc);margin-top:3px">Video → Reels · Yükleniyor...</div>`:
     `<img src="${localUrl}" style="height:60px;border-radius:5px;object-fit:cover">`;
   input.value='';
-  // Upload to server for persistent URL
   try{
     const fd=new FormData();fd.append('file',f);
     const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
     if(res.ok){
       const data=await res.json();
       if(window[key])window[key].url=data.url;
-      if(isV){const el=document.getElementById(fpId);if(el)el.querySelector('div').textContent='Video → Reels ✓';}
+      if(isV){const el=document.getElementById(fpId);if(el){const dv=el.querySelector('div');if(dv)dv.textContent='Video → Reels ✓';}}
     }
   }catch(e){console.warn('Upload hatası',e);}
 }

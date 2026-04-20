@@ -135,4 +135,22 @@ router.post('/approve-all', requireAuth, requireFirmAccess, async (req: AuthRequ
   }
 })
 
+// PATCH /ig/bulk-approve — toplu onayla / reddet
+router.patch('/bulk-approve', requireAuth, requireFirmAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const { ids, approved } = req.body as { ids: string[]; approved: boolean }
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ error: 'ids zorunlu' })
+    }
+    await db.iGCell.updateMany({
+      where: { id: { in: ids }, briefId: req.params.briefId },
+      data: { approved },
+    })
+    await cacheDelete(`brief:${req.params.briefId}`)
+    res.json({ updated: ids.length })
+  } catch (err) {
+    res.status(500).json({ error: 'Toplu onay başarısız' })
+  }
+})
+
 export default router
