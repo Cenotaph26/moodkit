@@ -482,16 +482,53 @@ async function loadBriefs(fid) {
   try {
     const data = await apiFetch('/api/firms/' + fid + '/briefs');
     const f = gF(fid); if (!f) return;
-    f.briefs = data.map(b => ({
-      id: b.id, month: b.month, year: b.year, stage: (b.stage || 'BRIEF').toLowerCase(),
-      products: b.products||'', tone: b.tone||'', colorDir: b.colorDir||'',
-      avoid: b.avoid||'', refs: b.refs||'', featured: b.featured||'',
-      newProduct: b.newProduct||false, newProductDesc: b.newProductDesc||'',
-      specialDay: b.specialDay||'', specialContent: b.specialContent||'',
-      notes: b.notes||'', hasAd: b.hasAd||false, budget: b.budget||'',
-      platforms: b.platforms||[], targetAudience: b.targetAudience||'', adAreas: b.adAreas||'',
-      mbIG: [], mbKamp: [], tasks: [], igCells: []
-    }));
+    f.briefs = data.map(b => {
+      // API'den gelen moodboardCards, tasks, igCells verilerini eşle
+      const allCards = b.moodboardCards || [];
+      const mapCard = c => ({
+        id: c.id, type: c.type, label: c.label,
+        desc: c.versions?.[0]?.desc || '',
+        url: c.versions?.[0]?.videoUrl || '',
+        img: c.versions?.[0]?.mediaUrl || null,
+        isVid: !!c.versions?.[0]?.videoUrl,
+        status: (c.status || 'PENDING').toLowerCase(),
+        versions: (c.versions || []).map(v => ({
+          v: v.vNum, date: new Date(v.createdAt).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),
+          by: v.createdBy || 'Bilinmiyor', note: v.note,
+          img: v.mediaUrl || null, url: v.videoUrl || '', desc: v.desc || ''
+        })),
+        task: c.taskType ? {
+          type: c.taskType, desc: c.taskDesc || '', format: c.taskFormat || '',
+          assignee: c.taskAssigneeId, dl: c.taskDeadline || '', igCell: c.taskIGCell
+        } : null
+      });
+      return {
+        id: b.id, month: b.month, year: b.year, stage: (b.stage || 'BRIEF').toLowerCase(),
+        products: b.products||'', tone: b.tone||'', colorDir: b.colorDir||'',
+        avoid: b.avoid||'', refs: b.refs||'', featured: b.featured||'',
+        newProduct: b.newProduct||false, newProductDesc: b.newProductDesc||'',
+        specialDay: b.specialDay||'', specialContent: b.specialContent||'',
+        notes: b.notes||'', hasAd: b.hasAd||false, budget: b.budget||'',
+        platforms: b.platforms||[], targetAudience: b.targetAudience||'', adAreas: b.adAreas||'',
+        mbIG: allCards.filter(c=>c.which==='IG').map(mapCard),
+        mbKamp: allCards.filter(c=>c.which==='KAMP').map(mapCard),
+        tasks: (b.tasks||[]).map(t => ({
+          id: t.id, cardRef: t.cardRef, type: t.type,
+          desc: t.desc, format: t.format || '', source: t.source || '',
+          assignee: t.assigneeId, deadline: t.deadline || '',
+          status: (t.status || 'TODO').toLowerCase(),
+          checkItems: (t.checkItems || []).map(ci => ({id:ci.id,text:ci.text,done:ci.done,order:ci.order}))
+        })),
+        igCells: (b.igCells||[]).sort((a,c)=>a.cellIndex-c.cellIndex).map(cell => ({
+          id: cell.id, cellIndex: cell.cellIndex,
+          type: (cell.type || 'POST').toLowerCase(),
+          src: cell.mediaUrl || null,
+          cap: cell.caption || '', hash: cell.hashtags || '',
+          date: cell.publishDate || '', videoUrl: cell.videoUrl || '',
+          slides: cell.slides || [], approved: cell.approved,
+        }))
+      };
+    });
   } catch(e) { console.error('Briefler yüklenemedi:', e); }
 }
 
