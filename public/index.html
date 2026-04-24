@@ -760,7 +760,7 @@ function mkSVG(c1,c2,t=''){
     <text x="200" y="155" text-anchor="middle" dominant-baseline="central" font-family="system-ui" font-size="13" font-weight="600" fill="rgba(255,255,255,0.32)" letter-spacing="2">${t}</text>
     </svg>`);
 }
-const GR=[['#0a0a0f','#1a1a2e'],['#111827','#374151'],['#0f172a','#1e293b'],['#1a1208','#2d1f08'],['#18181b','#27272a'],['#1c1917','#292524'],['#020617','#0f172a'],['#09090b','#18181b'],['#0a0a0f','#111827']];
+const GR=[['#2d1b4e','#534AB7'],['#0f3460','#185FA5'],['#1a3a1a','#2d5a2d'],['#3d1a00','#7a3600'],['#2d0a2d','#5a1a5a'],['#0a2d2d','#1a5a5a'],['#1a1a3d','#3d3d7a'],['#2d2d00','#5a5a00'],['#3d1a1a','#7a3333']];
 const gS=i=>mkSVG(GR[i%9][0],GR[i%9][1],'');
 const AC=[['#1a0f0a','#3d2314'],['#0a0f1a','#142a3d'],['#0f1a0a','#2a3d14'],['#1a1a0a','#3d3d14'],['#1a0a0f','#3d1420'],['#0a1a1a','#143d3d'],['#180f00','#3d2800'],['#0f000f','#280028'],['#001a0f','#003d28']];
 const aS=(i,t)=>mkSVG(AC[i%9][0],AC[i%9][1],t||['SMOOTHIE','TOST','LATTE','BARİSTA','KRUVASAN','BOWL','AFFAGATO','EL CLASICO','V60'][i%9]);
@@ -1444,6 +1444,7 @@ function delMBC(fid,bid,which,cid){
 // ── MB DETAIL ────────────────────────────────────────────
 function openMBDet(fid,bid,which,cid){
   const f=gF(fid),b=gB(fid,bid);
+  if(!f||!b)return;
   const cards=which==='ig'?b.mbIG:b.mbKamp;
   const c=cards.find(x=>x.id===cid);if(!c)return;
   const backFn=which==='ig'?`openMbIG('${fid}','${bid}')`:`openMbK('${fid}','${bid}')`;
@@ -1785,8 +1786,20 @@ function renderIGCells(fid,bid){
     const cellThumb=cell.src||ytThumb(cell.videoUrl||'');
     d.style.cssText='aspect-ratio:1;position:relative;overflow:hidden;cursor:pointer;background:'+GR[idx%9][0];
     if(cell.src||cell.videoUrl)d.draggable=true;
-    if(cellThumb){const img=document.createElement('img');img.src=cellThumb;img.loading='lazy';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';d.appendChild(img);}
-    else if(cell.videoUrl&&isEmbedUrl(cell.videoUrl)){const pl=document.createElement('div');pl.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2;font-size:22px;color:#fff';pl.textContent='▶';d.appendChild(pl);}
+    if(cellThumb){const img=document.createElement('img');img.src=cellThumb;img.loading='lazy';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';img.onerror=()=>{img.remove();};d.appendChild(img);}
+    else if(cell.videoUrl){
+      const pl=document.createElement('div');pl.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-size:22px;color:rgba(255,255,255,.8)';pl.textContent='▶';d.appendChild(pl);
+      // Base64 video: show first frame via hidden video element
+      if(cell.videoUrl.startsWith('data:video')){
+        const vt=document.createElement('video');
+        vt.src=cell.videoUrl;vt.muted=true;vt.preload='metadata';
+        vt.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0';
+        vt.addEventListener('loadedmetadata',()=>{vt.currentTime=0.5;});
+        vt.addEventListener('seeked',()=>{vt.style.opacity='1';pl.style.display='none';});
+        vt.onerror=()=>vt.remove();
+        d.appendChild(vt);
+      }
+    }
     // Tip ikonu
     if(cell.type==='reels'){const rv=document.createElement('div');rv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';rv.textContent='▶';d.appendChild(rv);}
     if(cell.type==='carousel'){const cv=document.createElement('div');cv.style.cssText='position:absolute;top:3px;right:3px;z-index:3;color:#fff;font-size:11px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))';cv.textContent='⧉';d.appendChild(cv);}
@@ -2681,7 +2694,7 @@ function showMod(type,...args){
           <div><label class="fl">Format</label><input class="inp" id="mbc-fmt" placeholder="9:16 · 30 sn · 4K"></div>
           <div><label class="fl">Deadline</label><input type="date" class="inp" id="mbc-dl" min="${todayStr()}"></div>
         </div>
-        ${which==='ig'?`<div class="fg" style="margin:0"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" placeholder="1"></div>`:''}
+        ${which==='ig'?`<div class="fg" style="margin:0"><label class="fl">IG Grid Hücre # (1+)</label><input class="inp" id="mbc-cell" type="number" min="1" placeholder="1"></div>`:''}
       </div>
       <div style="display:flex;gap:7px;justify-content:flex-end">
         <div class="btn bg0" onclick="closeMod()">İptal</div>
@@ -3057,6 +3070,7 @@ function handleFileSelect(input,fpId,keyName){
   input.value='';
 }
 const MAX_FILE_MB=50;
+let _uploading=0; // Aktif yükleme sayacı — 0 ise hazır
 function processFiles(files,fpId,keyName){
   if(!files.length)return;
   const isCarouselMode=document.getElementById('nic-t')?.value==='carousel'||document.getElementById('mbc-type')?.value==='Carousel';
@@ -3087,17 +3101,24 @@ async function uploadFile(file,fpId,keyName){
   const pct=document.getElementById(fpId+'-pct');
   const fill=document.getElementById(fpId+'-fill');
   if(prog)prog.style.display='block';
+  _uploading++;
   try{
     const fd=new FormData();fd.append('file',file);
     const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
     if(res.ok){
       const data=await res.json();
       if(window[keyName])window[keyName].url=data.url;
+      // Blob URL'yi server URL ile güncelle (artık persist edebilir)
+      if(window[keyName]&&window[keyName].img&&window[keyName].img.startsWith('blob:'))window[keyName].img=data.url;
       if(fill)fill.style.width='100%';
       if(pct)pct.textContent='✓ Yüklendi';
       setTimeout(()=>{if(prog)prog.style.display='none';},1500);
+    }else{
+      if(pct)pct.textContent='Yükleme başarısız';
+      toast('Dosya yüklenemedi','error');
     }
-  }catch(e){if(pct)pct.textContent='Yükleme hatası';console.warn('Upload hatası',e);}
+  }catch(e){if(pct)pct.textContent='Yükleme hatası';toast('Yükleme hatası','error');console.warn('Upload hatası',e);}
+  finally{_uploading=Math.max(0,_uploading-1);}
 }
 function processCarouselFilesNew(files,fpId,keyName){
   const CAROUSEL_MAX_MB=5;
@@ -3135,33 +3156,38 @@ async function prevFile(fpId,input,key){
   const f=input.files[0];
   if(f.size>MAX_FILE_MB*1024*1024){toast(`Dosya çok büyük (maks ${MAX_FILE_MB}MB)`,'error');input.value='';return;}
   const localUrl=URL.createObjectURL(f);const isV=isVidFile(f);
-  window[key]={img:isV?null:localUrl,blob:isV?localUrl:null,isVid:isV,url:''};
+  // img'i null bırak — upload bitince server URL atanacak (blob URL persist etmez)
+  window[key]={img:null,blob:isV?localUrl:null,isVid:isV,url:''};
   document.getElementById(fpId).innerHTML=isV?
     `<video src="${localUrl}" style="height:60px;border-radius:5px" muted></video><div style="font-size:9px;color:var(--acc);margin-top:3px">Video → Reels · Yükleniyor...</div>`:
     `<img src="${localUrl}" style="height:60px;border-radius:5px;object-fit:cover">`;
   input.value='';
+  _uploading++;
   try{
     const fd=new FormData();fd.append('file',f);
     const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:'Bearer '+_token},body:fd});
     if(res.ok){
       const data=await res.json();
-      if(window[key])window[key].url=data.url;
+      if(window[key]){window[key].url=data.url;window[key].img=data.url;}
       if(isV){const el=document.getElementById(fpId);if(el){const dv=el.querySelector('div');if(dv)dv.textContent='Video → Reels ✓';}}
-    }
-  }catch(e){console.warn('Upload hatası',e);}
+    }else{toast('Dosya yüklenemedi','error');}
+  }catch(e){toast('Yükleme hatası','error');console.warn('Upload hatası',e);}
+  finally{_uploading=Math.max(0,_uploading-1);}
 }
 
 // ── ACTIONS ──────────────────────────────────────────────
 async function addFirm(){
   const name=document.getElementById('nf-n')?.value.trim();if(!name){toast('Firma adı zorunlu');return;}
   try{
-    const f=await apiAddFirmAPI({name,sector:document.getElementById('nf-s').value,color:window._nfc||'#1a1a2e'});
+    const contact=document.getElementById('nf-e')?.value.trim()||undefined;
+    const f=await apiAddFirmAPI({name,sector:document.getElementById('nf-s').value,color:window._nfc||'#1a1a2e',contact});
     firms.push({id:f.id,name:f.name,sector:f.sector||'',color:f.color||'#1a1a2e',briefs:[],memberIds:[]});
     toast('Firma eklendi ✓');renderSB();goHome();
   }catch(e){toast('Hata: '+e.message);}
 }
 
 async function addMbCard(fid,bid,which){
+  if(_uploading>0){toast('Dosya yükleniyor, lütfen bekleyin…','warning');return;}
   const label=document.getElementById('mbc-label')?.value.trim();if(!label){toast('Başlık zorunlu');return;}
   const url=document.getElementById('mbc-url')?.value.trim()||'';
   const mbc=window._mbc||{img:null,isVid:false};
@@ -3185,10 +3211,11 @@ async function addMbCard(fid,bid,which){
       taskAssigneeId:assigneeId||undefined,
       taskIGCell:which==='ig'?cellNum:undefined
     });
-    toast('Kart eklendi ✓');
-    await loadCards(fid,bid,which);
+    toast('Kart eklendi ✓','success');
+    // Kartları ve görevleri güncelle (görev anında oluşturuldu)
+    await Promise.all([loadCards(fid,bid,which), loadTasks(fid,bid)]);
     if(which==='ig')openMbIG(fid,bid);else openMbK(fid,bid);
-  }catch(e){toast('Hata: '+e.message);}
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 function updateMbCard(fid,bid,which,cid){
@@ -3242,6 +3269,7 @@ async function addTask(fid,bid){
 }
 
 async function addIGCell(fid,bid){
+  if(_uploading>0){toast('Dosya yükleniyor, lütfen bekleyin…','warning');return;}
   const urlVal=document.getElementById('nic-v')?.value||'';
   const nic=window._nic||{img:null,blob:null,isVid:false};
   let type=document.getElementById('nic-t').value;

@@ -19,7 +19,7 @@ const CardSchema = z.object({
   taskFormat: z.string().optional(),
   taskDeadline: z.string().optional(),
   taskAssigneeId: z.string().optional(),
-  taskIGCell: z.number().min(0).max(8).optional(),
+  taskIGCell: z.number().min(0).optional(),
 })
 
 const VersionSchema = z.object({
@@ -80,6 +80,30 @@ router.post('/', requireAuth, requireFirmAccess, async (req: AuthRequest, res: R
 
     // Otomatik aşama geçişi
     await autoAdvanceStageOnCardAdd(req.params.briefId, req.params.firmId, data.which)
+
+    // Görev tanımı varsa hemen Task kaydı oluştur (onay bekleme)
+    if (data.taskType) {
+      const existing = await db.task.findFirst({ where: { briefId: req.params.briefId, cardRef: data.label } })
+      if (!existing) {
+        const last = await db.task.findFirst({ where: { briefId: req.params.briefId }, orderBy: { order: 'desc' } })
+        await db.task.create({
+          data: {
+            briefId: req.params.briefId,
+            cardId: card.id,
+            cardRef: data.label,
+            type: data.taskType,
+            desc: req.body.taskDesc || data.label,
+            format: req.body.taskFormat || null,
+            source: data.which === 'IG' ? 'IG Moodboard' : 'Kampanya MB',
+            assigneeId: req.body.taskAssigneeId || null,
+            deadline: req.body.taskDeadline || null,
+            status: 'TODO',
+            order: (last?.order ?? -1) + 1,
+            createdById: req.user!.id,
+          }
+        })
+      }
+    }
 
     await cacheDelete(`brief:${req.params.briefId}`)
     res.status(201).json(card)
@@ -241,8 +265,8 @@ async function handleApproval(card: any, briefId: string, approverId: string) {
     })
   }
 
-  // Kanban'a görev ekle (eğer yoksa)
-  if (card.taskType && card.taskDesc) {
+  // Kanban'a görev ekle (taskType varsa yeterli)
+  if (card.taskType) {
     const existing = await db.task.findFirst({
       where: { briefId, cardRef: card.label }
     })
