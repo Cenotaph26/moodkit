@@ -59,8 +59,6 @@ router.put('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 })
 
-export default router
-
 // DELETE /api/users/:id - üye sil (sadece admin)
 router.delete('/:id', requireAuth, requireRole('ADMIN'), async (req: AuthRequest, res: Response) => {
   try {
@@ -87,3 +85,5 @@ router.patch('/:id/password', requireAuth, async (req: AuthRequest, res: Respons
     res.status(500).json({ error: 'Şifre güncellenemedi' })
   }
 })
+
+export default router

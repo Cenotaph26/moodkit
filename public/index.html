@@ -508,7 +508,7 @@ async function loadCards(fid, bid, which) {
       status: (c.status || 'PENDING').toLowerCase(),
       versions: (c.versions || []).map(v => ({
         v: v.vNum, date: new Date(v.createdAt).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),
-        by: v.createdBy?.name || 'Bilinmiyor', note: v.note,
+        by: v.createdBy || 'Bilinmiyor', note: v.note,
         img: v.mediaUrl || null, url: v.videoUrl || '', desc: v.desc || ''
       })),
       task: c.taskType ? {
@@ -563,7 +563,7 @@ async function loadMembers() {
     const data = await apiFetch('/api/users');
     if (data && data.length > 0) {
       members = data.map(u => ({
-        id: u.id, name: u.name, role: u.role.toLowerCase(),
+        id: u.id, name: u.name, email: u.email || '', role: u.role.toLowerCase(),
         title: u.title || '', prodRole: u.prodRole || null
       }));
       // Üyeleri sessionStorage'a yedekle
@@ -1285,7 +1285,7 @@ async function addBrief(fid){
   try{
     const b=await apiAddBriefAPI(fid,{month:MONTHS[NOW_M-1],year:NOW_Y});
     const f=gF(fid);
-    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',answers:{},mbIG:[],mbKamp:[],tasks:[],igCells:[]});
+    f.briefs.push({id:b.id,month:b.month,year:b.year,stage:'brief',mbIG:[],mbKamp:[],tasks:[],igCells:[]});
     renderSB();openBrief(fid,b.id);
   }catch(e){toast('Hata: '+e.message);}
 }
@@ -2252,7 +2252,10 @@ async function sendCardCmt(fid,bid,cardLabel){
 }
 
 async function openCustIG(fid,bid){
-  const f=gF(fid),b=gB(fid,bid);
+  const f=gF(fid);if(!f)return;
+  if(!gB(fid,bid))await loadBriefs(fid);
+  const b=gB(fid,bid);if(!b)return;
+  if(!b.igCells||!b.igCells.length)await loadIGCells(fid,bid);
   const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_]/g,'');
   setBC([{label:'Dashboard',fn:'goHome()'},{label:f.name},{label:'IG Grid Onayı'}]);
   document.getElementById('v-cust').innerHTML=`
@@ -2325,11 +2328,9 @@ async function openYayin(fid,bid){
   const mbAp=mbIG.filter(k=>k.status==='approved').length+mbKamp.filter(k=>k.status==='approved').length;
   const totMB=mbIG.length+mbKamp.length;
   const tDone=(b.tasks||[]).filter(t=>t.status==='DONE'||t.status==='done').length;
-  const scheduledCells=b.igCells.filter(x=>x.date).sort((a,c)=>{
-    const da=parseInt(a.date)||parseInt((a.date||'').replace(/\D/g,''))||99;
-    const dc=parseInt(c.date)||parseInt((c.date||'').replace(/\D/g,''))||99;
-    return da-dc;
-  });
+  const scheduledCells=b.igCells.filter(x=>x.date).sort((a,c)=>
+    new Date(a.date).getTime()-new Date(c.date).getTime()
+  );
   document.getElementById('v-yayin').innerHTML=`
     <div id="print-area" style="max-width:640px">
       <div style="font-size:16px;font-weight:600;margin-bottom:14px">Yayın — ${b.month} ${b.year}</div>
@@ -2357,7 +2358,7 @@ async function openYayin(fid,bid){
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
                 <span class="badge ${typeBadge}" style="font-size:9px">${typeLabel}</span>
-                <span style="font-size:10px;color:var(--txt3)">${cell.date}</span>
+                <span style="font-size:10px;color:var(--txt3)">${formatIGDate(cell.date)}</span>
               </div>
               <div style="font-size:11px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cell.cap||'—'}</div>
             </div>
@@ -2725,7 +2726,7 @@ function showMod(type,...args){
           <input type="file" id="mbc-f2" accept="image/*,video/*" style="display:none" onchange="prevFile('mbc-fp2',this,'_mbc')">
         </div>
       </div>
-      ${which==='ig'?`<div class="fg"><label class="fl">IG Grid Hücre # (1-9)</label><input class="inp" id="mbc-cell" type="number" min="1" max="9" value="${(c.task?.igCell||0)+1}"></div>`:''}
+      ${which==='ig'?`<div class="fg"><label class="fl">IG Grid Hücre # (1+)</label><input class="inp" id="mbc-cell" type="number" min="1" value="${(c.task?.igCell!=null?c.task.igCell+1:1)}"></div>`:''}
       <div style="display:flex;gap:7px;justify-content:flex-end">
         <div class="btn bg0" onclick="closeMod()">İptal</div>
         <div class="btn bp" onclick="updateMbCard('${fid}','${bid}','${which}','${cid}')">Güncelle</div>
