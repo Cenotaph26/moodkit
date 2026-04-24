@@ -540,7 +540,7 @@ async function loadCards(fid, bid, which) {
       id: c.id, type: c.type, label: c.label,
       desc: c.versions?.[c.versions.length-1]?.desc || '',
       url: c.versions?.[c.versions.length-1]?.videoUrl || '',
-      img: c.versions?.[c.versions.length-1]?.mediaUrl || aS(0),
+      img: c.versions?.[c.versions.length-1]?.mediaUrl || null,
       isVid: c.versions?.[c.versions.length-1]?.videoUrl ? true : false,
       status: (c.status || 'PENDING').toLowerCase(),
       versions: (c.versions || []).map(v => ({
@@ -1006,7 +1006,11 @@ function getFirmCoverSrc(firm){
   if(!lb) return null;
   const approvedCell=(lb.igCells||[]).find(c=>c.approved&&c.src);
   if(approvedCell) return approvedCell.src;
-  return (lb.igCells||[]).find(c=>c.src)?.src||null;
+  const anyCell=(lb.igCells||[]).find(c=>c.src);
+  if(anyCell) return anyCell.src;
+  const anyCard=[...(lb.mbIG||[]),...(lb.mbKamp||[])].find(c=>c.img);
+  if(anyCard) return anyCard.img;
+  return null;
 }
 
 function getFirmProgress(firm){

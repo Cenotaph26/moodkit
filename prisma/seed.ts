@@ -95,6 +95,7 @@ async function main() {
     console.log('⚠️  BrewLab Coffee zaten var, atlanıyor')
   }
 
+  await updateImages()
   console.log('\n🎉 Seed tamamlandı!')
   console.log('📧 Giriş bilgileri:')
   console.log('  Admin      : admin@moodkit.dev / admin1234')
@@ -339,6 +340,37 @@ async function seedBrewLab(firmId: string, admin: any, editor: any, foto: any, c
 
   for (let i = 0; i < brewTasks.length; i++) {
     await db.task.create({ data: { ...brewTasks[i], briefId: brief.id, order: i, createdById: admin.id } })
+  }
+}
+
+// Her çalıştırmada mediaUrl null olan kayıtları güncelle
+async function updateImages() {
+  const config = [
+    { name: 'Nova Moda', bg: '#C9896A', accent: '#993556' },
+    { name: 'BrewLab Coffee', bg: '#D4B89A', accent: '#5A3010' },
+  ]
+  for (const { name, bg, accent } of config) {
+    const firm = await db.firm.findFirst({ where: { name } })
+    if (!firm) continue
+    const briefs = await db.brief.findMany({
+      where: { firmId: firm.id },
+      include: { moodboardCards: { include: { versions: true } }, igCells: true }
+    })
+    for (const brief of briefs) {
+      for (const card of brief.moodboardCards) {
+        for (const v of card.versions) {
+          if (!v.mediaUrl) {
+            await db.cardVersion.update({ where: { id: v.id }, data: { mediaUrl: mkImg(card.label, bg, accent) } })
+          }
+        }
+      }
+      for (const cell of brief.igCells) {
+        if (!cell.mediaUrl) {
+          await db.iGCell.update({ where: { id: cell.id }, data: { mediaUrl: mkImg(cell.caption || name, bg, accent) } })
+        }
+      }
+    }
+    console.log(`✅ ${name} görselleri güncellendi`)
   }
 }
 
