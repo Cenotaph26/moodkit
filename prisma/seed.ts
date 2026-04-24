@@ -4,6 +4,12 @@ import bcrypt from 'bcryptjs'
 
 const db = new PrismaClient()
 
+function mkImg(label: string, bg: string, accent: string): string {
+  const t = label.length > 22 ? label.slice(0, 20) + '…' : label
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${bg}"/><stop offset="100%" stop-color="${accent}"/></linearGradient></defs><rect width="400" height="400" fill="url(#g)"/><circle cx="200" cy="170" r="90" fill="${accent}" opacity="0.15"/><circle cx="200" cy="170" r="50" fill="${accent}" opacity="0.3"/><text x="200" y="310" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="white" opacity="0.9">${t}</text></svg>`
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64')
+}
+
 async function main() {
   console.log('🌱 Seed başlıyor...')
 
@@ -189,7 +195,7 @@ async function seedNovaModa(firmId: string, admin: any, editor: any, videograf: 
         taskType: cd.taskType, taskDesc: cd.taskDesc, taskFormat: cd.taskFormat,
         taskDeadline: cd.taskDeadline, taskAssigneeId: cd.taskAssigneeId,
         taskIGCell: cd.taskIGCell,
-        versions: { create: { vNum: 1, note: 'İlk taslak', desc: cd.taskDesc, videoUrl: cd.videoUrl, createdBy: admin.name } }
+        versions: { create: { vNum: 1, note: 'İlk taslak', desc: cd.taskDesc, videoUrl: cd.videoUrl, mediaUrl: mkImg(cd.label, '#C9896A', '#993556'), createdBy: admin.name } }
       }
     })
     await db.iGCell.upsert({
@@ -201,6 +207,7 @@ async function seedNovaModa(firmId: string, admin: any, editor: any, videograf: 
         hashtags: '#novamoda #yaz2026 #moda #topraktonu',
         publishDate: new Date(cd.taskDeadline + 'T10:00').toISOString(),
         approved: cd.mbStatus === 'APPROVED' ? true : null,
+        mediaUrl: mkImg(cd.label, '#C9896A', '#993556'),
       },
       update: {}
     })
@@ -230,7 +237,7 @@ async function seedNovaModa(firmId: string, admin: any, editor: any, videograf: 
         type: kc.type, label: kc.label, status: 'PENDING',
         taskType: kc.taskType, taskDesc: kc.taskDesc, taskFormat: kc.taskFormat,
         taskDeadline: kc.taskDeadline, taskAssigneeId: kc.taskAssigneeId,
-        versions: { create: { vNum: 1, note: 'İlk taslak', desc: kc.taskDesc, videoUrl: kc.videoUrl || null, createdBy: admin.name } }
+        versions: { create: { vNum: 1, note: 'İlk taslak', desc: kc.taskDesc, videoUrl: kc.videoUrl || null, mediaUrl: mkImg(kc.label, '#D4956A', '#7A2040'), createdBy: admin.name } }
       }
     })
   }
@@ -261,6 +268,7 @@ async function seedNovaModa(firmId: string, admin: any, editor: any, videograf: 
       caption: captions[i], hashtags: '#novamoda #ilkbahar2026 #pastel',
       publishDate: new Date(2026, 3, i + 3).toISOString(),
       approved: true,
+      mediaUrl: mkImg(captions[i], '#DDD0EC', '#6B3A8A'),
     }})
   }
 }
@@ -301,7 +309,7 @@ async function seedBrewLab(firmId: string, admin: any, editor: any, foto: any, c
         taskType: bc.taskType, taskDesc: bc.taskDesc, taskFormat: bc.taskFormat,
         taskDeadline: bc.taskDeadline, taskAssigneeId: bc.taskAssigneeId,
         taskIGCell: bc.taskIGCell,
-        versions: { create: { vNum: 1, note: 'İlk taslak — onaylandı', desc: bc.taskDesc, createdBy: admin.name } }
+        versions: { create: { vNum: 1, note: 'İlk taslak — onaylandı', desc: bc.taskDesc, mediaUrl: mkImg(bc.label, '#D4B89A', '#5A3010'), createdBy: admin.name } }
       }
     })
     await db.iGCell.upsert({
@@ -312,6 +320,7 @@ async function seedBrewLab(firmId: string, admin: any, editor: any, foto: any, c
         caption: card.label, hashtags: '#brewlab #kahve #coldbrew #yaz2026',
         publishDate: new Date(bc.taskDeadline + 'T09:00').toISOString(),
         approved: true,
+        mediaUrl: mkImg(bc.label, '#D4B89A', '#5A3010'),
       },
       update: {}
     })
