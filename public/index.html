@@ -717,39 +717,64 @@ function renderClientPortal() {
   document.querySelector('.sidebar').style.display = 'none';
   renderN();
   setBC([{label:'Müşteri Portalı'}]);
+  const greeting=new Date().getHours()<12?'Günaydın':'Merhaba';
+  const dateStr=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('v-home').innerHTML = `
-    <div style="max-width:560px">
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">Merhaba, ${_me?.name?.split(' ')[0] || 'Müşteri'}</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        ${firms.map(f=>{
-          const briefs = f.briefs || [];
-          const latest = briefs[0];
-          return `<div class="card cp" style="cursor:pointer" onclick="${latest?`openCustMB('${f.id}','${latest.id}','ig')`:''}">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-              <div style="width:32px;height:32px;border-radius:8px;background:${f.color||'#534AB7'}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${f.color||'#534AB7'}">${f.name[0]}</div>
-              <div>
-                <div style="font-size:13px;font-weight:600">${f.name}</div>
-                <div style="font-size:10px;color:var(--txt3)">${f.sector||''}</div>
-              </div>
-            </div>
-            ${briefs.map(b=>`
-              <div style="border:.5px solid var(--bdr);border-radius:8px;padding:9px 12px;margin-bottom:6px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <span style="font-size:12px;font-weight:500">${b.month} ${b.year}</span>
-                  <span class="badge ${STAGE_BADGES[b.stage?.toLowerCase()]||'bgr'}">${STAGE_LABELS[b.stage?.toLowerCase()]||b.stage}</span>
-                </div>
-                <div style="display:flex;gap:6px">
-                  <div class="btn bp bs" onclick="event.stopPropagation();openCustMB('${f.id}','${b.id}','ig')">IG Moodboard</div>
-                  <div class="btn bg0 bs" onclick="event.stopPropagation();openCustIG('${f.id}','${b.id}')">IG Grid</div>
-                </div>
-              </div>`).join('')}
-            ${!briefs.length?'<div style="font-size:11px;color:var(--txt3)">Henüz brief yok.</div>':''}
-          </div>`;
-        }).join('')}
-        ${!firms.length?'<div class="empty-st"><p>Size atanmış firma yok.<br>Lütfen yöneticinizle iletişime geçin.</p></div>':''}
+    <div style="max-width:640px;padding:0 4px">
+      <div style="margin-bottom:20px">
+        <div style="font-size:20px;font-weight:700;color:var(--txt)">${greeting}, ${_me?.name?.split(' ')[0]||'Müşteri'} 👋</div>
+        <div style="font-size:12px;color:var(--txt3);margin-top:2px">${dateStr}</div>
       </div>
+      ${firms.map(f=>{
+        const briefs=f.briefs||[];
+        return `<div style="border:.5px solid var(--bdr);border-radius:16px;overflow:hidden;margin-bottom:16px;background:var(--bg);box-shadow:0 2px 12px rgba(0,0,0,.06)">
+          <div style="background:${f.color};padding:18px 20px;position:relative">
+            <div style="font-size:16px;font-weight:700;color:#fff">${f.name}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">${f.sector||''}</div>
+          </div>
+          <div style="padding:14px 16px">
+            ${briefs.length?briefs.map(b=>`
+              <div style="border:.5px solid var(--bdr);border-radius:10px;padding:13px;margin-bottom:10px;background:var(--bg2)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <span style="font-size:13px;font-weight:600;color:var(--txt)">${b.month} ${b.year}</span>
+                  <span class="badge ${STAGE_BADGES[b.stage?.toLowerCase()]||'bgr'}" style="font-size:10px">${STAGE_LABELS[b.stage?.toLowerCase()]||b.stage}</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                  <div class="btn bp bs" onclick="openCustMB('${f.id}','${b.id}','ig')" style="justify-content:center;font-size:12px">📸 IG Moodboard</div>
+                  <div class="btn bp bs" onclick="openCustMB('${f.id}','${b.id}','kamp')" style="justify-content:center;font-size:12px">📢 Kampanya MB</div>
+                  <div class="btn bg0 bs" onclick="openCustIG('${f.id}','${b.id}')" style="justify-content:center;font-size:12px">🗓 IG Grid</div>
+                  <div class="btn bg0 bs" onclick="openCal('${f.id}','${b.id}')" style="justify-content:center;font-size:12px">📅 Takvim</div>
+                </div>
+              </div>`).join('')
+            :'<div style="font-size:12px;color:var(--txt3);padding:8px 0">Henüz brief yok.</div>'}
+            <div class="btn bgn-btn" style="width:100%;justify-content:center;margin-top:4px;font-size:12px" onclick="clientAddBrief('${f.id}')">+ Brief Ekle</div>
+          </div>
+        </div>`;
+      }).join('')}
+      ${!firms.length?`<div style="text-align:center;padding:48px 24px;color:var(--txt3)">
+        <div style="font-size:32px;margin-bottom:8px">🏢</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Firma ataması yok</div>
+        <div style="font-size:12px">Yöneticinizle iletişime geçin.</div>
+      </div>`:''}
     </div>`;
   showV('home');
+}
+
+async function clientAddBrief(fid){
+  const f=gF(fid);if(!f)return;
+  const monthNames=MONTHS;
+  const now=new Date();
+  const selMonth=prompt(`Brief ayı (1-12):`,now.getMonth()+1);
+  if(!selMonth)return;
+  const mi=parseInt(selMonth)-1;
+  if(mi<0||mi>11){toast('Geçersiz ay');return;}
+  try{
+    const b=await apiAddBriefAPI(fid,{month:monthNames[mi],year:now.getFullYear()});
+    f.briefs.unshift({id:b.id,month:b.month,year:b.year,stage:'brief',mbIG:[],mbKamp:[],tasks:[],igCells:[]});
+    toast('Brief oluşturuldu ✓','success');
+    renderClientPortal();
+    openBrief(fid,b.id);
+  }catch(e){toast('Hata: '+e.message,'error');}
 }
 
 // ── SEARCH ────────────────────────────────────────────────
@@ -885,9 +910,10 @@ function getLinkPlatform(url){
 function toEmbed(u){
   if(!u) return null;
   if(u.includes('/embed/')) return u;
-  if(u.includes('watch?v=')) return `https://www.youtube.com/embed/${u.split('watch?v=')[1].split('&')[0]}?rel=0&modestbranding=1`;
-  if(u.includes('youtu.be/')) return `https://www.youtube.com/embed/${u.split('youtu.be/')[1].split('?')[0]}?rel=0&modestbranding=1`;
-  if(u.includes('/shorts/')) return `https://www.youtube.com/embed/${u.split('/shorts/')[1].split('?')[0]}`;
+  const orig=encodeURIComponent(location.origin);
+  if(u.includes('watch?v=')) return `https://www.youtube.com/embed/${u.split('watch?v=')[1].split('&')[0]}?rel=0&modestbranding=1&origin=${orig}`;
+  if(u.includes('youtu.be/')) return `https://www.youtube.com/embed/${u.split('youtu.be/')[1].split('?')[0]}?rel=0&modestbranding=1&origin=${orig}`;
+  if(u.includes('/shorts/')) return `https://www.youtube.com/embed/${u.split('/shorts/')[1].split('?')[0]}?rel=0&modestbranding=1&origin=${orig}`;
   if(u.includes('vimeo.com/')) return `https://player.vimeo.com/video/${u.split('vimeo.com/')[1].split('?')[0]}`;
   if(u.includes('instagram.com/p/')){const s=u.split('instagram.com/p/')[1].split('/')[0];return `https://www.instagram.com/p/${s}/embed/`;}
   if(u.includes('instagram.com/reel/')){const s=u.split('instagram.com/reel/')[1].split('/')[0];return `https://www.instagram.com/reel/${s}/embed/`;}
@@ -962,12 +988,17 @@ document.addEventListener('click',e=>{
 
 // ── SIDEBAR ──────────────────────────────────────────────
 function renderSB(){
-  // "Benim Görevlerim" — PROD/EDITOR için göster
+  const r=(_me?.role||'').toUpperCase();
+  const isAdm=r==='ADMIN', canEd=isAdm||r==='EDITOR';
+  // Ekip: sadece admin
+  const teamEl=document.getElementById('sbi-team');
+  if(teamEl)teamEl.style.display=isAdm?'':'none';
+  // Benim Görevlerim: PROD/EDITOR/ADMIN
   const personelLink=document.getElementById('sbi-personel-wrap');
-  if(personelLink){
-    const role=(_me?.role||'').toLowerCase();
-    personelLink.style.display=(role==='prod'||role==='editor'||role==='admin')?'block':'none';
-  }
+  if(personelLink)personelLink.style.display=(r==='PROD'||r==='EDITOR'||isAdm)?'block':'none';
+  // Firma ekle: sadece admin
+  const addFirmEl=document.querySelector('.sidebar .sbi[onclick="showMod(\'add-firm\')"]');
+  if(addFirmEl)addFirmEl.style.display=isAdm?'':'none';
   document.getElementById('flist').innerHTML=firms.map(f=>`
     <div class="aw" id="aw-${f.id}">
       <div class="ah" onclick="document.getElementById('aw-${f.id}').classList.toggle('open')">
@@ -977,15 +1008,15 @@ function renderSB(){
       </div>
       <div class="abody">
         ${(f.briefs||[]).map(b=>`
-          <div class="asub" onclick="openBrief('${f.id}','${b.id}')">📋 ${b.month} ${b.year}</div>
-          <div class="asub" style="padding-left:16px" onclick="openMbIG('${f.id}','${b.id}')">· IG Moodboard</div>
-          <div class="asub" style="padding-left:16px" onclick="openMbK('${f.id}','${b.id}')">· Kampanya MB</div>
-          <div class="asub" style="padding-left:16px" onclick="openTasks('${f.id}','${b.id}')">· Görevler</div>
-          <div class="asub" style="padding-left:16px" onclick="openIG('${f.id}','${b.id}')">· IG Grid</div>
-          <div class="asub" style="padding-left:16px" onclick="openYayin('${f.id}','${b.id}')">· Yayın</div>
-          <div class="asub" style="padding-left:16px" onclick="openCal('${f.id}','${b.id}')">· Takvim</div>
+          ${isAdm?`<div class="asub" onclick="openBrief('${f.id}','${b.id}')">📋 ${b.month} ${b.year}</div>`:''}
+          <div class="asub" style="padding-left:${isAdm?16:0}px" onclick="openMbIG('${f.id}','${b.id}')">· IG Moodboard</div>
+          <div class="asub" style="padding-left:${isAdm?16:0}px" onclick="openMbK('${f.id}','${b.id}')">· Kampanya MB</div>
+          ${isAdm?`<div class="asub" style="padding-left:16px" onclick="openTasks('${f.id}','${b.id}')">· Görevler</div>`:''}
+          <div class="asub" style="padding-left:${isAdm?16:0}px" onclick="openIG('${f.id}','${b.id}')">· IG Grid</div>
+          ${isAdm?`<div class="asub" style="padding-left:16px" onclick="openYayin('${f.id}','${b.id}')">· Yayın</div>`:''}
+          ${isAdm?`<div class="asub" style="padding-left:16px" onclick="openCal('${f.id}','${b.id}')">· Takvim</div>`:''}
         `).join('')}
-        <div class="asub" style="color:var(--acc)" onclick="addBrief('${f.id}')">+ Yeni Brief</div>
+        ${isAdm?`<div class="asub" style="color:var(--acc)" onclick="addBrief('${f.id}')">+ Yeni Brief</div>`:''}
       </div>
     </div>`).join('');
 }
@@ -1175,7 +1206,7 @@ function goHome(){
         <div class="pg-title">Dashboard</div>
         <div class="pg-sub">${totalFirms} aktif firma</div>
       </div>
-      <button class="btn btn-p bp" onclick="showMod('add-firm')">+ Firma Ekle</button>
+      ${_me?.role==='ADMIN'?`<button class="btn btn-p bp" onclick="showMod('add-firm')">+ Firma Ekle</button>`:''}
     </div>
 
     <div class="stats">
@@ -1188,13 +1219,13 @@ function goHome(){
     <div class="sec-hd"><span class="sec-title">Firmalar</span></div>
     <div class="firma-grid">
       ${firms.map(renderFirmaCard).join('')}
-      <div class="fc-add" onclick="showMod('add-firm')" style="cursor:pointer">
+      ${_me?.role==='ADMIN'?`<div class="fc-add" onclick="showMod('add-firm')" style="cursor:pointer">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" opacity=".4">
           <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="1.5"/>
           <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="1.5"/>
         </svg>
         <span style="font-size:11px">Firma ekle</span>
-      </div>
+      </div>`:''}
     </div>
 
     ${firms.length?activeMoodboardSection():''}
@@ -1216,6 +1247,7 @@ function goHome(){
 
 // ── BRIEF ────────────────────────────────────────────────
 async function openBrief(fid,bid){
+  if(_me?.role==='PROD'||_me?.role==='EDITOR'){openMbIG(fid,bid);return;}
   curFid=fid;curBid=bid;openAcc(fid);lastView='brief';
   const f=gF(fid);if(!f)return;
   if(!f.briefs?.length)await loadBriefs(fid);
@@ -1426,10 +1458,10 @@ function renderMBG(gridId,fid,bid,which){
           </div>
           <div style="font-size:10px;color:var(--txt3)">${c.type} · v${c.versions?.length||1}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        ${(_me?.role==='ADMIN'||_me?.role==='EDITOR')?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
           <div class="btn bgn-btn bs" onclick="event.stopPropagation();setMBS('${fid}','${bid}','${which}','${c.id}','approved')">✓</div>
           <div class="btn brd-btn bs" onclick="event.stopPropagation();setMBS('${fid}','${bid}','${which}','${c.id}','rejected')">✗</div>
-        </div>
+        </div>`:''}
       </div>`;
     }).join('');
     return;
@@ -1457,7 +1489,7 @@ function renderMBG(gridId,fid,bid,which){
         </div>
         <div class="mbov">
           <div class="ovb">↗</div>
-          <div class="ovb" onclick="event.stopPropagation();delMBC('${fid}','${bid}','${which}','${c.id}')" style="color:var(--red)">✕</div>
+          ${(_me?.role==='ADMIN'||_me?.role==='EDITOR')?`<div class="ovb" onclick="event.stopPropagation();delMBC('${fid}','${bid}','${which}','${c.id}')" style="color:var(--red)">✕</div>`:''}
         </div>
       </div>
       <div class="mbb">
@@ -1498,12 +1530,18 @@ function openMBDet(fid,bid,which,cid){
 
   let mh='';
   const isIG=url&&(url.includes('instagram.com/p/')||url.includes('instagram.com/reel/'));
+  const mbCanEdit=_me?.role==='ADMIN'||_me?.role==='EDITOR';
   if(emb&&(emb.includes('youtube.com/embed')||emb.includes('vimeo.com'))){
     mh=`<div style="position:relative;padding-bottom:75%;height:0;overflow:hidden;border-radius:8px">
-      <iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay"></iframe></div>`;
-  } else if(isIG&&emb){
-    mh=`<div style="display:flex;justify-content:center;margin-bottom:4px">
-      <iframe src="${emb}" style="width:340px;height:440px;border:none;border-radius:12px;overflow:hidden" scrolling="no" allowtransparency="true"></iframe></div>`;
+      <iframe src="${emb}" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <div style="text-align:right;margin-top:4px"><a href="${url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--acc)">${url.includes('youtu')?'YouTube':'Vimeo'}'da izle ↗</a></div>`;
+  } else if(isIG){
+    mh=`<div style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);border-radius:8px;padding:40px 24px;text-align:center">
+      <div style="font-size:36px;margin-bottom:8px">📸</div>
+      <div style="color:#fff;font-size:13px;font-weight:600;margin-bottom:4px">Instagram İçeriği</div>
+      <div style="color:rgba(255,255,255,.75);font-size:11px;margin-bottom:16px">Instagram harici gömme iznine izin vermiyor.</div>
+      <a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:rgba(255,255,255,.2);backdrop-filter:blur(6px);color:#fff;border-radius:22px;font-size:12px;text-decoration:none;border:1px solid rgba(255,255,255,.4)">Instagram'da Aç ↗</a>
+    </div>`;
   } else if(emb&&/\.(mp4|mov|webm)$/i.test(emb)){
     mh=`<video src="${emb}" style="width:100%;max-height:260px;border-radius:8px" controls></video>`;
   } else if(img){
@@ -1551,12 +1589,12 @@ function openMBDet(fid,bid,which,cid){
         <div style="border-radius:12px;overflow:hidden;background:#111;margin-bottom:12px">${mh}</div>
         <div style="background:var(--bg2);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap">${cv?.desc||c.desc||'Açıklama yok.'}</div>
         ${url?`<div style="margin-bottom:12px"><a href="${url}" target="_blank" rel="noopener" style="font-size:11px;color:var(--acc);word-break:break-all">${url.replace('https://','').slice(0,60)}↗</a></div>`:''}
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${mbCanEdit?`<div style="display:flex;gap:7px;flex-wrap:wrap">
           <div class="btn bgn-btn" onclick="setMBS('${fid}','${bid}','${which}','${cid}','approved')">✓ Onayla</div>
           <div class="btn brd-btn" onclick="setMBS('${fid}','${bid}','${which}','${cid}','rejected')">✗ Reddet</div>
           <div class="btn bam-btn" onclick="setMBS('${fid}','${bid}','${which}','${cid}','review')">● İncele</div>
           <div class="btn bg0" onclick="showMod('edit-mb','${fid}','${bid}','${which}','${cid}')">✎ Düzenle</div>
-        </div>
+        </div>`:'<div style="font-size:11px;color:var(--txt3)">Sadece görüntüleme yetkisi</div>'}
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="card cp">
@@ -1598,6 +1636,7 @@ async function setMBS(fid,bid,which,cid,status){
 
 // ── TASKS ────────────────────────────────────────────────
 async function openTasks(fid,bid){
+  if(_me?.role==='PROD'||_me?.role==='EDITOR'){toast('Bu bölüme erişim yetkiniz yok');return;}
   curFid=fid;curBid=bid;openAcc(fid);lastView='tasks';
   const f=gF(fid);if(!f)return;
   if(!f.briefs?.length)await loadBriefs(fid);
@@ -2355,6 +2394,7 @@ async function sendAllIGApproval(fid,bid){
 
 // ── YAYIN ────────────────────────────────────────────────
 async function openYayin(fid,bid){
+  if(_me?.role==='PROD'||_me?.role==='EDITOR'){toast('Bu bölüme erişim yetkiniz yok');return;}
   curFid=fid;curBid=bid;openAcc(fid);lastView='yayin';
   const f=gF(fid);if(!f)return;
   if(!f.briefs?.length)await loadBriefs(fid);
@@ -2540,11 +2580,12 @@ async function openCal(fid,bid){
 
 // ── TEAM ─────────────────────────────────────────────────
 function showTeam(){
+  if(_me?.role==='CLIENT'){renderClientPortal();return;}
   setSBI('team');setBC([{label:'Dashboard',fn:'goHome()'},{label:'Ekip Üyeleri'}]);
   document.getElementById('v-team').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-size:16px;font-weight:600">Ekip Üyeleri</div>
-      <div class="btn bp" onclick="showMod('add-member')">+ Üye Ekle</div>
+      ${_me?.role==='ADMIN'?`<div class="btn bp" onclick="showMod('add-member')">+ Üye Ekle</div>`:''}
     </div>
     <div style="max-width:620px;display:flex;flex-direction:column;gap:8px">
       ${members.map(m=>{
@@ -2558,11 +2599,11 @@ function showTeam(){
               <div style="font-size:11px;color:var(--txt3);margin-bottom:4px">${m.email||''}${m.title?' · '+m.title:''}${m.prodRole?' · '+m.prodRole:''}</div>
               ${mFirms.length?`<div style="display:flex;flex-wrap:wrap;gap:4px">${mFirms.map(f=>`<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${f.color}22;color:${f.color};border:.5px solid ${f.color}44">${f.name}</span>`).join('')}</div>`:`<span style="font-size:9px;color:var(--txt3)">Firma ataması yok</span>`}
             </div>
-            <span class="badge ${{admin:'bpu',editor:'bgn',prod:'bcor',client:'bgr'}[m.role]||'bgr'}">${{admin:'Admin',editor:'Kreatif',prod:'Prodüksiyon',client:'Müşteri'}[m.role]||m.role}</span>
-            <div style="display:flex;gap:4px;margin-left:6px">
+            <span class="badge ${{admin:'bpu',editor:'bgn',prod:'bcor',client:'bgr'}[m.role]||'bgr'}">${{admin:'Admin',editor:'Düzenleyebilir',prod:'İzleyebilir',client:'Müşteri'}[m.role]||m.role}</span>
+            ${_me?.role==='ADMIN'?`<div style="display:flex;gap:4px;margin-left:6px">
               <div class="btn bg0 bs" onclick="showMod('edit-member','${m.id}')">✎</div>
               <div class="btn brd-btn bs" onclick="deleteMember('${m.id}')">✕</div>
-            </div>
+            </div>`:''}
           </div>
         </div>`;
       }).join('')}
@@ -2897,7 +2938,7 @@ function showMod(type,...args){
       <div class="fr2 fg">
         <div><label class="fl">Ünvan</label><input class="inp" id="em-t" value="${m.title||''}"></div>
         <div><label class="fl">Rol</label><select class="inp sel" id="em-r">
-          ${['ADMIN','EDITOR','PROD','CLIENT'].map(r=>`<option value="${r}" ${m.role?.toUpperCase()===r?'selected':''}>${{ADMIN:'Admin',EDITOR:'Kreatif',PROD:'Prodüksiyon',CLIENT:'Müşteri'}[r]}</option>`).join('')}
+          ${['ADMIN','EDITOR','PROD','CLIENT'].map(r=>`<option value="${r}" ${m.role?.toUpperCase()===r?'selected':''}>${{ADMIN:'Admin — Tam Yetki',EDITOR:'Kreatif — Düzenleyebilir',PROD:'Prodüksiyon — İzleyebilir',CLIENT:'Müşteri'}[r]}</option>`).join('')}
         </select></div>
       </div>
       <div class="fg"><label class="fl">Prodüksiyon Rolü</label><select class="inp sel" id="em-pr">
@@ -3409,6 +3450,8 @@ async function updateMember(mid){
     await apiFetch(`/api/users/${mid}`,{method:'PUT',body});
     if(pw)await apiFetch(`/api/users/${mid}/password`,{method:'PATCH',body:{password:pw}}).catch(e=>console.warn(e));
     m.name=name;m.title=title;m.role=role.toLowerCase();m.prodRole=prodRole||null;
+    // Kendi profilini güncelliyorsa _me'yi de güncelle
+    if(mid===_me?.id){_me.name=name;_me.title=title;_me.role=role;localStorage.setItem('mk_me',JSON.stringify(_me));const s=document.querySelector('.tb > div:last-child span');if(s)s.textContent=name.split(' ')[0]+' '+(name.split(' ')[1]?name.split(' ')[1][0]+'.':'');}
     // Firma erişimi güncelle
     const checked=[...document.querySelectorAll('.em-firm-cb:checked')].map(cb=>cb.value);
     const unchecked=[...document.querySelectorAll('.em-firm-cb:not(:checked)')].map(cb=>cb.value);
