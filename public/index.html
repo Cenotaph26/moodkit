@@ -253,7 +253,7 @@ textarea.fld{min-height:80px;resize:vertical}
       <input type="text" placeholder="Ara..." oninput="onSearch(this.value)" autocomplete="off">
       <div id="search-drop"></div>
     </div>
-    <div class="tb-av" id="tb-av" title="Profil" onclick="doLogout()">?</div>
+    <div class="tb-av" id="tb-av" title="Çıkış yapmak için tıkla" onclick="if(confirm('Çıkış yapmak istiyor musunuz?'))doLogout()">?</div>
     <div class="tb-info">
       <div class="tb-nm" id="tb-nm">—</div>
       <div class="tb-role-badge" id="tb-role">—</div>
@@ -322,7 +322,7 @@ const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağust
 const STAGE_PAGES={BRIEF:'brief',MB_IG:'mb',MB_KAMP:'mb-kamp',TASKS:'tasks',YAYIN:'yayin'};
 const PAGE_STAGES={'brief':'BRIEF','mb':'MB_IG','mb-kamp':'MB_KAMP','tasks':'TASKS','yayin':'YAYIN'};
 const STAGE_ORDER=['brief','mb','mb-kamp','tasks','yayin'];
-const STAGE_LABELS={brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',tasks:'Görevler',yayin:'Yayın'};
+const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın',pers:'Görevlerim',cust:'Müşteri Portalı'};
 const STATUS_CLS={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
 const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
@@ -348,25 +348,31 @@ async function api(path,opts={}){
 const gF=id=>firms.find(f=>f.id===id);
 const gB=(fid,bid)=>gF(fid)?.briefs?.find(b=>b.id===bid);
 
-function ytThumb(u){
-  if(!u)return null;
-  const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
-  return m?`https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`:null;
-}
 function toEmbed(u){
   if(!u)return null;
-  if(u.includes('/embed/'))return u;
-  const m=u.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
-  if(m)return`https://www.youtube.com/embed/${m[1]}?rel=0`;
-  if(u.includes('vimeo.com/')){const id=u.split('vimeo.com/')[1]?.split('?')[0];return`https://player.vimeo.com/video/${id}`;}
+  if(u.includes('youtube.com/embed/')||u.includes('player.vimeo.com'))return u;
+  // YouTube: watch?v=, youtu.be/, shorts/, embed/
+  const ytm=u.match(/(?:[?&]v=|youtu\.be\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  if(ytm)return`https://www.youtube.com/embed/${ytm[1]}?rel=0&modestbranding=1`;
+  // Vimeo: vimeo.com/12345678
+  const vim=u.match(/vimeo\.com\/(\d+)/);
+  if(vim)return`https://player.vimeo.com/video/${vim[1]}`;
   return null;
+}
+function ytThumb(u){
+  if(!u)return null;
+  const m=u.match(/(?:[?&]v=|youtu\.be\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  return m?`https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`:null;
 }
 function fmtDate(d){
   if(!d)return'—';
   try{return new Date(d).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'});}
   catch{return String(d).slice(0,10);}
 }
-function briefTitle(b){return`${MONTHS[(parseInt(b.month)||1)-1]||b.month} ${b.year}`;}
+function briefTitle(b){
+  // month is stored as Turkish string ("Ocak") from backend
+  return`${b.month||'—'} ${b.year||''}`.trim();
+}
 
 function toast(msg,type='ok'){
   const w=document.getElementById('toast-wrap');if(!w)return;
@@ -683,7 +689,7 @@ async function renderMB(){
 
   const cardsHtml=cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
     ${cards.map(c=>{
-      const v0=c.versions?.[0];
+      const v0=c.versions?.at(-1)||c.versions?.[0];
       const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
       return`<div class="mb-card" data-s="${c.status}" onclick="openCardDet('${f.id}','${b.id}','IG','${c.id}')">
         ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -803,7 +809,7 @@ async function openCardDet(fid,bid,which,cid){
   let c=arr.find(x=>x.id===cid);
   if(!c)return;
 
-  const v0=c.versions?.[0];
+  const v0=c.versions?.at(-1)||c.versions?.[0]; // latest version
   const embed=v0?.videoUrl?toEmbed(v0.videoUrl):null;
   const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
 
@@ -857,7 +863,7 @@ async function addCardVersion(fid,bid,cid){
     if(b){
       const allArr=[...(b._igCards||[]),...(b._kampCards||[])];
       const c=allArr.find(x=>x.id===cid);
-      if(c){if(!c.versions)c.versions=[];c.versions.unshift(ver);}
+      if(c){if(!c.versions)c.versions=[];c.versions.push(ver);} // push = newest last, at(-1) gets latest
     }
     toast('Versiyon eklendi ✓');closeModal();
   }catch(e){toast(e.message,'err');}
@@ -1022,10 +1028,9 @@ async function renderTasks(){
   const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
     onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
-  if(!b.tasks||!b.tasks.length){
-    try{b.tasks=await api(`/api/firms/${f.id}/briefs/${b.id}/tasks`);}
-    catch{b.tasks=[];}
-  }
+  // Always reload for kanban — brief load doesn't include assignee details
+  try{b.tasks=await api(`/api/firms/${f.id}/briefs/${b.id}/tasks`);}
+  catch{if(!b.tasks)b.tasks=[];}
   const tasks=b.tasks||[];
   const cols=['TODO','DOING','DONE'];
   const colLabels={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
@@ -1137,8 +1142,18 @@ async function renderPers(){
 
 async function markMyTaskDone(bid,tid){
   const t=_myTasks.find(x=>x.id===tid);if(!t)return;
+  // mytasks API includes brief with firmId field and nested firm.id
   const fid=t.brief?.firmId||t.brief?.firm?.id;
-  if(!fid){toast('Firma bilgisi eksik','err');return;}
+  if(!fid){
+    // fallback: look in local firms state
+    const b=firms.flatMap(f=>f.briefs||[]).find(b=>b.id===bid);
+    const ff=b?gF(b.firmId):null;
+    if(!ff){toast('Firma bilgisi eksik','err');return;}
+    return markMyTaskDoneWith(ff.id,bid,tid,t);
+  }
+  return markMyTaskDoneWith(fid,bid,tid,t);
+}
+async function markMyTaskDoneWith(fid,bid,tid,t){
   try{
     const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status:'DONE'}});
     Object.assign(t,updated);
@@ -1155,19 +1170,23 @@ async function renderCust(){
     try{b._igCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`);}
     catch{b._igCards=[];}
   }
-  const cards=(b._igCards||[]).filter(c=>c.status==='REVIEW'||c.status==='APPROVED'||c.status==='REJECTED');
+  // Show all cards except PENDING (REVIEW = awaiting approval, APPROVED/REJECTED = decided)
+  const allCards=b._igCards||[];
+  const cards=allCards.filter(c=>c.status!=='PENDING');
+  const reviewCards=cards.filter(c=>c.status==='REVIEW');
   const stsCls={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
-  const stsLbl={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
+  const stsLbl={PENDING:'Bekliyor',REVIEW:'İnceleme Bekliyor',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
   document.getElementById('page-cust').innerHTML=`
     <div style="background:${f.color||'#534AB7'};border-radius:var(--r2);padding:20px;color:#fff;margin-bottom:20px">
       <div style="font-size:20px;font-weight:700;margin-bottom:4px">${f.name}</div>
       <div style="font-size:13px;opacity:.8">${briefTitle(b)} · Müşteri Onay Paneli</div>
+      <div style="margin-top:10px;font-size:12px;opacity:.7">${allCards.length} içerik · ${reviewCards.length} onay bekliyor</div>
     </div>
     ${cards.length?`
       <div class="sec-hd">
-        <div class="sec-ttl">Onay Bekleyen İçerikler (${cards.filter(c=>c.status==='REVIEW').length})</div>
-        <button class="btn ok xs" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
+        <div class="sec-ttl">İçerikler (${cards.length})</div>
+        ${reviewCards.length?`<button class="btn ok xs" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla</button>`:''}
       </div>
       <div class="card-grid card-grid-3" style="gap:16px">
         ${cards.map(c=>{
