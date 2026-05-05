@@ -7,372 +7,329 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ── TOKENS ─────────────────────────────────────────────── */
 :root{
-  --bg:#f0ede6;--bg2:#e8e4da;--bg3:#dedad0;
-  --card:#ffffff;
-  --blk:#1a1a18;--blk2:#2c2c28;
-  --amb:#C8720A;--ambL:#FEF3DC;
-  --gry:#ede9e0;--gry2:#d8d4ca;--gry3:#b4b0a6;
-  --t1:#1a1a18;--t2:#5c5852;--t3:#9c9890;
-  --bdr:rgba(26,26,24,.09);--bdr2:rgba(26,26,24,.18);
-  --ok-c:#1a5c1a;--ok-bg:rgba(26,92,26,.08);--ok-br:rgba(26,92,26,.18);
-  --wt-c:#8a5000;--wt-bg:#FEF3DC;--wt-br:rgba(200,114,10,.22);
-  --er-c:#7a1818;--er-bg:rgba(160,30,30,.08);--er-br:rgba(160,30,30,.18);
+  --bg:#f5f3ee; --blk:#1a1a18; --amb:#c8a96e;
+  --gry:#8a857c; --gry1:#ede9e0; --gry2:#d8d4ca;
+  --t1:#1a1a18; --t2:#3d3c38; --t3:#8a857c;
+  --bdr:#e0dbd0;
+  --ok:#2d7a4f; --ok2:#d4edda;
+  --wt:#c8a96e; --wt2:#fff3cd;
+  --er:#8b1a1a; --er2:#f8d7da;
+  --rv:#1a4f8b; --rv2:#cce5ff;
+  --r:8px; --r2:12px; --sh:0 2px 12px rgba(0,0,0,.08);
+  --tr:160ms ease;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{font-family:'Inter',system-ui,sans-serif;color:var(--t1);background:var(--bg);-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:var(--t1);line-height:1.5;overflow:hidden;height:100vh}
 
-/* ── SHELL ── */
-.app{display:flex;flex-direction:column;height:100vh}
-.tb{height:48px;background:var(--card);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;z-index:10}
-.tb-logo{font-size:15px;font-weight:700;letter-spacing:-.4px;color:var(--blk)}
-.tb-logo em{font-style:normal;color:var(--amb)}
-.tb-sep{width:1px;height:18px;background:var(--bdr2);flex-shrink:0}
-.tb-bc{flex:1;display:flex;align-items:center;gap:4px;font-size:12px;overflow:hidden}
-.bcr{color:var(--t3);cursor:pointer;white-space:nowrap}
-.bcr:hover{color:var(--t1)}
-.bcs{color:var(--bdr2)}
-.bcu{color:var(--t1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.tb-av{width:28px;height:28px;border-radius:50%;background:var(--blk);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0;cursor:pointer}
-.tb-nm{font-size:11px;color:var(--t2)}
-
-.layout{display:flex;flex:1;overflow:hidden;min-height:0}
-.sb{width:196px;background:var(--card);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;padding:10px 0 12px}
-.cnt{flex:1;overflow-y:auto;padding:20px 22px;background:var(--bg);min-height:0}
+/* ── APP SHELL ───────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.tb{height:52px;background:#fff;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;padding:0 16px;flex-shrink:0;z-index:100}
+.layout{display:flex;flex:1;min-height:0;overflow:hidden}
+.sb{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+.cnt{flex:1;min-height:0;overflow-y:auto;padding:24px}
 .page{display:none}.page.on{display:block}
 
-/* ── SIDEBAR ── */
-.sb-lbl{font-size:10px;font-weight:500;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;padding:10px 14px 4px;display:block}
-.sb-nav{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:8px;margin:0 6px 1px;cursor:pointer;font-size:12px;color:var(--t2);transition:background .1s,color .1s;white-space:nowrap;user-select:none}
-.sb-nav:hover{background:var(--gry);color:var(--t1)}
-.sb-nav.on{background:var(--blk);color:#fff;font-weight:500}
-.sb-nav svg{flex-shrink:0;opacity:.5}
-.sb-nav.on svg{opacity:1}
-.sb-hr{height:1px;background:var(--bdr);margin:8px 12px}
-.firm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;margin:0 6px 1px;cursor:pointer;font-size:12px;font-weight:500;color:var(--t1);transition:background .1s;user-select:none}
-.firm-row:hover{background:var(--gry)}
-.firm-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-right:6px}
-.firm-count{font-size:10px;font-weight:400;color:var(--t3)}
-.sub-link{display:block;padding:5px 10px 5px 22px;border-radius:8px;margin:0 6px 1px;font-size:11px;color:var(--t3);cursor:pointer;transition:background .1s,color .1s;user-select:none}
-.sub-link:hover{background:var(--gry);color:var(--t2)}
-.sub-link.on{color:var(--t1);font-weight:500}
-.sub-link.on::before{content:"";display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--t1);margin-right:6px;vertical-align:middle;margin-bottom:1px}
-.sb-add{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px;margin:4px 6px 0;font-size:12px;color:var(--amb);cursor:pointer;transition:background .1s}
-.sb-add:hover{background:var(--ambL)}
-.sb-subs{overflow:hidden}
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.tb-logo{font-weight:700;font-size:15px;letter-spacing:-.5px;color:var(--blk);white-space:nowrap}
+.tb-logo span{color:var(--amb)}
+.tb-bc{font-size:11px;color:var(--t3);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tb-search{position:relative;flex:0 0 200px}
+.tb-search input{width:100%;padding:6px 10px 6px 28px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;background:var(--gry1);color:var(--t1);outline:none}
+.tb-search input:focus{border-color:var(--amb);background:#fff}
+.tb-search::before{content:'⌕';position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:14px;pointer-events:none}
+#search-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--bdr);border-radius:var(--r);box-shadow:var(--sh);z-index:200;display:none;max-height:280px;overflow-y:auto}
+.sr-item{padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--bdr)}
+.sr-item:last-child{border:none}.sr-item:hover{background:var(--gry1)}
+.tb-av{width:32px;height:32px;border-radius:50%;background:var(--amb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0}
+.tb-info{display:flex;flex-direction:column;line-height:1.2}
+.tb-nm{font-size:12px;font-weight:600}
+.tb-role-badge{font-size:10px;color:var(--t3)}
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-family:'Inter',system-ui;cursor:pointer;font-weight:500;letter-spacing:-.1px;transition:all .12s;white-space:nowrap;border:none;text-decoration:none}
-.btn:active{transform:scale(.97)}
-.btn.solid{background:var(--blk);color:#fff;border-radius:999px;padding:0 16px;height:34px;font-size:12px}
-.btn.solid:hover{background:var(--blk2)}
-.btn.amber{background:var(--amb);color:#fff;border-radius:999px;padding:0 16px;height:34px;font-size:12px}
-.btn.amber:hover{background:#a85d08}
-.btn.outline{background:var(--card);color:var(--blk);border:1.5px solid var(--bdr2);border-radius:999px;padding:0 14px;height:34px;font-size:12px}
-.btn.outline:hover{background:var(--gry)}
-.btn.surface{background:var(--gry2);color:var(--blk);border-radius:999px;padding:0 14px;height:34px;font-size:12px}
-.btn.surface:hover{background:var(--gry3)}
-.btn.out-a{background:var(--card);color:var(--amb);border:1.5px solid var(--amb);border-radius:999px;padding:0 14px;height:34px;font-size:12px}
-.btn.out-a:hover{background:var(--ambL)}
-.btn.sm{height:28px;padding:0 12px;font-size:11px}
-.btn.xs{height:22px;padding:0 9px;font-size:10px}
-.btn.lg{height:40px;padding:0 20px;font-size:13px}
-.btn.ico{border-radius:50%;padding:0}
-.btn.ico.md{width:34px;height:34px}
-.btn.ico.sm{width:28px;height:28px}
-.btn.ico.xs{width:22px;height:22px}
-.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sb-top{padding:12px;border-bottom:1px solid var(--bdr);display:flex;gap:6px}
+.sb-nav{padding:8px 0;border-bottom:1px solid var(--bdr)}
+.sb-lnk{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:12px;color:var(--t2);cursor:pointer;border-radius:0;transition:background var(--tr)}
+.sb-lnk:hover{background:var(--gry1)}.sb-lnk.on{background:var(--gry1);color:var(--blk);font-weight:600}
+.sb-lnk .ico{font-size:14px;width:18px;text-align:center}
+.firms-list{flex:1;overflow-y:auto}
+.firm-row{padding:0}
+.firm-hd{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:500;transition:background var(--tr)}
+.firm-hd:hover{background:var(--gry1)}
+.firm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.firm-ch{margin-left:auto;font-size:10px;color:var(--t3);transition:transform var(--tr)}
+.firm-row.open .firm-ch{transform:rotate(90deg)}
+.acc-body{display:none;padding-left:28px;padding-bottom:4px}
+.firm-row.open .acc-body{display:block}
+.sub-lnk{display:flex;align-items:center;gap:6px;padding:5px 8px;font-size:11px;color:var(--t3);cursor:pointer;border-radius:var(--r);transition:background var(--tr)}
+.sub-lnk:hover{background:var(--gry1);color:var(--t1)}.sub-lnk.on{color:var(--blk);font-weight:600}
+.sub-lnk .stage-dot{width:6px;height:6px;border-radius:50%;background:var(--gry2);flex-shrink:0}
+.sub-lnk.on .stage-dot{background:var(--amb)}
+.sb-add{padding:10px 12px;border-top:1px solid var(--bdr)}
 
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:9px;font-weight:600;white-space:nowrap}
-.b-ok{background:var(--ok-bg);color:var(--ok-c);border:.5px solid var(--ok-br)}
-.b-rv{background:#e0ddd6;color:#3a3832;border:.5px solid #c4c0b8}
-.b-wt{background:var(--wt-bg);color:var(--wt-c);border:.5px solid var(--wt-br)}
-.b-er{background:var(--er-bg);color:var(--er-c);border:.5px solid var(--er-br)}
-.b-blk{background:var(--blk);color:#fff}
-.b-amb{background:var(--ambL);color:#7a4000;border:.5px solid var(--wt-br)}
-.b-gry{background:#c8c4bc;color:#2a2a24;border:.5px solid #a8a49c}
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;font-family:inherit}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.solid{background:var(--blk);color:#fff}.btn.solid:hover{background:#333}
+.btn.amber{background:var(--amb);color:#fff}.btn.amber:hover{background:#b8964f}
+.btn.outline{background:transparent;color:var(--t1);border:1px solid var(--bdr)}.btn.outline:hover{background:var(--gry1)}
+.btn.surface{background:var(--gry2);color:var(--t1)}.btn.surface:hover{background:var(--gry)}
+.btn.ok{background:var(--ok2);color:var(--ok);border:1px solid var(--ok)}.btn.ok:hover{background:var(--ok);color:#fff}
+.btn.er{background:var(--er2);color:var(--er);border:1px solid var(--er)}.btn.er:hover{background:var(--er);color:#fff}
+.btn.xs{padding:4px 8px;font-size:11px}.btn.sm{padding:5px 10px;font-size:11px}.btn.lg{padding:10px 20px;font-size:14px}
+.btn.ico{padding:6px;border-radius:var(--r)}.btn.xs.ico{padding:4px}
 
-/* ── TAGS ── */
-.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:500;cursor:pointer;transition:all .1s}
-.tag.filled{background:var(--blk);color:#fff}
-.tag.ot{background:var(--card);color:var(--t1);border:1.5px solid var(--bdr2)}
-.tag.ot:hover{background:var(--gry)}
-.tag.sf{background:var(--gry2);color:var(--t1)}
-.tag.sf:hover{background:var(--gry3)}
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--ok2);color:var(--ok)}.b-rv{background:var(--rv2);color:var(--rv)}
+.b-wt{background:var(--wt2);color:#7a5c00}.b-er{background:var(--er2);color:var(--er)}
+.b-blk{background:var(--blk);color:#fff}.b-amb{background:var(--amb);color:#fff}
+.b-gry{background:var(--gry2);color:var(--t2)}
 
-/* ── SEGMENTED ── */
-.seg{display:inline-flex;background:var(--gry2);border-radius:10px;padding:2px;gap:1px}
-.seg-b{padding:4px 11px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;color:var(--t2);border:none;background:transparent;font-family:'Inter',system-ui;transition:all .1s}
-.seg-b.on{background:var(--card);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+/* ── FORMS ───────────────────────────────────────────────── */
+.fld{padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;font-family:inherit;color:var(--t1);background:#fff;width:100%;outline:none;transition:border var(--tr)}
+.fld:focus{border-color:var(--amb)}.fld::placeholder{color:var(--t3)}
+textarea.fld{min-height:80px;resize:vertical}
+.fld-row{margin-bottom:12px}.fld-row label{font-size:11px;color:var(--t3);font-weight:500;display:block;margin-bottom:4px}
+.fld-grid{display:grid;gap:12px}.fld-grid-2{grid-template-columns:1fr 1fr}
 
-/* ── FORMS ── */
-.fl{font-size:9px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:block}
-.inp{width:100%;height:36px;padding:0 12px;border:1px solid var(--bdr2);border-radius:10px;font-size:12px;color:var(--t1);background:var(--card);font-family:'Inter',system-ui;outline:none}
-.inp:focus{border-color:var(--blk);box-shadow:0 0 0 3px rgba(26,26,24,.06)}
-.inp.ta{height:auto;min-height:72px;padding:10px 12px;resize:vertical;border-radius:10px;line-height:1.5}
-select.inp{cursor:pointer}
-.inp-row{display:flex;align-items:center;gap:7px;padding:0 12px;height:36px;border:1px solid var(--bdr2);border-radius:999px;background:var(--card)}
-.inp-row input{border:none;outline:none;flex:1;font-size:12px;color:var(--t1);background:transparent;font-family:'Inter',system-ui}
-.inp-row input::placeholder{color:var(--t3)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-g{display:flex;flex-direction:column;margin-bottom:10px}
+/* ── STAGE PILLS ─────────────────────────────────────────── */
+.stage-bar{display:flex;gap:0;margin-bottom:24px;background:var(--gry1);border-radius:var(--r2);padding:3px}
+.stage-pill{flex:1;padding:7px 8px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;transition:all var(--tr);white-space:nowrap;position:relative}
+.stage-pill.done{color:var(--ok)}.stage-pill.done::after{content:'✓';margin-left:4px}
+.stage-pill.active{background:#fff;color:var(--blk);box-shadow:var(--sh);font-weight:600}
+.stage-pill.todo{color:var(--gry2)}
 
-/* ── STAGE PILLS ── */
-.stage-nav{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;margin-bottom:18px;scrollbar-width:none}
-.stage-nav::-webkit-scrollbar{display:none}
-.stage-pill{padding:5px 12px;border-radius:999px;font-size:10px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .12s;user-select:none}
-.stage-pill.done{background:var(--ok-bg);color:var(--ok-c);border:.5px solid var(--ok-br)}
-.stage-pill.active{background:var(--blk);color:#fff}
-.stage-pill.todo{background:var(--gry2);color:var(--t2);border:.5px solid var(--bdr)}
-.stage-pill.todo:hover{background:var(--gry3);color:var(--t1)}
-.stage-arrow{color:var(--t3);font-size:11px;flex-shrink:0}
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
+.card-grid{display:grid;gap:16px}
+.card-grid-2{grid-template-columns:1fr 1fr}
+.card-grid-3{grid-template-columns:1fr 1fr 1fr}
+.card-grid-4{grid-template-columns:repeat(4,1fr)}
 
-/* ── STAT CARD ── */
-.stat{background:var(--card);border-radius:12px;border:1px solid var(--bdr);padding:14px 16px}
-.stat-l{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-.stat-v{font-size:22px;font-weight:600;color:var(--t1);letter-spacing:-.5px;line-height:1}
-.stat-c{font-size:10px;margin-top:3px;color:var(--t3)}
+/* ── MOODBOARD CARDS ─────────────────────────────────────── */
+.mb-card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden;position:relative;cursor:pointer;transition:box-shadow var(--tr)}
+.mb-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.mb-card[data-s="PENDING"]{border-left:3px solid var(--gry2)}
+.mb-card[data-s="REVIEW"]{border-left:3px solid var(--rv)}
+.mb-card[data-s="APPROVED"]{border-left:3px solid var(--ok)}
+.mb-card[data-s="REJECTED"]{border-left:3px solid var(--er)}
+.mb-thumb{width:100%;height:140px;object-fit:cover;display:block;background:var(--gry1)}
+.mb-thumb-ph{width:100%;height:140px;background:var(--gry1);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gry2)}
+.mb-body{padding:10px}
+.mb-label{font-size:12px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-meta{font-size:10px;color:var(--t3);display:flex;align-items:center;justify-content:space-between}
+.mb-actions{padding:8px;border-top:1px solid var(--bdr);display:flex;gap:6px;justify-content:flex-end}
 
-/* ── MOODBOARD CARD ── */
-.mb-card{background:var(--card);border-radius:12px;border:1px solid var(--bdr);overflow:hidden;position:relative;cursor:pointer;transition:border-color .12s,transform .12s}
-.mb-card:hover{border-color:var(--bdr2);transform:translateY(-1px)}
-.mb-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;z-index:1}
-.mb-card[data-s="ok"]::before{background:rgba(26,92,26,.55)}
-.mb-card[data-s="rv"]::before{background:var(--gry3)}
-.mb-card[data-s="wt"]::before{background:var(--amb)}
-.mb-card[data-s="er"]::before{background:rgba(160,30,30,.6)}
-.mb-card[data-s="er"]{border-color:var(--er-br)}
-.mb-ov{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:5px;z-index:2}
-.mb-card:hover .mb-ov{opacity:1}
-.mb-ov-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
-.mb-plat{position:absolute;top:6px;left:8px;z-index:2;padding:2px 6px;border-radius:4px;font-size:7px;font-weight:600;color:#fff}
-.mb-add{background:var(--card);border-radius:12px;border:1.5px dashed var(--bdr2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .12s;min-height:120px}
-.mb-add:hover{border-color:var(--blk)}
+/* ── KANBAN ──────────────────────────────────────────────── */
+.kb-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+.kb-col{background:var(--gry1);border-radius:var(--r2);padding:12px}
+.kb-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.kb-col-ttl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)}
+.kb-cnt{font-size:11px;background:#fff;border-radius:999px;padding:1px 7px;color:var(--t2);font-weight:600}
+.tc{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:10px;margin-bottom:8px;cursor:grab}
+.tc:last-child{margin-bottom:0}
+.tc-ref{font-size:11px;color:var(--t3);margin-bottom:4px}
+.tc-title{font-size:12px;font-weight:600;margin-bottom:6px}
+.tc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tc-actions{display:flex;gap:4px;margin-top:8px;justify-content:flex-end}
+.tc.drg{opacity:.4;box-shadow:0 0 0 2px var(--amb)}
 
-/* ── KANBAN ── */
-.kb-col{background:var(--gry);border-radius:12px;padding:10px;min-height:120px}
-.kb-ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.kb-t{font-size:12px;font-weight:500;color:var(--t1)}
-.tc{background:var(--card);border-radius:10px;border:1px solid var(--bdr);padding:10px 11px;margin-bottom:5px;position:relative;overflow:hidden;cursor:grab;user-select:none}
-.tc:hover{border-color:var(--bdr2)}
-.tc.drg{opacity:.4;cursor:grabbing}
-.tc-acc{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
-
-/* ── INFO BLOCK ── */
-.info{display:flex;gap:9px;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.55;margin-bottom:12px}
-.info.ok{background:var(--ok-bg);color:var(--ok-c)}
-.info.wt{background:var(--wt-bg);color:var(--wt-c)}
-.info.er{background:var(--er-bg);color:var(--er-c)}
-.info-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-
-/* ── LIST CELL ── */
-.cell{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--bdr);background:var(--card);cursor:pointer;transition:all .1s;margin-bottom:5px}
-.cell:hover{background:var(--gry);border-color:var(--bdr2)}
-
-/* ── PROGRESS ── */
-.prog{height:2px;background:var(--gry2);border-radius:2px;overflow:hidden;margin:4px 0}
-.pf{height:100%;border-radius:2px;background:var(--blk)}
-
-/* ── SKELETON ── */
-.skel{background:var(--gry);border-radius:6px;animation:sk 1.4s ease infinite}
-@keyframes sk{0%,100%{opacity:.75}50%{opacity:.38}}
-
-/* ── IG CELLS ── */
-.igcell{border-radius:8px;overflow:hidden;position:relative;cursor:pointer;background:var(--gry2);aspect-ratio:1}
-.igcell-ov{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .12s;display:flex;align-items:flex-end;justify-content:space-between;padding:6px}
+/* ── IG GRID ─────────────────────────────────────────────── */
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.igcell{aspect-ratio:1;background:var(--gry1);position:relative;overflow:hidden;cursor:pointer}
+.igcell img,.igcell video{width:100%;height:100%;object-fit:cover;display:block}
+.igcell-ov{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0;transition:opacity var(--tr)}
 .igcell:hover .igcell-ov{opacity:1}
-.igcell-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
-.igcell.empty{border:1.5px dashed var(--bdr2);display:flex;align-items:center;justify-content:center}
-.igcell.empty:hover{border-color:var(--blk)}
+.igcell-idx{position:absolute;top:4px;left:5px;font-size:10px;font-weight:700;color:#fff;opacity:.7}
+.igcell-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-size:22px;color:var(--gry2);gap:4px}
+.igcell-ph span{font-size:10px;color:var(--t3)}
 
-/* ── IG PHONE ── */
-.ig-phone{background:#fff;border:.5px solid #dbdbdb;border-radius:13px;overflow:hidden}
-.ig-ph-top{padding:3px 9px 0;display:flex;justify-content:space-between;font-size:8px;font-weight:700;color:#1a1a1a;font-family:system-ui}
-.ig-ph-hdr{display:flex;align-items:center;padding:6px 9px;border-bottom:.5px solid #dbdbdb;gap:6px}
-.ig-ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;padding:1px}
-.ig-ph-cell{aspect-ratio:1;background:#f0f0f0;overflow:hidden}
+/* ── IG PHONE ────────────────────────────────────────────── */
+.ig-phone{width:184px;flex-shrink:0;background:#fff;border:1px solid var(--bdr);border-radius:20px;overflow:hidden;padding:8px}
+.ig-ph-hd{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ig-ph-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;object-fit:cover}
+.ig-ph-nm{font-size:10px;font-weight:600}
+.ig-ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px}
+.ig-ph-cell{aspect-ratio:1;background:var(--gry1);overflow:hidden}
+.ig-ph-cell img{width:100%;height:100%;object-fit:cover}
 
-/* ── MODAL ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-bg.hidden{display:none}
-.modal{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.modal-title{font-size:14px;font-weight:600}
-.modal-close{width:26px;height:26px;border-radius:50%;background:var(--gry);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t2)}
-.modal-close:hover{background:var(--gry2)}
+/* ── STAT CARD ───────────────────────────────────────────── */
+.stat-card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
+.stat-num{font-size:28px;font-weight:700;line-height:1}
+.stat-lbl{font-size:11px;color:var(--t3);margin-top:4px}
 
-/* ── TOAST ── */
-#toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
-.toast-msg{padding:9px 16px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);animation:tin .2s ease;pointer-events:none}
-@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── MODAL ───────────────────────────────────────────────── */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:16px}
+#modal-box{background:#fff;border-radius:var(--r2);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);transform:translateY(8px);opacity:0;transition:all var(--tr)}
+#modal-box.open{transform:none;opacity:1}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-ttl{font-size:15px;font-weight:600}
+.modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--bdr)}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:600;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast-msg{padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;box-shadow:var(--sh);animation:tin .2s ease;max-width:300px}
 .toast-msg.ok{background:var(--blk);color:#fff}
-.toast-msg.err{background:#7a1818;color:#fff}
-.toast-msg.wt{background:var(--amb);color:#fff}
+.toast-msg.err{background:var(--er);color:#fff}
+.toast-msg.amb{background:var(--amb);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* ── LOGIN ── */
-#login-wrap{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center}
-#login-wrap.hidden{display:none}
-.login-box{background:var(--card);border-radius:20px;padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.1)}
-.login-logo{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-.login-logo em{font-style:normal;color:var(--amb)}
-.login-sub{font-size:12px;color:var(--t3);margin-bottom:24px}
+/* ── LOGIN / REGISTER ────────────────────────────────────── */
+.auth-wrap{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;align-items:center;justify-content:center}
+.auth-box{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:32px;width:360px;box-shadow:var(--sh)}
+.auth-logo{font-size:22px;font-weight:700;margin-bottom:24px;text-align:center}
+.auth-logo span{color:var(--amb)}
 
-/* ── PAGE HEADERS ── */
-.ph{font-size:16px;font-weight:600;letter-spacing:-.35px;margin-bottom:4px}
-.psub{font-size:12px;color:var(--t3);margin-bottom:16px}
+/* ── SECTION HEADER ──────────────────────────────────────── */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-ttl{font-size:14px;font-weight:600}
 
-/* ── TOOLBAR ── */
-.tb2{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+/* ── PROGRESS ────────────────────────────────────────────── */
+.prog-bar{background:var(--gry1);border-radius:999px;height:6px;overflow:hidden}
+.prog-fill{height:100%;border-radius:999px;background:var(--amb);transition:width .3s ease}
 
-/* ── ACCORDION ── */
-.acc-body{overflow:hidden;display:none}
-.acc-body.open{display:block}
+/* ── INFO BLOCK ──────────────────────────────────────────── */
+.info-block{background:var(--gry1);border-radius:var(--r2);padding:16px;font-size:12px;color:var(--t2)}
+.info-block strong{color:var(--t1)}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--gry2);border-radius:4px}
+/* ── PRINT ───────────────────────────────────────────────── */
+@media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
 
-/* ── FIRMA CARD ── */
-.firma-card{background:var(--card);border-radius:12px;border:1px solid var(--bdr);overflow:hidden;cursor:pointer;transition:border-color .12s,transform .12s}
-.firma-card:hover{border-color:var(--bdr2);transform:translateY(-1px)}
-.firma-add{background:var(--card);border-radius:12px;border:1.5px dashed var(--bdr2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--t3);min-height:104px;transition:all .12s}
-.firma-add:hover{border-color:var(--blk);color:var(--t1)}
-
-/* ── DETAIL PANEL ── */
-.det-panel{background:var(--card);border-radius:12px;border:1px solid var(--bdr);padding:14px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){.sb{display:none}.form-row{grid-template-columns:1fr}}
+/* ── MISC ────────────────────────────────────────────────── */
+.sep{height:1px;background:var(--bdr);margin:16px 0}
+.empty{padding:32px;text-align:center;color:var(--t3);font-size:12px}
+.chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:500;background:var(--gry1);color:var(--t2);border:1px solid var(--bdr);cursor:pointer;transition:all var(--tr)}
+.chip.on{background:var(--blk);color:#fff;border-color:var(--blk)}
+.det-wrap{display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start}
+.det-panel{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:16px;position:sticky;top:0}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-wrap">
-  <div class="login-box">
-    <div class="login-logo">mood<em>kit</em></div>
-    <div class="login-sub">Kreatif ajans yönetim paneli</div>
-    <div id="login-err" style="display:none;margin-bottom:12px" class="info er">
-      <span id="login-err-msg"></span>
-    </div>
-    <div class="form-g"><label class="fl">E-posta</label><input class="inp" id="li-email" type="email" placeholder="siz@ajans.com" autocomplete="email"></div>
-    <div class="form-g"><label class="fl">Şifre</label><input class="inp" id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
-    <button class="btn solid" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Giriş Yap</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--t3)">Hesabınız yok mu? <span style="color:var(--amb);cursor:pointer" onclick="showRegister()">Kayıt Ol</span></div>
+<!-- AUTH OVERLAYS -->
+<div id="login-wrap" class="auth-wrap" style="display:flex">
+  <div class="auth-box">
+    <div class="auth-logo">Mood<span>Kit</span></div>
+    <div class="fld-row"><label>E-posta</label><input id="li-email" type="email" class="fld" placeholder="ad@ajans.com" autocomplete="email"></div>
+    <div class="fld-row"><label>Şifre</label><input id="li-pass" type="password" class="fld" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn amber lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Giriş Yap</button>
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--t3)">Hesabın yok mu? <span style="color:var(--amb);cursor:pointer;font-weight:500" onclick="showRegister()">Kayıt ol</span></div>
   </div>
 </div>
 
-<!-- REGISTER -->
-<div id="reg-wrap" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:101;align-items:center;justify-content:center">
-  <div class="login-box" style="max-width:400px">
-    <div class="login-logo">mood<em>kit</em></div>
-    <div class="login-sub" style="margin-bottom:16px">Yeni hesap oluştur</div>
-    <div class="form-row">
-      <div class="form-g"><label class="fl">Ad Soyad</label><input class="inp" id="rg-name" placeholder="Adınız"></div>
-      <div class="form-g"><label class="fl">E-posta</label><input class="inp" id="rg-email" type="email" placeholder="siz@ajans.com"></div>
+<div id="reg-wrap" class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">Mood<span>Kit</span></div>
+    <div class="fld-grid fld-grid-2" style="margin-bottom:0">
+      <div class="fld-row"><label>Ad Soyad</label><input id="re-name" type="text" class="fld" placeholder="Ali Veli"></div>
+      <div class="fld-row"><label>E-posta</label><input id="re-email" type="email" class="fld" placeholder="ali@ajans.com"></div>
     </div>
-    <div class="form-row">
-      <div class="form-g"><label class="fl">Şifre</label><input class="inp" id="rg-pass" type="password" placeholder="Min 8 karakter"></div>
-      <div class="form-g"><label class="fl">Rol</label>
-        <select class="inp" id="rg-role">
-          <option value="ADMIN">Admin</option>
-          <option value="EDITOR">Kreatif (Editor)</option>
-          <option value="PROD" selected>Prodüksiyon</option>
-          <option value="CLIENT">Müşteri</option>
-        </select>
-      </div>
+    <div class="fld-grid fld-grid-2" style="margin-bottom:0">
+      <div class="fld-row"><label>Şifre</label><input id="re-pass" type="password" class="fld" placeholder="min 8 karakter"></div>
+      <div class="fld-row"><label>Unvan</label><input id="re-title" type="text" class="fld" placeholder="Kreatif Direktör"></div>
     </div>
-    <div class="form-g"><label class="fl">Ünvan (opsiyonel)</label><input class="inp" id="rg-title" placeholder="Grafik Tasarımcı"></div>
-    <button class="btn solid" style="width:100%;justify-content:center;margin-top:4px" onclick="doRegister()">Kayıt Ol</button>
-    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--t3)">Zaten hesabınız var mı? <span style="color:var(--amb);cursor:pointer" onclick="showLogin()">Giriş Yap</span></div>
+    <div class="fld-row"><label>Rol</label>
+      <select id="re-role" class="fld">
+        <option value="EDITOR">Editör (Kreatif Ekip)</option>
+        <option value="PROD">Prodüksiyon</option>
+        <option value="CLIENT">Müşteri</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+    </div>
+    <button class="btn amber lg" style="width:100%;justify-content:center" onclick="doRegister()">Kayıt Ol</button>
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--t3)">Hesabın var mı? <span style="color:var(--amb);cursor:pointer;font-weight:500" onclick="backToLogin()">Giriş yap</span></div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- APP SHELL -->
 <div class="app" id="app" style="display:none">
-  <header class="tb">
-    <div class="tb-logo">mood<em>kit</em></div>
-    <div class="tb-sep"></div>
-    <div class="tb-bc" id="bc"><span class="bcu">Dashboard</span></div>
-    <div class="tb-right">
-      <div class="inp-row" style="width:180px;display:none" id="srch-wrap">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="var(--t3)" stroke-width="1.4"/><path d="M10.5 10.5l3 3" stroke="var(--t3)" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <input id="srch-inp" placeholder="Ara..." oninput="onSearch(this.value)">
-      </div>
-      <div class="tb-av" id="tb-av" title="Profil">AY</div>
-      <span class="tb-nm" id="tb-nm"></span>
-      <span class="badge b-blk" id="tb-role" style="font-size:9px">Admin</span>
-      <button class="btn outline sm" onclick="doLogout()">Çıkış</button>
+  <!-- TOPBAR -->
+  <div class="tb">
+    <div class="tb-logo">Mood<span>Kit</span></div>
+    <div class="tb-bc" id="bc">Ana Sayfa</div>
+    <div class="tb-search">
+      <input type="text" placeholder="Ara..." oninput="onSearch(this.value)" autocomplete="off">
+      <div id="search-drop"></div>
     </div>
-  </header>
+    <div class="tb-av" id="tb-av" title="Profil" onclick="doLogout()">?</div>
+    <div class="tb-info">
+      <div class="tb-nm" id="tb-nm">—</div>
+      <div class="tb-role-badge" id="tb-role">—</div>
+    </div>
+  </div>
+
   <div class="layout">
-    <nav class="sb" id="sb">
-      <span class="sb-lbl">Genel</span>
-      <div class="sb-nav on" id="si-home" onclick="go('home')">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 7.5L8 2l6 5.5V14a.5.5 0 01-.5.5h-3.5V10h-4v4.5H2.5A.5.5 0 012 14V7.5z" stroke="currentColor" stroke-width="1.2"/></svg>
-        Dashboard
+    <!-- SIDEBAR -->
+    <div class="sb">
+      <div class="sb-nav">
+        <div class="sb-lnk on" id="si-home" onclick="go('home')"><span class="ico">⌂</span>Ana Sayfa</div>
+        <div class="sb-lnk" id="si-pers" onclick="go('pers')"><span class="ico">✓</span>Görevlerim</div>
+        <div class="sb-lnk" id="si-cust" onclick="go('cust')" style="display:none"><span class="ico">👁</span>Müşteri Portalı</div>
       </div>
-      <div class="sb-nav" id="si-pers" onclick="go('pers')">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.2"/></svg>
-        Görevlerim
-        <span class="badge b-amb" id="sb-task-cnt" style="font-size:8px;padding:1px 5px;margin-left:auto;display:none">0</span>
+      <div class="firms-list" id="flist"></div>
+      <div class="sb-add">
+        <button class="btn outline xs" style="width:100%;justify-content:center" id="sb-add-firm" onclick="openFirmModal()">+ Firma Ekle</button>
       </div>
-      <div class="sb-nav" id="si-cust" onclick="go('cust')" style="display:none">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 7h6M5 9.5h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-        Müşteri Paneli
-      </div>
-      <div class="sb-hr"></div>
-      <span class="sb-lbl">Firmalar</span>
-      <div id="flist"></div>
-      <div class="sb-hr"></div>
-      <div class="sb-add" id="sb-add-firm" onclick="openModal('firm')">
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
-        Firma ekle
-      </div>
-    </nav>
-    <main class="cnt" id="cnt">
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="cnt" id="cnt">
+
+      <!-- PAGE: HOME -->
       <div class="page on" id="page-home"></div>
+
+      <!-- PAGE: BRIEF -->
       <div class="page" id="page-brief"></div>
+
+      <!-- PAGE: IG MOODBOARD -->
       <div class="page" id="page-mb"></div>
+
+      <!-- PAGE: KAMPANYA MOODBOARD -->
       <div class="page" id="page-mb-kamp"></div>
+
+      <!-- PAGE: IG GRID -->
       <div class="page" id="page-ig"></div>
+
+      <!-- PAGE: TASKS -->
       <div class="page" id="page-tasks"></div>
+
+      <!-- PAGE: PERSONEL -->
       <div class="page" id="page-pers"></div>
+
+      <!-- PAGE: MÜŞTERI -->
       <div class="page" id="page-cust"></div>
+
+      <!-- PAGE: YAYIN -->
       <div class="page" id="page-yayin"></div>
-    </main>
+
+    </div>
   </div>
 </div>
 
 <!-- MODAL -->
-<div class="modal-bg hidden" id="modal-bg" onclick="if(event.target===this)closeModal()">
-  <div class="modal" id="modal-box"></div>
+<div id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div id="modal-box"></div>
 </div>
 
-<!-- TOAST -->
+<!-- TOASTS -->
 <div id="toast-wrap"></div>
 
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────
 const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-const STAGE_TO_PAGE={BRIEF:'brief',MB_IG:'mb',MB_KAMP:'mb-kamp',TASKS:'tasks',YAYIN:'yayin'};
-const PAGE_TO_STAGE={brief:'BRIEF',mb:'MB_IG','mb-kamp':'MB_KAMP',tasks:'TASKS',yayin:'YAYIN'};
+const STAGE_PAGES={BRIEF:'brief',MB_IG:'mb',MB_KAMP:'mb-kamp',TASKS:'tasks',YAYIN:'yayin'};
+const PAGE_STAGES={'brief':'BRIEF','mb':'MB_IG','mb-kamp':'MB_KAMP','tasks':'TASKS','yayin':'YAYIN'};
 const STAGE_ORDER=['brief','mb','mb-kamp','tasks','yayin'];
-const STATUS_DS={PENDING:'wt',REVIEW:'rv',APPROVED:'ok',REJECTED:'er'};
-const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylı',REJECTED:'Revize'};
-const PLAT={YouTube:['YT','#cc2200'],Vimeo:['Vi','#1AB7EA'],TikTok:['TT','rgba(0,0,0,.7)'],Instagram:['IG','rgba(0,0,0,.35)'],Pinterest:['Pi','rgba(0,0,0,.35)'],Behance:['Be','rgba(0,0,0,.35)'],Video:['MP4','var(--gry3)'],Web:['Web','var(--gry3)']};
-const GR=['#1a1a18','#0a0a0f','#2d1f08','#111827','#1c1917','#0f1729','#18120a','#080d18','#1a1208'];
+const STAGE_LABELS={brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',tasks:'Görevler',yayin:'Yayın'};
+const STATUS_CLS={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
+const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
 // ── STATE ─────────────────────────────────────────────────
 let _me=null, _token=localStorage.getItem('mk_token');
-let firms=[], members=[];
+let firms=[], members=[], _myTasks=[];
 let _curFid=null, _curBid=null, _curPage='home';
-let _mbFilter='all', _kampFilter='all', _taskFilter='all', _persFilter='all';
-let _myTasks=[];
 
 // ── API ───────────────────────────────────────────────────
 async function api(path,opts={}){
@@ -387,1049 +344,1050 @@ async function api(path,opts={}){
   return d;
 }
 
-async function loadFirms(){firms=await api('/api/firms');}
-async function loadBriefs(fid){
-  const bs=await api(`/api/firms/${fid}/briefs`);
-  const f=gF(fid);if(f)f.briefs=bs;
-}
-async function loadMembers(){try{members=await api('/api/users');}catch(_){members=[];}}
-async function loadMyTasks(){_myTasks=await api('/api/tasks/mine');}
-async function loadCards(fid,bid,which){
-  const cs=await api(`/api/firms/${fid}/briefs/${bid}/cards?which=${which}`);
-  const b=gB(fid,bid);if(!b)return;
-  if(which==='IG')b._igCards=cs; else b._kampCards=cs;
-  return cs;
-}
-async function loadIGCells(fid,bid){
-  const cs=await api(`/api/firms/${fid}/briefs/${bid}/ig`);
-  const b=gB(fid,bid);if(b)b.igCells=cs;
-  return cs;
-}
-async function loadTasks(fid,bid){
-  const ts=await api(`/api/firms/${fid}/briefs/${bid}/tasks`);
-  const b=gB(fid,bid);if(b)b.tasks=ts;
-  return ts;
-}
-
 // ── HELPERS ───────────────────────────────────────────────
 const gF=id=>firms.find(f=>f.id===id);
 const gB=(fid,bid)=>gF(fid)?.briefs?.find(b=>b.id===bid);
 
-function toast(msg,type='ok'){
-  const w=document.getElementById('toast-wrap');if(!w)return;
-  const el=document.createElement('div');
-  el.className='toast-msg '+(type==='err'?'err':type==='wt'?'wt':'ok');
-  el.textContent=msg;w.appendChild(el);setTimeout(()=>el.remove(),3200);
-}
-
 function ytThumb(u){
   if(!u)return null;
-  let id=u.match(/[?&]v=([\w-]{11})/)?.[1]||u.match(/youtu\.be\/([\w-]{11})/)?.[1]||u.match(/\/embed\/([\w-]{11})/)?.[1]||u.match(/\/shorts\/([\w-]{11})/)?.[1];
-  return id?`https://img.youtube.com/vi/${id}/hqdefault.jpg`:null;
+  const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  return m?`https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`:null;
 }
-
 function toEmbed(u){
   if(!u)return null;
   if(u.includes('/embed/'))return u;
-  const o=encodeURIComponent(location.origin);
-  if(u.includes('watch?v='))return`https://www.youtube.com/embed/${u.split('watch?v=')[1].split('&')[0]}?rel=0&origin=${o}`;
-  if(u.includes('youtu.be/'))return`https://www.youtube.com/embed/${u.split('youtu.be/')[1].split('?')[0]}?rel=0&origin=${o}`;
-  if(u.includes('/shorts/'))return`https://www.youtube.com/embed/${u.split('/shorts/')[1].split('?')[0]}?rel=0&origin=${o}`;
-  if(u.includes('vimeo.com/'))return`https://player.vimeo.com/video/${u.split('vimeo.com/')[1].split('?')[0]}`;
-  if(/\.(mp4|mov|webm)$/i.test(u))return u;
+  const m=u.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  if(m)return`https://www.youtube.com/embed/${m[1]}?rel=0`;
+  if(u.includes('vimeo.com/')){const id=u.split('vimeo.com/')[1]?.split('?')[0];return`https://player.vimeo.com/video/${id}`;}
   return null;
 }
-
-function detectPlat(url){
-  if(!url)return null;
-  if(url.includes('youtube')||url.includes('youtu.be'))return'YouTube';
-  if(url.includes('vimeo'))return'Vimeo';
-  if(url.includes('tiktok'))return'TikTok';
-  if(url.includes('instagram'))return'Instagram';
-  if(url.includes('pinterest'))return'Pinterest';
-  if(url.includes('behance'))return'Behance';
-  if(/\.(mp4|mov|webm)$/i.test(url))return'Video';
-  return'Web';
-}
-
-function platBadge(url){
-  const p=detectPlat(url);if(!p)return'';
-  const[lbl,bg]=PLAT[p]||['?','#888'];
-  return`<div class="mb-plat" style="background:${bg}">${lbl}</div>`;
-}
-
-function cardThumb(card){
-  const v=card.versions?.[card.versions.length-1];
-  if(!v)return null;
-  return v.mediaUrl||ytThumb(v.videoUrl)||null;
-}
-
-function ini(name){return(name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
-
 function fmtDate(d){
-  if(!d)return'';
-  const dt=new Date(d);
-  return dt.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+  if(!d)return'—';
+  try{return new Date(d).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'});}
+  catch{return String(d).slice(0,10);}
+}
+function briefTitle(b){return`${MONTHS[(parseInt(b.month)||1)-1]||b.month} ${b.year}`;}
+
+function toast(msg,type='ok'){
+  const w=document.getElementById('toast-wrap');if(!w)return;
+  const el=document.createElement('div');
+  el.className='toast-msg '+(type==='err'?'err':type==='amb'?'amb':'ok');
+  el.textContent=msg;w.appendChild(el);setTimeout(()=>el.remove(),3200);
 }
 
-function daysLeft(dl){
-  if(!dl)return null;
-  const diff=Math.ceil((new Date(dl)-new Date())/(1000*60*60*24));
-  return diff;
+// ── MODAL ─────────────────────────────────────────────────
+function showModal(html){
+  const box=document.getElementById('modal-box');
+  const bg=document.getElementById('modal-bg');
+  box.innerHTML=html;bg.style.display='flex';
+  requestAnimationFrame(()=>box.classList.add('open'));
 }
+function closeModal(){
+  const box=document.getElementById('modal-box');
+  box.classList.remove('open');
+  setTimeout(()=>{document.getElementById('modal-bg').style.display='none';box.innerHTML='';},160);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
-function plural(n,s){return`${n} ${s}`;}
+function mHd(title){
+  return`<div class="modal-hd"><div class="modal-ttl">${title}</div><button class="btn surface xs ico" onclick="closeModal()">✕</button></div>`;
+}
+function mFt(...btns){return`<div class="modal-ft">${btns.join('')}</div>`;}
+function fRow(label,input){return`<div class="fld-row"><label>${label}</label>${input}</div>`;}
+function fInp(id,type,ph,val=''){return`<input id="${id}" type="${type}" placeholder="${ph}" value="${val||''}" class="fld">`;}
+function fSel(id,opts,cur=''){return`<select id="${id}" class="fld">${opts.map(([v,l])=>`<option value="${v}"${cur===v?' selected':''}>${l}</option>`).join('')}</select>`;}
+function fTa(id,ph,val=''){return`<textarea id="${id}" placeholder="${ph}" class="fld">${val||''}</textarea>`;}
+function v(id){return document.getElementById(id)?.value?.trim()||'';}
+function vb(id){const el=document.getElementById(id);return el?el.checked:false;}
+
+// ── DATA LOADERS ──────────────────────────────────────────
+async function loadFirms(){
+  const data=await api('/api/firms');
+  firms=data.map(f=>({...f,briefs:f.briefs||[]}));
+}
+async function loadBriefs(fid){
+  const bs=await api(`/api/firms/${fid}/briefs`);
+  const f=gF(fid);if(f)f.briefs=bs;
+}
+async function loadMembers(){
+  try{members=await api('/api/users');}catch{members=[];}
+}
+async function loadMyTasks(){
+  try{_myTasks=await api('/api/tasks/mine');}catch{_myTasks=[];}
+}
 
 // ── NAVIGATION ────────────────────────────────────────────
-const BC_MAP={
-  home:'Dashboard',pers:'Görevlerim',cust:'Müşteri Paneli',
-  brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',
-  ig:'IG Grid',tasks:'Görevler',yayin:'Yayın Takvimi'
-};
-
-function updateBC(page){
-  const el=document.getElementById('bc');if(!el)return;
-  const f=gF(_curFid),b=gB(_curFid,_curBid);
-  const parts=[];
-  if(['brief','mb','mb-kamp','ig','tasks','yayin'].includes(page)&&f){
-    parts.push(`<span class="bcr" onclick="go('home')">Dashboard</span><span class="bcs">·</span>`);
-    parts.push(`<span class="bcr" onclick="nav('${f.id}','${b?.id||''}','brief')">${f.name}</span><span class="bcs">·</span>`);
-    if(b)parts.push(`<span class="bcr" onclick="nav('${f.id}','${b.id}','brief')">${b.month} ${b.year}</span><span class="bcs">·</span>`);
-    parts.push(`<span class="bcu">${BC_MAP[page]||page}</span>`);
-  } else {
-    parts.push(`<span class="bcu">${BC_MAP[page]||'Dashboard'}</span>`);
-  }
-  el.innerHTML=parts.join('');
-}
-
-function updateStagePills(page){
-  const idx=STAGE_ORDER.indexOf(page);
-  document.querySelectorAll('.stage-pill').forEach((p,i)=>{
-    p.className='stage-pill';
-    if(i<idx)p.classList.add('done');
-    else if(i===idx)p.classList.add('active');
-    else p.classList.add('todo');
-  });
-}
-
 function go(page){
   _curPage=page;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.getElementById('page-'+page)?.classList.add('on');
-  document.querySelectorAll('.sb-nav').forEach(s=>s.classList.remove('on'));
-  const si={home:'si-home',pers:'si-pers',cust:'si-cust'}[page];
-  if(si)document.getElementById(si)?.classList.add('on');
-  document.querySelectorAll('.sub-link').forEach(s=>s.classList.remove('on'));
-  if(_curFid&&_curBid){
-    const sidx={brief:0,mb:1,'mb-kamp':2,ig:3,tasks:4,yayin:5}[page];
-    if(sidx!==undefined){
-      const links=document.querySelectorAll(`#subs-${_curBid} .sub-link`);
-      links[sidx]?.classList.add('on');
-    }
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
+  const pg=document.getElementById('page-'+page);
+  if(pg)pg.classList.add('on');
+
+  // Topbar breadcrumb
+  const bcEl=document.getElementById('bc');
+  if(bcEl){
+    const f=gF(_curFid),b=gB(_curFid,_curBid);
+    const parts=[];
+    if(f)parts.push(f.name);
+    if(b)parts.push(briefTitle(b));
+    parts.push(STAGE_LABELS[page]||page);
+    bcEl.textContent=parts.join(' › ');
   }
-  updateBC(page);
-  updateStagePills(page);
-  renderPage(page);
+
+  // Sidebar active links
+  ['home','pers','cust'].forEach(id=>{
+    const el=document.getElementById('si-'+id);
+    if(el)el.classList.toggle('on',page===id);
+  });
+  document.querySelectorAll('.sub-lnk').forEach(el=>{
+    el.classList.toggle('on',el.dataset.page===page&&el.dataset.fid===_curFid&&el.dataset.bid===_curBid);
+  });
+
+  // Render the page
+  const renders={home:renderHome,brief:renderBrief,mb:renderMB,'mb-kamp':renderMBKamp,
+    ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin};
+  if(renders[page])renders[page]();
 }
 
-function nav(fid,bid,page='brief'){
+function nav(fid,bid,page){
   _curFid=fid;_curBid=bid;
-  openFirmAccordion(fid);
+  // Open firm accordion
+  document.querySelectorAll('.firm-row').forEach(el=>{
+    el.classList.toggle('open',el.dataset.fid===fid);
+  });
   go(page);
 }
 
-function openFirmAccordion(fid){
-  document.querySelectorAll('.acc-body').forEach(el=>{
-    if(el.id!==`acc-${fid}`)el.classList.remove('open');
-  });
-  document.getElementById(`acc-${fid}`)?.classList.add('open');
-}
-
 function toggleFirm(fid){
-  document.getElementById(`acc-${fid}`)?.classList.toggle('open');
+  const el=document.querySelector(`.firm-row[data-fid="${fid}"]`);
+  if(el)el.classList.toggle('open');
 }
 
-// ── SIDEBAR RENDER ─────────────────────────────────────────
 function renderSB(){
+  const el=document.getElementById('flist');if(!el)return;
   const isAdmin=_me?.role==='ADMIN';
-  const isCli=_me?.role==='CLIENT';
   document.getElementById('sb-add-firm').style.display=isAdmin?'':'none';
-  document.getElementById('si-cust').style.display=isCli?'':'none';
-  document.getElementById('si-pers').style.display=isCli?'none':'';
-
-  // pending task count badge
-  const pending=_myTasks.filter(t=>t.status==='TODO'||t.status==='DOING').length;
-  const badge=document.getElementById('sb-task-cnt');
-  if(badge){badge.textContent=pending;badge.style.display=pending?'':'none';}
-
-  const fl=document.getElementById('flist');if(!fl)return;
-  fl.innerHTML=firms.map(f=>{
+  if(!firms.length){el.innerHTML='<div class="empty" style="font-size:11px">Firma yok</div>';return;}
+  el.innerHTML=firms.map(f=>{
     const bs=f.briefs||[];
-    const dot=`<div class="firm-dot" style="background:${f.color||'#1a1a18'}"></div>`;
-    const subs=bs.map(b=>`
-      <div id="subs-${b.id}" class="sb-subs">
-        <div class="sub-link" onclick="nav('${f.id}','${b.id}','brief')">${b.month} ${b.year}</div>
-        <div class="sub-link" onclick="nav('${f.id}','${b.id}','mb')">IG Moodboard</div>
-        <div class="sub-link" onclick="nav('${f.id}','${b.id}','mb-kamp')">Kampanya MB</div>
-        <div class="sub-link" onclick="nav('${f.id}','${b.id}','ig')">IG Grid</div>
-        ${isAdmin?`<div class="sub-link" onclick="nav('${f.id}','${b.id}','tasks')">Görevler</div>`:''}
-        ${isAdmin?`<div class="sub-link" onclick="nav('${f.id}','${b.id}','yayin')">Yayın</div>`:''}
-      </div>`).join('');
-    return`<div>
-      <div class="firm-row" onclick="toggleFirm('${f.id}')">${dot}<span style="flex:1">${f.name}</span><span class="firm-count">${bs.length} brief</span></div>
-      <div class="acc-body" id="acc-${f.id}">${subs}
-        ${isAdmin?`<div class="sub-link" style="color:var(--amb)" onclick="openModal('brief','${f.id}')">+ Yeni Brief</div>`:''}
+    return`<div class="firm-row${_curFid===f.id?' open':''}" data-fid="${f.id}">
+      <div class="firm-hd" onclick="toggleFirm('${f.id}')">
+        <span class="firm-dot" style="background:${f.color||'#534AB7'}"></span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+        <span class="firm-ch">›</span>
+      </div>
+      <div class="acc-body">
+        ${bs.map(b=>{
+          const pg=STAGE_PAGES[b.stage]||'brief';
+          const isOn=_curBid===b.id&&_curFid===f.id;
+          return`<div class="sub-lnk${isOn?' on':''}" data-fid="${f.id}" data-bid="${b.id}" data-page="${pg}"
+            onclick="nav('${f.id}','${b.id}','${pg}')">
+            <span class="stage-dot"></span>${briefTitle(b)}
+          </div>`;
+        }).join('')}
+        <div class="sub-lnk" onclick="openBriefModal('${f.id}')" style="color:var(--amb)">+ Brief Ekle</div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── PAGE DISPATCHER ───────────────────────────────────────
-function renderPage(page){
-  const fns={home:renderHome,brief:renderBrief,mb:renderMB,'mb-kamp':renderMBKamp,ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin};
-  (fns[page]||renderHome)();
-}
-
-// ── HOME ──────────────────────────────────────────────────
+// ── PAGE: HOME ────────────────────────────────────────────
 function renderHome(){
-  const el=document.getElementById('page-home');if(!el)return;
-  const allBriefs=firms.flatMap(f=>(f.briefs||[]).map(b=>({...b,_firm:f})));
-  const allCards=allBriefs.flatMap(b=>(b.moodboardCards||[]).map(c=>({...c,_brief:b})));
-  const allTasks=allBriefs.flatMap(b=>(b.tasks||[]).map(t=>({...t,_brief:b})));
-  const allCells=allBriefs.flatMap(b=>(b.igCells||[]));
-  const pending=allCards.filter(c=>c.status==='PENDING').length;
-  const activeTasks=allTasks.filter(t=>t.status==='TODO'||t.status==='DOING').length;
-  const totCells=allCells.length,apCells=allCells.filter(c=>c.approved===true).length;
-  const igPct=totCells?Math.round(apCells/totCells*100):0;
+  const allBriefs=firms.flatMap(f=>f.briefs||[]);
+  const allCards=allBriefs.flatMap(b=>b.moodboardCards||[]);
+  const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
+  const allCells=allBriefs.flatMap(b=>b.igCells||[]);
+  const done=allTasks.filter(t=>t.status==='DONE').length;
+  const approved=allCards.filter(c=>c.status==='APPROVED').length;
 
-  // IG preview cards (latest 3 from all firms)
-  const previewCards=allCards.filter(c=>c.which==='IG').slice(0,3);
-  const previewTasksHtml=allTasks.filter(t=>t.status!=='DONE').slice(0,3).map(t=>{
-    const dl=daysLeft(t.deadline);
-    return`<div class="cell">
-      <div style="width:6px;height:6px;border-radius:50%;background:${t.status==='DOING'?'var(--amb)':'var(--gry3)'};flex-shrink:0"></div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.cardRef||t.desc||'Görev'}</div>
-        <div style="font-size:10px;color:var(--t3)">${t._brief?._firm?.name||''}</div>
-      </div>
-      ${dl!==null?`<span class="badge ${dl<0?'b-er':dl<=3?'b-wt':'b-gry'}">${dl<0?'Gecikti':dl===0?'Bugün':dl+' gün'}</span>`:''}
-    </div>`;
-  }).join('')||'<div style="padding:12px;font-size:11px;color:var(--t3);text-align:center">Aktif görev yok</div>';
+  const recentBriefs=allBriefs.slice(0,6);
+  const activeTasks=allTasks.filter(t=>t.status!=='DONE').slice(0,6);
 
-  // IG phone cells
-  const phoneFirm=firms[0];
-  const phoneBrief=phoneFirm?.briefs?.[0];
-  const phoneCells=(phoneBrief?.igCells||[]).slice(0,9);
-  const phoneGrid=phoneCells.map(c=>`<div class="ig-ph-cell">${c.mediaUrl?`<img src="${c.mediaUrl}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:`<div style="width:100%;height:100%;background:${GR[phoneCells.indexOf(c)%9]}"></div>`}</div>`).join('')+Array(Math.max(0,9-phoneCells.length)).fill('<div class="ig-ph-cell"></div>').join('');
+  document.getElementById('page-home').innerHTML=`
+    <!-- Stats -->
+    <div class="card-grid card-grid-4" style="margin-bottom:20px">
+      ${[
+        ['Firma',firms.length,'🏢'],
+        ['Brief',allBriefs.length,'📋'],
+        ['Kart',approved+'/'+allCards.length,'🎨'],
+        ['Görev',done+'/'+allTasks.length,'✓'],
+      ].map(([l,n,i])=>`<div class="stat-card">
+        <div style="font-size:20px;margin-bottom:6px">${i}</div>
+        <div class="stat-num">${n}</div>
+        <div class="stat-lbl">${l}</div>
+      </div>`).join('')}
+    </div>
 
-  el.innerHTML=`
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card-grid card-grid-2">
+      <!-- Recent briefs -->
       <div>
-        <div class="ph">Dashboard</div>
-        <div class="psub">Hoş geldiniz, ${_me?.name?.split(' ')[0]||'Kullanıcı'}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div class="stat"><div class="stat-l">Firmalar</div><div class="stat-v">${firms.length}</div><div class="stat-c">${allBriefs.length} aktif brief</div></div>
-        <div class="stat"><div class="stat-l">Bekleyen Onay</div><div class="stat-v">${pending}</div><div class="stat-c" style="color:${pending?'var(--er-c)':'var(--t3)'}">${pending?pending+' kart bekliyor':'Temiz'}</div></div>
-        <div class="stat"><div class="stat-l">Aktif Görev</div><div class="stat-v">${activeTasks}</div><div class="stat-c">${allTasks.filter(t=>t.status==='DOING').length} üretimde</div></div>
-        <div class="stat"><div class="stat-l">IG Onay</div><div class="stat-v">${igPct}<span style="font-size:14px;color:var(--t3)">%</span></div><div class="prog" style="margin-top:6px"><div class="pf" style="width:${igPct}%"></div></div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px">
-        ${firms.map(f=>{
-          const lb=f.briefs?.[0];
-          const cards=(lb?.moodboardCards||[]);
-          const ap=cards.filter(c=>c.status==='APPROVED').length;
-          const tot=cards.length;
-          const pct=tot?Math.round(ap/tot*100):0;
-          const cover=lb?.igCells?.find(c=>c.mediaUrl)?.mediaUrl||lb?.moodboardCards?.find(c=>cardThumb(c))&&cardThumb(lb.moodboardCards.find(c=>cardThumb(c)));
-          return`<div class="firma-card" onclick="nav('${f.id}','${lb?.id||''}','brief')">
-            <div style="height:70px;background:${f.color||'#1a1a18'};position:relative;display:flex;align-items:flex-end;padding:8px 12px;overflow:hidden">
-              ${cover?`<img src="${cover}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35" loading="lazy">`:''}
-              <div style="position:relative;z-index:1">
-                <div style="font-size:12px;font-weight:600;color:#fff">${f.name}</div>
-                <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:1px">${f.sector||'Ajans'}</div>
-              </div>
-            </div>
-            <div style="padding:10px 12px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-                <span class="badge b-wt">${lb?lb.month+' '+lb.year:'Brief yok'}</span>
-                <span class="badge b-gry">${tot} kart</span>
-              </div>
-              <div class="prog"><div class="pf" style="width:${pct}%"></div></div>
-              <div style="font-size:9px;color:var(--t3);margin-top:3px">${ap}/${tot} onaylı</div>
-            </div>
-          </div>`;
-        }).join('')}
-        ${_me?.role==='ADMIN'?`<div class="firma-add" onclick="openModal('firm')">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5"/></svg>
-          Firma ekle
-        </div>`:''}
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 272px;gap:12px">
-        <div>
-          <div style="font-size:13px;font-weight:500;margin-bottom:8px">Son Moodboard</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-            ${previewCards.length?previewCards.map(c=>{
-              const v=c.versions?.[c.versions.length-1];
-              const img=cardThumb(c);
-              const ds=STATUS_DS[c.status]||'wt';
-              return`<div class="mb-card" data-s="${ds}" onclick="nav('${c._brief._firm.id}','${c.briefId}','mb')">
-                <div style="height:82px;background:#1a1a18;position:relative;overflow:hidden">
-                  ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75" loading="lazy">`:''}
-                  ${v?.videoUrl?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center"><svg width="8" height="8" viewBox="0 0 12 12" fill="white"><polygon points="4,2 10,6 4,10"/></svg></div></div>`:''}
-                  ${platBadge(v?.videoUrl)}
-                </div>
-                <div style="padding:8px 9px 9px 11px">
-                  <div style="font-size:11px;font-weight:500;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.label}</div>
-                  <div style="display:flex;align-items:center;justify-content:space-between">
-                    <span class="badge b-${ds}">${STATUS_LBL[c.status]}</span>
-                    <span style="font-size:9px;color:var(--t3)">${c._brief._firm.name}</span>
-                  </div>
-                </div>
-              </div>`;
-            }).join(''):`<div style="grid-column:1/-1;padding:20px;text-align:center;font-size:11px;color:var(--t3)">Henüz moodboard kartı yok</div>`}
-          </div>
-          <div style="font-size:13px;font-weight:500;margin-bottom:8px">Aktif Görevler</div>
-          ${previewTasksHtml}
+        <div class="sec-hd">
+          <div class="sec-ttl">Son Briefler</div>
+          ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openFirmModal()">+ Firma</button>`:''}
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="det-panel">
-            <div style="font-size:12px;font-weight:500;margin-bottom:8px">IG Önizleme</div>
-            ${phoneFirm&&phoneBrief?`
-              <div class="ig-phone" style="width:100%">
-                <div class="ig-ph-top"><span>9:41</span><span>●●●</span></div>
-                <div class="ig-ph-hdr">
-                  <div style="width:22px;height:22px;border-radius:50%;background:${phoneFirm.color||'#1a1a18'};display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0">${ini(phoneFirm.name)}</div>
-                  <span style="font-size:9px;font-weight:700;color:#1a1a1a;font-family:system-ui">${phoneFirm.name.toLowerCase().replace(/\s/g,'_')}</span>
-                </div>
-                <div class="ig-ph-grid">${phoneGrid}</div>
+        ${recentBriefs.length?`<div class="card-grid" style="gap:10px">
+          ${recentBriefs.map(b=>{
+            const f=gF(b.firmId);
+            const stg=STAGE_PAGES[b.stage]||'brief';
+            const cards=b.moodboardCards||[];
+            const tasks=b.tasks||[];
+            const prog=tasks.length?Math.round(tasks.filter(t=>t.status==='DONE').length/tasks.length*100):0;
+            return`<div class="card" style="cursor:pointer;padding:12px" onclick="nav('${b.firmId}','${b.id}','${stg}')">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${f?.color||'#534AB7'};flex-shrink:0"></span>
+                <span style="font-size:11px;color:var(--t3)">${f?.name||'—'}</span>
+                <span class="badge b-gry" style="margin-left:auto">${STAGE_LABELS[stg]}</span>
               </div>
-              <div style="display:flex;gap:5px;margin-top:8px">
-                <button class="btn surface xs" style="flex:1;justify-content:center" onclick="nav('${phoneFirm.id}','${phoneBrief.id}','ig')">IG Grid →</button>
-                <button class="btn outline xs" style="flex:1;justify-content:center" onclick="nav('${phoneFirm.id}','${phoneBrief.id}','yayin')">Yayın →</button>
-              </div>`:`<div style="font-size:11px;color:var(--t3);text-align:center;padding:16px">Firma ekleyin</div>`}
-          </div>
-          <div class="det-panel">
-            <div style="font-size:12px;font-weight:500;margin-bottom:8px">Özet</div>
-            ${[['Toplam Firma',firms.length],['Aktif Brief',allBriefs.length],['Onaylı Kart',allCards.filter(c=>c.status==='APPROVED').length],['Tamamlanan Görev',allTasks.filter(t=>t.status==='DONE').length]].map(([l,v])=>
-              `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px"><span style="color:var(--t2)">${l}</span><span style="font-weight:600">${v}</span></div>`
-            ).join('')}
-          </div>
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px">${briefTitle(b)}</div>
+              <div style="font-size:11px;color:var(--t3);margin-bottom:6px">${cards.length} kart · ${tasks.length} görev</div>
+              <div class="prog-bar"><div class="prog-fill" style="width:${prog}%"></div></div>
+            </div>`;
+          }).join('')}
+        </div>`:
+        `<div class="empty">Henüz brief yok. Firma ekleyip başlayın.</div>`}
+      </div>
+
+      <!-- Active tasks -->
+      <div>
+        <div class="sec-hd">
+          <div class="sec-ttl">Aktif Görevler</div>
+          <button class="btn outline xs" onclick="go('pers')">Tümü →</button>
         </div>
+        ${activeTasks.length?`<div style="display:flex;flex-direction:column;gap:8px">
+          ${activeTasks.map(t=>{
+            const b=allBriefs.find(b=>b.id===t.briefId);
+            const f=b?gF(b.firmId):null;
+            const stsCls={TODO:'b-gry',DOING:'b-rv',DONE:'b-ok'}[t.status]||'b-gry';
+            return`<div class="card" style="padding:10px;cursor:pointer" onclick="nav('${b?.firmId||''}','${t.briefId}','tasks')">
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <span class="badge ${stsCls}">${t.status==='TODO'?'Yapılacak':t.status==='DOING'?'Yapılıyor':'Tamam'}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||t.cardRef}</div>
+                  <div style="font-size:10px;color:var(--t3)">${f?.name||'—'} · ${b?briefTitle(b):''}</div>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`:`<div class="empty">Aktif görev yok.</div>`}
       </div>
     </div>`;
 }
 
-// ── BRIEF ─────────────────────────────────────────────────
+// ── PAGE: BRIEF ───────────────────────────────────────────
 function renderBrief(){
-  const el=document.getElementById('page-brief');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
-  const stage=STAGE_TO_PAGE[b.stage]||'brief';
-  const pills=STAGE_ORDER.map((p,i)=>{
-    const lbl=['Brief','IG Moodboard','Kampanya MB','Görevler','Yayın'][i];
-    return`<span class="stage-pill" onclick="nav('${f.id}','${b.id}','${p}')">${lbl}</span><span class="stage-arrow">→</span>`;
-  });
-  pills.pop();
+  if(!f||!b){document.getElementById('page-brief').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  el.innerHTML=`
-    <div class="stage-nav" id="stage-nav">${pills.join('')}</div>
-    <div style="max-width:680px">
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-radius:12px;border:1px solid var(--bdr);margin-bottom:16px">
-        <div style="width:36px;height:36px;border-radius:10px;background:${f.color||'#1a1a18'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ini(f.name)}</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${f.name}</div>
-          <div style="font-size:11px;color:var(--t3)">${f.sector||''} · ${b.month} ${b.year}</div>
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
+  const pfOpts=[['Meta','Meta'],['Google','Google'],['YouTube','YouTube'],['TikTok','TikTok'],['LinkedIn','LinkedIn'],['Twitter','Twitter']];
+  const plats=b.platforms||[];
+
+  document.getElementById('page-brief').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:18px;font-weight:700">${briefTitle(b)}</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · Brief Formu</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openMemberModal('${f.id}')">+ Üye</button>`:''}
+        <button class="btn amber" onclick="saveBrief('${f.id}','${b.id}')">💾 Kaydet</button>
+      </div>
+    </div>
+
+    <div class="fld-grid fld-grid-2">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Ürün & İçerik</div>
+          ${fRow('Öne Çıkan Ürünler/Hizmetler',fTa('bf-products','Ürün adları ve açıklamaları...',b.products))}
+          ${fRow('Yeni Ürün Lansmanı var mı?',`<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="bf-newProduct"${b.newProduct?' checked':''}> <span style="font-size:12px">Evet, yeni ürün var</span></label>`)}
+          ${fRow('Yeni Ürün Açıklaması',fTa('bf-newProductDesc','Yeni ürün detayları...',b.newProductDesc))}
+          ${fRow('Öne Çıkarılacak Ürün',fInp('bf-featured','text','En çok push edilecek ürün...',b.featured))}
         </div>
-        <span class="badge b-ok">Aktif</span>
-        <button class="btn outline sm" onclick="openModal('brief-edit','${f.id}','${b.id}')">Düzenle</button>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Özel Günler</div>
+          ${fRow('Özel Gün/Tema',fInp('bf-specialDay','text','Anneler Günü, Ramazan...',b.specialDay))}
+          ${fRow('Özel İçerik Notu',fTa('bf-specialContent','Özel gün için notlar...',b.specialContent))}
+          ${fRow('Genel Notlar',fTa('bf-notes','Ekstra bilgiler, özel talepler...',b.notes))}
+        </div>
       </div>
-      <div class="form-row" style="margin-bottom:10px">
-        <div class="form-g"><label class="fl">Ürünler / Hizmetler</label><textarea class="inp ta" id="bf-products" style="min-height:88px" placeholder="Bu ay hangi ürünler / hizmetler öne çıkacak?">${b.products||''}</textarea></div>
-        <div class="form-g"><label class="fl">Hedef Kitle</label><textarea class="inp ta" id="bf-audience" style="min-height:88px" placeholder="Hedef kitle tanımı, yaş, ilgi alanları...">${b.targetAudience||''}</textarea></div>
-      </div>
-      <div class="form-row" style="margin-bottom:10px">
-        <div class="form-g"><label class="fl">Ton & Stil</label><textarea class="inp ta" id="bf-tone" style="min-height:88px" placeholder="İçerik tonu, atmosfer, renk yönlendirmesi...">${b.tone||''}</textarea></div>
-        <div class="form-g"><label class="fl">Özel Günler & Kampanyalar</label><textarea class="inp ta" id="bf-special" style="min-height:88px" placeholder="Kampanyalar, özel günler, etkinlikler...">${b.specialDay||''}</textarea></div>
-      </div>
-      <div class="form-row" style="margin-bottom:10px">
-        <div class="form-g"><label class="fl">İçerik Dağılımı</label><input class="inp" id="bf-dist" value="${b.adAreas||''}" placeholder="Örn: 4 video, 5 görsel, 2 carousel"></div>
-        <div class="form-g"><label class="fl">Referans Hesaplar</label><input class="inp" id="bf-refs" value="${b.refs||''}" placeholder="@hesap1, @hesap2 veya URL"></div>
-      </div>
-      <div class="form-g" style="margin-bottom:16px"><label class="fl">Genel Notlar</label><textarea class="inp ta" id="bf-notes" style="min-height:80px" placeholder="Ajans ve müşteriye özel notlar...">${b.notes||''}</textarea></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn outline sm" onclick="nav('${f.id}','${b.id}','mb')">IG Moodboard →</button>
-        <button class="btn solid sm" onclick="saveBrief('${f.id}','${b.id}')">Kaydet</button>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Ton & Stil</div>
+          ${fRow('Ton & Stil',fSel('bf-tone',[['','Seçin'],['Profesyonel','Profesyonel'],['Samimi','Samimi'],['Eğlenceli','Eğlenceli'],['Lüks','Lüks'],['Minimal','Minimal'],['Bold','Bold'],['Organik','Organik']],b.tone||''))}
+          ${fRow('Renk Yönlendirmesi',fTa('bf-colorDir','Renkler, hissiyat...',b.colorDir))}
+          ${fRow('Kaçınılacak Unsurlar',fTa('bf-avoid','Kullanılmaması gerekenler...',b.avoid))}
+          ${fRow('Referans Linkler',fTa('bf-refs','Beğenilen içerik linkleri...',b.refs))}
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Hedef & Reklam</div>
+          ${fRow('Hedef Kitle',fInp('bf-audience','text','25-45 yaş, kadın, şehirli...',b.targetAudience))}
+          ${fRow('Reklam Platformları',`<div style="display:flex;flex-wrap:wrap;gap:6px">${pfOpts.map(([v,l])=>`<span class="chip${plats.includes(v)?' on':''}" onclick="toggleChip(this,'${v}')" data-val="${v}">${l}</span>`).join('')}</div>`)}
+          ${fRow('Reklam Alanları',fTa('bf-adAreas','Reklam hedef kitle tanımı...',b.adAreas))}
+          ${fRow('Bütçe',fInp('bf-budget','text','50.000 TL',b.budget))}
+        </div>
       </div>
     </div>`;
-  updateStagePills(stage);
 }
+
+function toggleChip(el,val){el.classList.toggle('on');}
 
 async function saveBrief(fid,bid){
+  const chips=[...document.querySelectorAll('.chip.on')].map(el=>el.dataset.val);
   const body={
-    products:document.getElementById('bf-products')?.value||'',
-    targetAudience:document.getElementById('bf-audience')?.value||'',
-    tone:document.getElementById('bf-tone')?.value||'',
-    specialDay:document.getElementById('bf-special')?.value||'',
-    adAreas:document.getElementById('bf-dist')?.value||'',
-    refs:document.getElementById('bf-refs')?.value||'',
-    notes:document.getElementById('bf-notes')?.value||''
+    products:v('bf-products')||undefined,
+    newProduct:document.getElementById('bf-newProduct')?.checked||false,
+    newProductDesc:v('bf-newProductDesc')||undefined,
+    featured:v('bf-featured')||undefined,
+    tone:v('bf-tone')||undefined,
+    colorDir:v('bf-colorDir')||undefined,
+    avoid:v('bf-avoid')||undefined,
+    refs:v('bf-refs')||undefined,
+    budget:v('bf-budget')||undefined,
+    platforms:chips,
+    targetAudience:v('bf-audience')||undefined,
+    adAreas:v('bf-adAreas')||undefined,
+    specialDay:v('bf-specialDay')||undefined,
+    specialContent:v('bf-specialContent')||undefined,
+    notes:v('bf-notes')||undefined,
   };
   try{
-    await api(`/api/firms/${fid}/briefs/${bid}`,{method:'PATCH',body});
-    const b=gB(fid,bid);if(b)Object.assign(b,body);
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}`,{method:'PUT',body});
+    const b=gB(fid,bid);if(b)Object.assign(b,updated);
     toast('Brief kaydedildi ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── IG MOODBOARD ──────────────────────────────────────────
+// ── PAGE: IG MOODBOARD ────────────────────────────────────
 async function renderMB(){
-  const el=document.getElementById('page-mb');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
+  if(!f||!b){document.getElementById('page-mb').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
+
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
+  // Load cards if needed
   if(!b._igCards){
-    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Yükleniyor...</div>';
-    await loadCards(_curFid,_curBid,'IG');
+    try{b._igCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`);}
+    catch{b._igCards=[];}
   }
   const cards=b._igCards||[];
-  const filtered=_mbFilter==='all'?cards:cards.filter(c=>c.status===_mbFilter);
-  const ap=cards.filter(c=>c.status==='APPROVED').length;
-  const stage=STAGE_TO_PAGE[b.stage]||'brief';
-  const pills=STAGE_ORDER.map((p,i)=>{
-    const lbl=['Brief','IG Moodboard','Kampanya MB','Görevler','Yayın'][i];
-    return`<span class="stage-pill" onclick="nav('${f.id}','${b.id}','${p}')">${lbl}</span><span class="stage-arrow">→</span>`;
-  });pills.pop();
 
-  el.innerHTML=`
-    <div class="stage-nav">${pills.join('')}</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+  const stsCls={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
+  const stsLbl={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
+
+  const cardsHtml=cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
+    ${cards.map(c=>{
+      const v0=c.versions?.[0];
+      const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+      return`<div class="mb-card" data-s="${c.status}" onclick="openCardDet('${f.id}','${b.id}','IG','${c.id}')">
+        ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="mb-thumb-ph" style="display:none">🎨</div>`
+          :`<div class="mb-thumb-ph">🎨</div>`}
+        <div class="mb-body">
+          <div class="mb-label">${c.label}</div>
+          <div class="mb-meta">
+            <span style="font-size:10px;color:var(--t3)">${c.type} · v${(c.versions||[]).length}</span>
+            <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
+          </div>
+        </div>
+        <div class="mb-actions" onclick="event.stopPropagation()">
+          ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','APPROVED')">✓ Onayla</button>`:''}
+          ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','REJECTED')">✕</button>`:''}
+          <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','IG','${c.id}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`:`<div class="empty">Henüz IG referansı eklenmedi.</div>`;
+
+  document.getElementById('page-mb').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+    <div class="sec-hd">
       <div>
-        <div class="ph">${f.name} — IG Moodboard</div>
-        <div style="font-size:11px;color:var(--t3)">${b.month} ${b.year} · ${ap}/${cards.length} onaylı</div>
+        <div style="font-size:18px;font-weight:700">IG Moodboard</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} referans</div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn outline sm" onclick="openModal('cust-mb','${f.id}','${b.id}','ig')">Müşteri Görünümü</button>
-        <button class="btn solid sm" onclick="openModal('card','${f.id}','${b.id}','IG')">+ Kart Ekle</button>
-      </div>
+      <button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','IG')">+ Referans Ekle</button>
     </div>
-    <div class="tb2">
-      ${['all','PENDING','REVIEW','APPROVED','REJECTED'].map(s=>`<span class="tag ${_mbFilter===s?'filled':'sf'}" onclick="_mbFilter='${s}';renderMB()">${{all:'Tümü',PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylı',REJECTED:'Revize'}[s]}</span>`).join('')}
-    </div>
-    ${cards.length?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-      ${filtered.map(c=>mbCardHtml(c,f,b,'ig')).join('')}
-      <div class="mb-add" onclick="openModal('card','${f.id}','${b.id}','IG')">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="14" stroke="var(--t3)" stroke-width="1.5"/><line x1="2" y1="8" x2="14" y2="8" stroke="var(--t3)" stroke-width="1.5"/></svg>
-        <span style="font-size:11px;color:var(--t3)">Kart ekle</span>
-      </div>
-    </div>`:`<div style="padding:48px;text-align:center;color:var(--t3)">
-      <div style="font-size:32px;margin-bottom:8px">🎨</div>
-      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Henüz kart yok</div>
-      <button class="btn solid sm" onclick="openModal('card','${f.id}','${b.id}','IG')">+ İlk Kartı Ekle</button>
-    </div>`}`;
-  updateStagePills(stage);
+    ${cardsHtml}`;
 }
 
-function mbCardHtml(c,f,b,which){
-  const v=c.versions?.[c.versions.length-1];
-  const img=cardThumb(c);
-  const ds=STATUS_DS[c.status]||'wt';
-  const isVid=!!(v?.videoUrl);
-  return`<div class="mb-card" data-s="${ds}" onclick="openCardDet('${f.id}','${b.id}','${which}','${c.id}')">
-    <div style="height:82px;background:#1a1a18;position:relative;overflow:hidden">
-      ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75" loading="lazy">`:''}
-      ${isVid?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1"><div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center"><svg width="8" height="8" viewBox="0 0 12 12" fill="white"><polygon points="4,2 10,6 4,10"/></svg></div></div>`:''}
-      ${platBadge(v?.videoUrl)}
-      <div style="position:absolute;top:6px;right:8px;z-index:2"><span style="background:rgba(255,255,255,.18);color:#fff;font-size:7px;padding:1px 5px;border-radius:4px;font-weight:600">v${v?.vNum||1}</span></div>
-      <div class="mb-ov">
-        <div class="mb-ov-btn" onclick="event.stopPropagation();openCardDet('${f.id}','${b.id}','${which}','${c.id}')">↗</div>
-        <div class="mb-ov-btn" onclick="event.stopPropagation();deleteCard('${f.id}','${b.id}','${c.id}','${which}')" style="color:var(--er-c)">✕</div>
-      </div>
-    </div>
-    <div style="padding:8px 9px 9px 11px">
-      <div style="font-size:11px;font-weight:500;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.label}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span class="badge b-${ds}">${STATUS_LBL[c.status]}</span>
-        <span style="font-size:9px;color:var(--t3)">${c.type}</span>
-      </div>
-    </div>
-  </div>`;
-}
-
-async function deleteCard(fid,bid,cid,which){
-  if(!confirm('Kartı silmek istediğinizden emin misiniz?'))return;
-  try{
-    await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}`,{method:'DELETE'});
-    const b=gB(fid,bid);
-    if(b){b._igCards=b._igCards?.filter(c=>c.id!==cid);b._kampCards=b._kampCards?.filter(c=>c.id!==cid);}
-    toast('Kart silindi');
-    if(which==='ig'||which==='IG')renderMB(); else renderMBKamp();
-  }catch(e){toast(e.message,'err');}
-}
-
-// ── KAMPANYA MB ───────────────────────────────────────────
+// ── PAGE: KAMPANYA MOODBOARD ──────────────────────────────
 async function renderMBKamp(){
-  const el=document.getElementById('page-mb-kamp');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
+  if(!f||!b){document.getElementById('page-mb-kamp').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
+
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
   if(!b._kampCards){
-    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Yükleniyor...</div>';
-    await loadCards(_curFid,_curBid,'KAMP');
+    try{b._kampCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=KAMP`);}
+    catch{b._kampCards=[];}
   }
   const cards=b._kampCards||[];
-  const filtered=_kampFilter==='all'?cards:cards.filter(c=>c.status===_kampFilter);
-  const stage=STAGE_TO_PAGE[b.stage]||'brief';
-  const pills=STAGE_ORDER.map((p,i)=>{
-    const lbl=['Brief','IG Moodboard','Kampanya MB','Görevler','Yayın'][i];
-    return`<span class="stage-pill" onclick="nav('${f.id}','${b.id}','${p}')">${lbl}</span><span class="stage-arrow">→</span>`;
-  });pills.pop();
+  const stsCls={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
+  const stsLbl={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
-  el.innerHTML=`
-    <div class="stage-nav">${pills.join('')}</div>
-    <div class="info wt"><div class="info-ico" style="background:var(--amb)"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M6 3v4M6 9v.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg></div><div><strong>${cards.filter(c=>c.status==='PENDING').length} kart onayınızı bekliyor.</strong> Her iş kartını inceleyip onaylayın veya revize isteyin.</div></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div><div class="ph">${f.name} — Kampanya MB</div><div style="font-size:11px;color:var(--t3)">${b.month} ${b.year} · ${cards.length} iş kalemi</div></div>
-      <button class="btn amber sm" onclick="openModal('card','${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>
+  document.getElementById('page-mb-kamp').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+    <div class="sec-hd">
+      <div>
+        <div style="font-size:18px;font-weight:700">Kampanya Moodboard</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} kart</div>
+      </div>
+      <button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>
     </div>
-    <div class="tb2">
-      ${['all','PENDING','REVIEW','APPROVED','REJECTED'].map(s=>`<span class="tag ${_kampFilter===s?'filled':'sf'}" onclick="_kampFilter='${s}';renderMBKamp()">${{all:'Tümü',PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylı',REJECTED:'Revize'}[s]}</span>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      ${filtered.map(c=>{
-        const ds=STATUS_DS[c.status]||'wt';
-        return`<div style="background:var(--card);border-radius:12px;border:1px solid ${ds==='er'?'var(--er-br)':ds==='ok'?'var(--ok-br)':'var(--bdr)'};overflow:hidden">
-          <div style="background:${ds==='wt'?'var(--ambL)':ds==='ok'?'var(--ok-bg)':ds==='er'?'var(--er-bg)':'var(--gry)'};padding:10px 12px;border-bottom:1px solid ${ds==='wt'?'rgba(200,114,10,.2)':'var(--bdr)'}">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <span class="badge b-${ds}">${STATUS_LBL[c.status]}</span>
-              <span style="font-size:9px;color:var(--t3)">${c.taskDeadline?fmtDate(c.taskDeadline):''}</span>
+    ${cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
+      ${cards.map(c=>{
+        const v0=c.versions?.[0];
+        const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+        return`<div class="mb-card" data-s="${c.status}" onclick="openCardDet('${f.id}','${b.id}','KAMP','${c.id}')">
+          ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="mb-thumb-ph" style="display:none">🎬</div>`
+            :`<div class="mb-thumb-ph">🎬</div>`}
+          <div class="mb-body">
+            <div class="mb-label">${c.label}</div>
+            <div class="mb-meta">
+              <span style="font-size:10px;color:var(--t3)">${c.type} · v${(c.versions||[]).length}</span>
+              <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
             </div>
           </div>
-          <div style="padding:12px">
-            <div style="font-size:13px;font-weight:600;margin-bottom:4px">${c.label}</div>
-            <div style="font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.55">${c.taskDesc||'—'}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
-              ${c.type?`<div style="background:var(--gry);border-radius:8px;padding:8px"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">Tür</div><div style="font-size:11px;font-weight:500">${c.type}</div></div>`:''}
-              ${c.taskFormat?`<div style="background:var(--gry);border-radius:8px;padding:8px"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">Format</div><div style="font-size:11px;font-weight:500">${c.taskFormat}</div></div>`:''}
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="btn ${c.status==='APPROVED'?'surface':'solid'} xs" style="flex:1;justify-content:center" onclick="updateCardStatus('${f.id}','${b.id}','${c.id}','${c.status==='APPROVED'?'PENDING':'APPROVED'}','kamp')">${c.status==='APPROVED'?'✓ Onaylı':'Onayla'}</button>
-              <button class="btn ${c.status==='REJECTED'?'out-a':'outline'} xs" onclick="updateCardStatus('${f.id}','${b.id}','${c.id}','${c.status==='REJECTED'?'PENDING':'REJECTED'}','kamp')">${c.status==='REJECTED'?'✕ Revize':'Revize'}</button>
-              <button class="btn surface xs" onclick="deleteCard('${f.id}','${b.id}','${c.id}','KAMP')">✕</button>
-            </div>
+          <div class="mb-actions" onclick="event.stopPropagation()">
+            ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','APPROVED')">✓ Onayla</button>`:''}
+            ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','REJECTED')">✕</button>`:''}
+            <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','KAMP','${c.id}')">🗑</button>
           </div>
         </div>`;
       }).join('')}
-      <div class="mb-add" style="min-height:160px" onclick="openModal('card','${f.id}','${b.id}','KAMP')">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="14" stroke="var(--t3)" stroke-width="1.5"/><line x1="2" y1="8" x2="14" y2="8" stroke="var(--t3)" stroke-width="1.5"/></svg>
-        <span style="font-size:11px;color:var(--t3)">Kart ekle</span>
-      </div>
-    </div>`;
-  updateStagePills(stage);
+    </div>`:`<div class="empty">Henüz kampanya kartı eklenmedi.</div>`}`;
 }
 
-async function updateCardStatus(fid,bid,cid,status,which){
+// ── CARD ACTIONS ──────────────────────────────────────────
+async function updateCard(fid,bid,which,cid,status){
   try{
-    const card=await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}`,{method:'PATCH',body:{status}});
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}`,{method:'PUT',body:{status}});
     const b=gB(fid,bid);
-    if(b&&b._igCards){const i=b._igCards.findIndex(c=>c.id===cid);if(i>=0)b._igCards[i].status=status;}
-    if(b&&b._kampCards){const i=b._kampCards.findIndex(c=>c.id===cid);if(i>=0)b._kampCards[i].status=status;}
-    toast(status==='APPROVED'?'✓ Onaylandı':status==='REJECTED'?'✕ Revize istendi':'Güncellendi');
-    if(which==='kamp')renderMBKamp(); else renderMB();
+    if(b){
+      const arr=which==='IG'?(b._igCards||[]):(b._kampCards||[]);
+      const idx=arr.findIndex(c=>c.id===cid);
+      if(idx>=0)Object.assign(arr[idx],updated);
+    }
+    if(which==='IG')renderMB();else renderMBKamp();
+    toast(status==='APPROVED'?'Onaylandı ✓':'Reddedildi','ok');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── IG GRID ───────────────────────────────────────────────
+async function deleteCard(fid,bid,which,cid){
+  if(!confirm('Kartı silmek istediğinize emin misiniz?'))return;
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}`,{method:'DELETE'});
+    const b=gB(fid,bid);
+    if(b){
+      if(which==='IG')b._igCards=(b._igCards||[]).filter(c=>c.id!==cid);
+      else b._kampCards=(b._kampCards||[]).filter(c=>c.id!==cid);
+    }
+    if(which==='IG')renderMB();else renderMBKamp();
+    toast('Kart silindi');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function openCardDet(fid,bid,which,cid){
+  const b=gB(fid,bid);if(!b)return;
+  const arr=which==='IG'?(b._igCards||[]):(b._kampCards||[]);
+  let c=arr.find(x=>x.id===cid);
+  if(!c)return;
+
+  const v0=c.versions?.[0];
+  const embed=v0?.videoUrl?toEmbed(v0.videoUrl):null;
+  const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+
+  showModal(`${mHd(c.label)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        ${embed?`<div style="position:relative;padding-bottom:56.25%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px">
+          <iframe src="${embed}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allowfullscreen></iframe></div>`
+          :thumb?`<img src="${thumb}" style="width:100%;border-radius:8px;margin-bottom:10px;max-height:180px;object-fit:cover">`:''}
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px">${c.type}</div>
+        ${v0?.desc?`<div class="info-block">${v0.desc}</div>`:''}
+      </div>
+      <div>
+        ${fRow('Durum',fSel('cd-status',[['PENDING','Bekliyor'],['REVIEW','İncelemede'],['APPROVED','Onaylandı'],['REJECTED','Reddedildi']],c.status))}
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--t3)">Yeni Versiyon Ekle</div>
+        ${fRow('Versiyon Notu',fInp('cd-vnote','text','v2 açıklaması...'))}
+        ${fRow('Video URL',fInp('cd-vurl','url','https://youtube.com/...'))}
+        ${fRow('Görsel URL',fInp('cd-vimg','url','https://...'))}
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;margin-top:12px;color:var(--t3)">Versiyon Geçmişi</div>
+        <div style="max-height:100px;overflow-y:auto">
+          ${(c.versions||[]).map(ver=>`<div style="padding:4px 0;border-bottom:1px solid var(--bdr);font-size:11px">
+            <span style="font-weight:600">v${ver.vNum}</span> — ${ver.note} <span style="color:var(--t3)">${fmtDate(ver.createdAt)}</span>
+          </div>`).join('')||'<div style="color:var(--t3);font-size:11px">Versiyon yok</div>'}
+        </div>
+      </div>
+    </div>
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
+      `<button class="btn outline" onclick="addCardVersion('${fid}','${bid}','${cid}')">+ Versiyon</button>`,
+      `<button class="btn amber" onclick="saveCardStatus('${fid}','${bid}','${which}','${cid}')">Kaydet</button>`
+    )}`);
+}
+
+async function saveCardStatus(fid,bid,which,cid){
+  const status=v('cd-status');
+  if(!status)return;
+  await updateCard(fid,bid,which,cid,status);
+  closeModal();
+}
+
+async function addCardVersion(fid,bid,cid){
+  const note=v('cd-vnote');
+  const videoUrl=v('cd-vurl')||undefined;
+  const mediaUrl=v('cd-vimg')||undefined;
+  if(!note){toast('Versiyon notu gerekli','err');return;}
+  try{
+    const ver=await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}/versions`,
+      {method:'POST',body:{note,videoUrl,mediaUrl}});
+    // Reload card versions
+    const b=gB(fid,bid);
+    if(b){
+      const allArr=[...(b._igCards||[]),...(b._kampCards||[])];
+      const c=allArr.find(x=>x.id===cid);
+      if(c){if(!c.versions)c.versions=[];c.versions.unshift(ver);}
+    }
+    toast('Versiyon eklendi ✓');closeModal();
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── PAGE: IG GRID ─────────────────────────────────────────
 async function renderIG(){
-  const el=document.getElementById('page-ig');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
-  if(!b.igCells?.length){
-    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Yükleniyor...</div>';
-    await loadIGCells(_curFid,_curBid);
+  if(!f||!b){document.getElementById('page-ig').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
+
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
+  if(!b.igCells||!b.igCells.length){
+    try{b.igCells=await api(`/api/firms/${f.id}/briefs/${b.id}/ig`);}
+    catch{b.igCells=[];}
   }
   const cells=b.igCells||[];
-  const ap=cells.filter(c=>c.approved===true).length;
-  const un=f.name.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9_]/g,'');
+  const typeLbl={POST:'📷 Post',REELS:'🎬 Reels',CAROUSEL:'🎠 Carousel'};
 
-  // Build 9-cell grid (fill with empty cells)
-  const gridCells=[...cells,...Array(Math.max(0,9-cells.length)).fill(null)].slice(0,12).map((cell,i)=>{
-    if(!cell)return`<div class="igcell empty" onclick="openModal('ig-cell','${f.id}','${b.id}')">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="14" stroke="var(--gry3)" stroke-width="1.5"/><line x1="2" y1="8" x2="14" y2="8" stroke="var(--gry3)" stroke-width="1.5"/></svg>
-    </div>`;
-    const thumb=cell.mediaUrl||ytThumb(cell.videoUrl||'');
-    return`<div class="igcell" onclick="viewIGCell('${f.id}','${b.id}','${cell.id}')">
-      ${thumb?`<img src="${thumb}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" loading="lazy">`:`<div style="position:absolute;inset:0;background:${GR[i%9]}"></div>`}
-      ${cell.type==='REELS'?`<div style="position:absolute;top:5px;right:5px;color:#fff;font-size:10px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:2">▶</div>`:''}
-      ${cell.type==='CAROUSEL'?`<div style="position:absolute;top:5px;right:5px;color:#fff;font-size:10px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:2">⧉</div>`:''}
-      ${cell.approved===true?`<div style="position:absolute;bottom:5px;right:5px;color:#fff;font-size:10px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:2">✓</div>`:''}
-      ${cell.approved===false?`<div style="position:absolute;bottom:5px;right:5px;color:#ff6b6b;font-size:10px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:2">✗</div>`:''}
-      <div class="igcell-ov">
-        <div class="igcell-btn" onclick="event.stopPropagation();openModal('ig-cell-edit','${f.id}','${b.id}','${cell.id}')">✎</div>
-        <div class="igcell-btn" onclick="event.stopPropagation();deleteIGCell('${f.id}','${b.id}','${cell.id}')" style="color:var(--er-c)">✕</div>
-      </div>
+  // Build 9-cell grid (always show 9 slots)
+  const cellsHtml=Array.from({length:9},(_,i)=>{
+    const cell=cells.find(c=>c.cellIndex===i);
+    const thumb=cell?.mediaUrl||(cell?.videoUrl?ytThumb(cell.videoUrl):null);
+    return`<div class="igcell" onclick="${cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:
+      `openIGCellModal('${f.id}','${b.id}',${i})`}">
+      ${thumb?`<img src="${thumb}" onerror="this.parentElement.innerHTML='<div class=igcell-ph>📷<span>${i+1}</span></div>'">`:
+        `<div class="igcell-ph">📷<span>${i+1}</span></div>`}
+      ${cell?`<div class="igcell-ov">
+        <span class="badge ${cell.approved?'b-ok':cell.approved===false?'b-er':'b-gry'}" style="font-size:9px">${cell.approved?'✓ Onaylı':cell.approved===false?'✕':'Bekliyor'}</span>
+        <span style="font-size:9px;color:#fff">${typeLbl[cell.type]||cell.type}</span>
+      </div>`:''}
+      <span class="igcell-idx">${i+1}</span>
     </div>`;
   }).join('');
 
-  // Phone preview
-  const phoneGrid=cells.slice(0,9).map((c,i)=>{
-    const th=c.mediaUrl||ytThumb(c.videoUrl||'');
-    return`<div class="ig-ph-cell">${th?`<img src="${th}" style="width:100%;height:100%;object-fit:cover">`:`<div style="width:100%;height:100%;background:${GR[i%9]}"></div>`}</div>`;
-  }).join('')+Array(Math.max(0,9-cells.length)).fill('<div class="ig-ph-cell"></div>').join('');
+  // Sidebar stats
+  const approved=cells.filter(c=>c.approved===true).length;
+  const pending=cells.filter(c=>c.approved==null).length;
+  const distHtml=`
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${cells.slice(0,6).map(c=>{
+        const thumb=c.mediaUrl||(c.videoUrl?ytThumb(c.videoUrl):null);
+        return`<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="openIGCell('${f.id}','${b.id}','${c.id}')">
+          <div style="width:40px;height:40px;border-radius:6px;background:var(--gry1);overflow:hidden;flex-shrink:0">
+            ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:16px">📷</div>'}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.caption?.slice(0,30)||'—'}</div>
+            <div style="font-size:10px;color:var(--t3)">${typeLbl[c.type]||c.type} · ${fmtDate(c.publishDate)}</div>
+          </div>
+          <span class="badge ${c.approved?'b-ok':c.approved===false?'b-er':'b-gry'}" style="font-size:9px">${c.approved?'✓':c.approved===false?'✕':'?'}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
 
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div><div class="ph">IG Grid — ${f.name}</div><div style="font-size:11px;color:var(--t3)">${b.month} ${b.year} · ${ap}/${cells.length} onaylı</div></div>
-      <div style="display:flex;gap:6px">
-        <button class="btn outline sm" onclick="openModal('cust-ig','${f.id}','${b.id}')">Müşteri Onayı</button>
-        <button class="btn solid sm" onclick="openModal('ig-cell','${f.id}','${b.id}')">+ Hücre Ekle</button>
+  document.getElementById('page-ig').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+    <div class="sec-hd">
+      <div>
+        <div style="font-size:18px;font-weight:700">IG Grid</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cells.length}/9 hücre</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
+        <button class="btn amber" onclick="openIGCellModal('${f.id}','${b.id}')">+ İçerik Ekle</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 184px;gap:14px;align-items:start">
+    <div class="det-wrap">
       <div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${gridCells}</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center">Shift+tıkla çoklu seçim · Sürükle-bırak sıralama</div>
+        <div class="ig-grid">${cellsHtml}</div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <span class="badge b-ok">${approved} onaylı</span>
+          <span class="badge b-gry">${pending} bekliyor</span>
+          <span class="badge b-er">${cells.filter(c=>c.approved===false).length} reddedildi</span>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="ig-phone">
-          <div class="ig-ph-top"><span>9:41</span><span>●●●</span></div>
-          <div class="ig-ph-hdr">
-            <div style="width:22px;height:22px;border-radius:50%;background:${f.color||'#1a1a18'};display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0">${ini(f.name)}</div>
-            <span style="font-size:9px;font-weight:700;color:#1a1a1a;font-family:system-ui">${un}</span>
-          </div>
-          <div class="ig-ph-grid">${phoneGrid}</div>
-        </div>
-        <div class="det-panel">
-          <div style="font-size:11px;font-weight:500;margin-bottom:8px">Dağılım</div>
-          ${['POST','REELS','CAROUSEL'].map(t=>{const n=cells.filter(c=>c.type===t).length;const pct=cells.length?Math.round(n/cells.length*100):0;return`<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:var(--t2)">${t}</span><span style="font-weight:500">${n}</span></div><div class="prog"><div class="pf" style="width:${pct}%"></div></div></div>`;}).join('')}
-        </div>
+      <div class="det-panel">
+        <div style="font-size:12px;font-weight:600;margin-bottom:12px">İçerik Listesi</div>
+        ${cells.length?distHtml:`<div class="empty" style="padding:12px">İçerik yok</div>`}
       </div>
     </div>`;
+}
+
+async function approveAllIG(fid,bid){
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/ig/approve-all`,{method:'POST'});
+    const b=gB(fid,bid);
+    if(b&&b.igCells)b.igCells.forEach(c=>c.approved=true);
+    renderIG();toast('Tümü onaylandı ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+function openIGCell(fid,bid,cid){
+  const b=gB(fid,bid);if(!b)return;
+  const cell=(b.igCells||[]).find(c=>c.id===cid);if(!cell)return;
+  const embed=cell.videoUrl?toEmbed(cell.videoUrl):null;
+  const thumb=cell.mediaUrl||(cell.videoUrl?ytThumb(cell.videoUrl):null);
+  const typeLbl={POST:'📷 Post',REELS:'🎬 Reels',CAROUSEL:'🎠 Carousel'};
+  showModal(`${mHd(`Hücre ${cell.cellIndex+1} — ${typeLbl[cell.type]||cell.type}`)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        ${embed?`<div style="position:relative;padding-bottom:56.25%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px">
+          <iframe src="${embed}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allowfullscreen></iframe></div>`
+          :thumb?`<img src="${thumb}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;margin-bottom:10px">`:''}
+        ${cell.caption?`<div class="info-block">${cell.caption}</div>`:''}
+        ${cell.hashtags?`<div style="font-size:11px;color:var(--t3);margin-top:6px">${cell.hashtags}</div>`:''}
+      </div>
+      <div>
+        <div style="margin-bottom:8px">${fRow('Yayın Tarihi',fInp('ic-date','date','',cell.publishDate?.slice(0,10)||''))}</div>
+        <div style="margin-bottom:12px">${fRow('Altyazı',fTa('ic-cap','Altyazı...',cell.caption||''))}</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Durum: <strong>${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</strong></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn ok xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',true)">✓ Onayla</button>
+          <button class="btn er xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',false)">✕ Reddet</button>
+          <button class="btn surface xs ico" onclick="deleteIGCell('${fid}','${bid}','${cid}')">🗑</button>
+        </div>
+      </div>
+    </div>
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
+      `<button class="btn amber" onclick="saveIGCell('${fid}','${bid}','${cid}')">Kaydet</button>`
+    )}`);
+}
+
+async function saveIGCell(fid,bid,cid){
+  const body={caption:v('ic-cap')||undefined,publishDate:v('ic-date')||undefined};
+  try{
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'PUT',body});
+    const b=gB(fid,bid);
+    if(b){const idx=(b.igCells||[]).findIndex(c=>c.id===cid);if(idx>=0)Object.assign(b.igCells[idx],updated);}
+    closeModal();renderIG();toast('Kaydedildi ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function toggleIGApprove(fid,bid,cid,val){
+  try{
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'PUT',body:{approved:val}});
+    const b=gB(fid,bid);
+    if(b){const idx=(b.igCells||[]).findIndex(c=>c.id===cid);if(idx>=0)Object.assign(b.igCells[idx],updated);}
+    closeModal();renderIG();toast(val?'Onaylandı ✓':'Reddedildi');
+  }catch(e){toast(e.message,'err');}
 }
 
 async function deleteIGCell(fid,bid,cid){
-  if(!confirm('Hücreyi silmek istediğinizden emin misiniz?'))return;
+  if(!confirm('İçeriği silmek istiyor musunuz?'))return;
   try{
     await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'DELETE'});
-    const b=gB(fid,bid);if(b)b.igCells=b.igCells?.filter(c=>c.id!==cid);
-    toast('Hücre silindi');renderIG();
+    const b=gB(fid,bid);
+    if(b)b.igCells=(b.igCells||[]).filter(c=>c.id!==cid);
+    closeModal();renderIG();toast('Silindi');
   }catch(e){toast(e.message,'err');}
 }
 
-function viewIGCell(fid,bid,cid){
-  const b=gB(fid,bid);const cell=b?.igCells?.find(c=>c.id===cid);if(!cell)return;
-  const emb=toEmbed(cell.videoUrl||'');
-  const f=gF(fid);
-  let mediaHtml='';
-  if(emb&&cell.videoUrl){
-    mediaHtml=`<div style="position:relative;padding-bottom:100%;height:0;background:#000;border-radius:12px;overflow:hidden"><iframe src="${emb}${emb.includes('?')?'&':'?'}autoplay=0" style="position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay;encrypted-media;accelerometer;gyroscope;picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
-  } else if(cell.mediaUrl){
-    mediaHtml=`<img src="${cell.mediaUrl}" style="width:100%;border-radius:12px;display:block">`;
-  } else {
-    mediaHtml=`<div style="width:100%;aspect-ratio:1;background:${GR[0]};border-radius:12px"></div>`;
-  }
-  showInfoModal(`IG Hücresi — ${cell.type}`,`
-    ${mediaHtml}
-    <div style="padding:12px 0 4px">
-      <div style="font-size:12px;color:var(--t1);line-height:1.6">${cell.caption||''}</div>
-      ${cell.hashtags?`<div style="font-size:11px;color:var(--amb);margin-top:6px">${cell.hashtags}</div>`:''}
-    </div>
-    <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn ${cell.approved===true?'surface':'solid'} sm" style="flex:1;justify-content:center" onclick="toggleCellApprove('${fid}','${bid}','${cid}',${cell.approved===true?'null':'true'})">${cell.approved===true?'✓ Onaylı':'Onayla'}</button>
-      <button class="btn ${cell.approved===false?'out-a':'outline'} sm" style="flex:1;justify-content:center" onclick="toggleCellApprove('${fid}','${bid}','${cid}',${cell.approved===false?'null':'false'})">${cell.approved===false?'✕ Revize':'Reddet'}</button>
-    </div>`);
-}
-
-async function toggleCellApprove(fid,bid,cid,val){
-  try{
-    await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'PUT',body:{approved:val}});
-    const b=gB(fid,bid);const cell=b?.igCells?.find(c=>c.id===cid);
-    if(cell)cell.approved=val;
-    toast(val===true?'✓ Onaylandı':val===false?'✕ Reddedildi':'Güncellendi');
-    closeModal();renderIG();
-  }catch(e){toast(e.message,'err');}
-}
-
-// ── TASKS ─────────────────────────────────────────────────
+// ── PAGE: TASKS (KANBAN) ──────────────────────────────────
 async function renderTasks(){
-  const el=document.getElementById('page-tasks');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
-  if(!b.tasks||!b._tasksLoaded){
-    el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Yükleniyor...</div>';
-    await loadTasks(_curFid,_curBid);b._tasksLoaded=true;
+  if(!f||!b){document.getElementById('page-tasks').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
+
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
+  if(!b.tasks||!b.tasks.length){
+    try{b.tasks=await api(`/api/firms/${f.id}/briefs/${b.id}/tasks`);}
+    catch{b.tasks=[];}
   }
   const tasks=b.tasks||[];
-  const todo=tasks.filter(t=>t.status==='TODO');
-  const doing=tasks.filter(t=>t.status==='DOING');
-  const done=tasks.filter(t=>t.status==='DONE');
+  const cols=['TODO','DOING','DONE'];
+  const colLabels={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
+  const colColors={TODO:'var(--gry2)',DOING:'var(--rv)',DONE:'var(--ok)'};
+  const nextStatus={TODO:'DOING',DOING:'DONE',DONE:'TODO'};
 
-  function tcHtml(t){
-    const ci=t.checkItems||[];
-    const dci=ci.filter(x=>x.done).length;
-    const dl=daysLeft(t.deadline);
-    const assignee=t.assignee||members.find(m=>m.id===t.assigneeId);
-    const acc=t.status==='TODO'?'var(--amb)':t.status==='DOING'?'var(--blk)':'rgba(26,92,26,.5)';
-    return`<div class="tc">
-      <div class="tc-acc" style="background:${acc}"></div>
-      <div style="padding-left:9px">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:2px">
-          <div style="font-size:11px;font-weight:500;${t.status==='DONE'?'text-decoration:line-through;opacity:.6':''}">${t.cardRef||t.desc}</div>
-          <div style="display:flex;gap:3px;flex-shrink:0">
-            <button class="btn ico xs surface" onclick="cycleTask('${f.id}','${b.id}','${t.id}')" title="Durumu değiştir">→</button>
-            <button class="btn ico xs surface" onclick="deleteTask('${f.id}','${b.id}','${t.id}')" style="color:var(--er-c)">✕</button>
+  const mem=members.filter(m=>(f.members||[]).some(fm=>fm.userId===m.id));
+
+  const kanban=cols.map(status=>{
+    const colTasks=tasks.filter(t=>t.status===status);
+    return`<div class="kb-col">
+      <div class="kb-col-hd">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${colColors[status]}"></span>
+          <span class="kb-col-ttl">${colLabels[status]}</span>
+        </div>
+        <span class="kb-cnt">${colTasks.length}</span>
+      </div>
+      ${colTasks.map(t=>{
+        const assignee=mem.find(m=>m.id===t.assigneeId)||t.assignee;
+        return`<div class="tc">
+          <div class="tc-ref">${t.type} ${t.cardRef?'· '+t.cardRef:''}</div>
+          <div class="tc-title">${t.desc}</div>
+          <div class="tc-meta">
+            ${t.deadline?`<span class="badge b-gry">${fmtDate(t.deadline)}</span>`:''}
+            ${assignee?`<span class="badge b-blk">${assignee.name||assignee.email||'?'}</span>`:''}
+            ${t.format?`<span class="badge b-rv">${t.format}</span>`:''}
           </div>
-        </div>
-        <div style="font-size:9px;color:var(--t3);margin-bottom:6px">${t.type||''} ${t.format?'· '+t.format:''}</div>
-        ${t.type?`<div style="margin-bottom:5px"><span class="badge b-${t.status==='TODO'?'wt':t.status==='DOING'?'gry':'ok'}">${t.type}</span></div>`:''}
-        ${ci.length?`<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:8px;color:var(--t3);margin-bottom:2px"><span>Checklist</span><span>${dci}/${ci.length}</span></div><div class="prog"><div class="pf" style="width:${ci.length?Math.round(dci/ci.length*100):0}%"></div></div></div>`:''}
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          ${assignee?`<div style="display:flex;align-items:center;gap:4px"><div style="width:18px;height:18px;border-radius:50%;background:var(--gry2);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600;color:var(--t2)">${ini(assignee.name)}</div><span style="font-size:9px;color:var(--t2)">${assignee.name.split(' ')[0]}</span></div>`:'<span></span>'}
-          ${dl!==null?`<span class="badge ${dl<0?'b-er':dl<=3?'b-wt':'b-gry'}">${dl<0?'Gecikti':dl===0?'Bugün':dl+' gün'}</span>`:''}
-        </div>
-      </div>
+          <div class="tc-actions">
+            <button class="btn outline xs" onclick="cycleTask('${f.id}','${b.id}','${t.id}')">${nextStatus[t.status]} →</button>
+            <button class="btn er xs ico" onclick="deleteTask('${f.id}','${b.id}','${t.id}')">🗑</button>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
-  }
+  }).join('');
 
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div><div class="ph">Görevler — ${f.name}</div><div style="font-size:11px;color:var(--t3)">${b.month} ${b.year} · ${tasks.length} görev</div></div>
-      <button class="btn solid sm" onclick="openModal('task','${f.id}','${b.id}')">+ Görev Ekle</button>
+  document.getElementById('page-tasks').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+    <div class="sec-hd">
+      <div>
+        <div style="font-size:18px;font-weight:700">Görevler</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${tasks.length} görev</div>
+      </div>
+      <button class="btn amber" onclick="openTaskModal('${f.id}','${b.id}')">+ Görev Ekle</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      <div class="kb-col">
-        <div class="kb-ch"><span class="kb-t">Bekliyor</span><span class="badge b-wt">${todo.length}</span></div>
-        ${todo.map(tcHtml).join('')}
-        <div style="margin-top:4px"><button class="btn surface xs" style="width:100%;justify-content:center" onclick="openModal('task','${f.id}','${b.id}')">+ Ekle</button></div>
-      </div>
-      <div class="kb-col">
-        <div class="kb-ch"><span class="kb-t">Üretimde</span><span class="badge b-gry">${doing.length}</span></div>
-        ${doing.map(tcHtml).join('')}
-      </div>
-      <div class="kb-col">
-        <div class="kb-ch"><span class="kb-t">Tamamlandı</span><span class="badge b-ok">${done.length}</span></div>
-        ${done.map(tcHtml).join('')}
-      </div>
-    </div>`;
+    <div class="kb-wrap">${kanban}</div>`;
 }
 
 async function cycleTask(fid,bid,tid){
-  const b=gB(fid,bid);const t=b?.tasks?.find(x=>x.id===tid);if(!t)return;
-  const next={TODO:'DOING',DOING:'DONE',DONE:'TODO'}[t.status]||'TODO';
+  const b=gB(fid,bid);if(!b)return;
+  const t=(b.tasks||[]).find(x=>x.id===tid);if(!t)return;
+  const next={TODO:'DOING',DOING:'DONE',DONE:'TODO'}[t.status];
   try{
-    await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PATCH',body:{status:next}});
-    t.status=next;renderTasks();toast('Güncellendi');
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status:next}});
+    Object.assign(t,updated);
+    renderTasks();toast(`${next==='TODO'?'Sıfırlandı':next==='DOING'?'Başlandı':'Tamamlandı'} ✓`);
   }catch(e){toast(e.message,'err');}
 }
 
 async function deleteTask(fid,bid,tid){
-  if(!confirm('Görevi silmek istediğinizden emin misiniz?'))return;
+  if(!confirm('Görevi silmek istiyor musunuz?'))return;
   try{
     await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'DELETE'});
-    const b=gB(fid,bid);if(b)b.tasks=b.tasks?.filter(t=>t.id!==tid);
-    toast('Görev silindi');renderTasks();
+    const b=gB(fid,bid);
+    if(b)b.tasks=(b.tasks||[]).filter(t=>t.id!==tid);
+    renderTasks();toast('Görev silindi');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── PERSONEL ──────────────────────────────────────────────
+// ── PAGE: PERSONEL ────────────────────────────────────────
 async function renderPers(){
-  const el=document.getElementById('page-pers');if(!el)return;
-  el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Yükleniyor...</div>';
-  try{await loadMyTasks();}catch(e){el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--er-c)">${e.message}</div>`;return;}
-  const tasks=_persFilter==='all'?_myTasks:_myTasks.filter(t=>t.status===_persFilter);
-  const todo=_myTasks.filter(t=>t.status==='TODO').length;
-  const doing=_myTasks.filter(t=>t.status==='DOING').length;
-  const done=_myTasks.filter(t=>t.status==='DONE').length;
-  const filters=['all','TODO','DOING','DONE'];
-  const fLbl={all:`Tümü (${_myTasks.length})`,TODO:`Bekliyor (${todo})`,DOING:`Üretimde (${doing})`,DONE:`Tamamlandı (${done})`};
+  await loadMyTasks();
+  const tasks=_myTasks||[];
+  const done=tasks.filter(t=>t.status==='DONE').length;
+  const doing=tasks.filter(t=>t.status==='DOING').length;
+  const todo=tasks.filter(t=>t.status==='TODO').length;
+  const stsCls={TODO:'b-gry',DOING:'b-rv',DONE:'b-ok'};
+  const stsLbl={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
 
-  el.innerHTML=`
-    <div class="ph" style="margin-bottom:14px">Görevlerim</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
-      ${[['Toplam',_myTasks.length,'b-gry'],['Bekliyor',todo,'b-wt'],['Üretimde',doing,'b-blk'],['Tamamlandı',done,'b-ok']].map(([l,v,b])=>`<div class="stat"><div class="stat-l">${l}</div><div class="stat-v"><span class="badge ${b}" style="font-size:16px;padding:3px 12px">${v}</span></div></div>`).join('')}
+  document.getElementById('page-pers').innerHTML=`
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px">Görevlerim</div>
+    <div class="card-grid card-grid-3" style="margin-bottom:24px">
+      ${[['Yapılacak',todo,'b-gry'],['Yapılıyor',doing,'b-rv'],['Tamamlandı',done,'b-ok']].map(([l,n,cls])=>`
+        <div class="stat-card">
+          <div class="stat-num">${n}</div>
+          <div class="stat-lbl">${l}</div>
+          <div style="margin-top:8px"><span class="badge ${cls}">${l}</span></div>
+        </div>`).join('')}
     </div>
-    <div class="seg" style="margin-bottom:14px">
-      ${filters.map(f=>`<button class="seg-b ${_persFilter===f?'on':''}" onclick="_persFilter='${f}';renderPers()">${fLbl[f]}</button>`).join('')}
-    </div>
-    ${!tasks.length?`<div style="padding:40px;text-align:center;color:var(--t3)">Bu filtrede görev yok</div>`:''}
-    <div style="display:flex;flex-direction:column;gap:8px">
+    ${tasks.length?`<div style="display:flex;flex-direction:column;gap:8px">
       ${tasks.map(t=>{
-        const ci=t.checkItems||[];const dci=ci.filter(x=>x.done).length;
-        const dl=daysLeft(t.deadline);
-        const acc=t.status==='TODO'?'var(--amb)':t.status==='DOING'?'var(--blk)':'rgba(26,92,26,.5)';
-        const v=t.card?.versions?.[0];const img=v?.mediaUrl||ytThumb(v?.videoUrl||'');
-        return`<div class="det-panel" style="position:relative;padding-left:16px;overflow:hidden">
-          <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${acc}"></div>
+        const briefLabel=t.brief?briefTitle(t.brief):t.briefId?.slice(0,8)||'—';
+        const firmLabel=t.brief?.firm?.name||'—';
+        return`<div class="card" style="padding:12px">
           <div style="display:flex;align-items:flex-start;gap:10px">
-            ${img?`<img src="${img}" style="width:52px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0" loading="lazy">`:''}
+            <span class="badge ${stsCls[t.status]||'b-gry'}">${stsLbl[t.status]||t.status}</span>
             <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px">
-                <div style="font-size:12px;font-weight:500">${t.cardRef||t.desc}</div>
-                <div style="display:flex;gap:4px;flex-shrink:0">
-                  <span class="badge ${t.status==='TODO'?'b-wt':t.status==='DOING'?'b-blk':'b-ok'}">${{TODO:'Bekliyor',DOING:'Üretimde',DONE:'Tamamlandı'}[t.status]||t.status}</span>
-                  ${dl!==null?`<span class="badge ${dl<0?'b-er':dl<=3?'b-wt':'b-gry'}">${dl<0?'Gecikti':dl===0?'Bugün':dl+' gün'}</span>`:''}
-                </div>
-              </div>
-              <div style="font-size:10px;color:var(--t3);margin-bottom:6px">${t.type||''} ${t.format?'· '+t.format:''} ${t.brief?.firm?.name?'· '+t.brief.firm.name:''}</div>
-              ${ci.length?`<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:2px"><span>Checklist</span><span>${dci}/${ci.length}</span></div><div class="prog"><div class="pf" style="width:${ci.length?Math.round(dci/ci.length*100):0}%"></div></div></div>`:''}
-              ${t.status!=='DONE'?`<button class="btn amber xs" onclick="myTaskDone('${t.id}','${t.briefId}','${t.brief?.firmId||''}')">Tamamlandı Olarak İşaretle</button>`:`<span class="badge b-ok">✓ Tamamlandı</span>`}
+              <div style="font-weight:600;font-size:13px;margin-bottom:2px">${t.desc||t.cardRef}</div>
+              <div style="font-size:11px;color:var(--t3)">${firmLabel} · ${briefLabel} · ${t.type}</div>
+              ${t.deadline?`<div style="font-size:11px;color:var(--t3);margin-top:2px">Son tarih: ${fmtDate(t.deadline)}</div>`:''}
             </div>
+            ${t.status!=='DONE'?`<button class="btn ok xs" onclick="markMyTaskDone('${t.briefId}','${t.id}')">✓ Tamamla</button>`:''}
           </div>
         </div>`;
       }).join('')}
-    </div>`;
+    </div>`:`<div class="empty">Size atanmış görev yok.</div>`}`;
 }
 
-async function myTaskDone(tid,bid,fid){
+async function markMyTaskDone(bid,tid){
+  const t=_myTasks.find(x=>x.id===tid);if(!t)return;
+  const fid=t.brief?.firmId||t.brief?.firm?.id;
+  if(!fid){toast('Firma bilgisi eksik','err');return;}
   try{
-    if(fid&&bid)await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PATCH',body:{status:'DONE'}});
-    const t=_myTasks.find(x=>x.id===tid);if(t)t.status='DONE';
-    toast('✓ Tamamlandı olarak işaretlendi');renderPers();
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status:'DONE'}});
+    Object.assign(t,updated);
+    renderPers();toast('Görev tamamlandı ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── CUSTOMER ──────────────────────────────────────────────
+// ── PAGE: MÜŞTERI PORTALI ─────────────────────────────────
 async function renderCust(){
-  const el=document.getElementById('page-cust');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){
-    el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--t3)">
-      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Müşteri portalı</div>
-      <div style="font-size:11px">Bir firma seçin</div>
-    </div>`;return;
-  }
-  if(!b._igCards)await loadCards(_curFid,_curBid,'IG');
-  const cards=b._igCards||[];
-  const ap=cards.filter(c=>c.status==='APPROVED').length;
+  if(!f||!b){document.getElementById('page-cust').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  el.innerHTML=`
-    <div style="background:var(--blk);padding:14px 18px;border-radius:12px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#fff">${f.name} — Moodboard Onayı</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">${b.month} ${b.year}</div></div>
-      <span class="badge" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-size:9px">Müşteri Görünümü</span>
+  if(!b._igCards){
+    try{b._igCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`);}
+    catch{b._igCards=[];}
+  }
+  const cards=(b._igCards||[]).filter(c=>c.status==='REVIEW'||c.status==='APPROVED'||c.status==='REJECTED');
+  const stsCls={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
+  const stsLbl={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
+
+  document.getElementById('page-cust').innerHTML=`
+    <div style="background:${f.color||'#534AB7'};border-radius:var(--r2);padding:20px;color:#fff;margin-bottom:20px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">${f.name}</div>
+      <div style="font-size:13px;opacity:.8">${briefTitle(b)} · Müşteri Onay Paneli</div>
     </div>
-    <div class="info wt"><div class="info-ico" style="background:var(--amb)"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M6 3v4M6 9v.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg></div><div><strong>${cards.filter(c=>c.status==='PENDING').length} kart onayınızı bekliyor.</strong> Her kartı inceleyip onayla veya revize isteyin.</div></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <div class="prog" style="flex:1;height:4px"><div class="pf" style="width:${cards.length?Math.round(ap/cards.length*100):0}%"></div></div>
-      <span style="font-size:11px;color:var(--t3)">${ap}/${cards.length} onaylı</span>
-      <button class="btn amber sm" onclick="approveAllCards('${f.id}','${b.id}')">Tümünü Onayla</button>
-      <button class="btn out-a sm" onclick="rejectSelectedCards()">Seçiliyi Reddet</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      ${cards.map(c=>{
-        const img=cardThumb(c);const ds=STATUS_DS[c.status]||'wt';
-        const isOk=c.status==='APPROVED',isEr=c.status==='REJECTED';
-        return`<div style="background:var(--card);border-radius:12px;border:1.5px solid ${isOk?'var(--ok-br)':isEr?'var(--er-br)':'var(--bdr)'};overflow:hidden">
-          <div style="height:92px;background:#1a1a18;position:relative;overflow:hidden">
-            ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.8" loading="lazy">`:''}
-            ${platBadge(c.versions?.[c.versions.length-1]?.videoUrl)}
-          </div>
-          <div style="padding:10px 12px">
-            <div style="font-size:12px;font-weight:500;margin-bottom:2px">${c.label}</div>
-            <div style="font-size:10px;color:var(--t3);margin-bottom:8px">${c.type}</div>
-            ${isEr?`<div class="info er" style="margin-bottom:8px;font-size:10px"><span>Revize istendi</span></div>`:''}
-            <div style="display:flex;gap:5px">
-              ${!isOk?`<button class="btn amber xs" style="flex:1;justify-content:center" onclick="custApprove('${f.id}','${b.id}','${c.id}',true)">Onayla</button>`:`<span class="badge b-ok" style="flex:1;justify-content:center;display:flex">✓ Onaylı</span>`}
-              ${!isEr?`<button class="btn out-a xs" style="flex:1;justify-content:center" onclick="custApprove('${f.id}','${b.id}','${c.id}',false)">Revize</button>`:''}
+    ${cards.length?`
+      <div class="sec-hd">
+        <div class="sec-ttl">Onay Bekleyen İçerikler (${cards.filter(c=>c.status==='REVIEW').length})</div>
+        <button class="btn ok xs" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
+      </div>
+      <div class="card-grid card-grid-3" style="gap:16px">
+        ${cards.map(c=>{
+          const v0=c.versions?.[0];
+          const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+          return`<div class="mb-card" data-s="${c.status}">
+            ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none'">`:
+              `<div class="mb-thumb-ph">🎨</div>`}
+            <div class="mb-body">
+              <div class="mb-label">${c.label}</div>
+              <div class="mb-meta">
+                <span style="font-size:10px;color:var(--t3)">${c.type}</span>
+                <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
+              </div>
             </div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`;
+            ${c.status==='REVIEW'?`<div class="mb-actions">
+              <button class="btn ok xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',true)">✓ Onayla</button>
+              <button class="btn er xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',false)">✕ Reddet</button>
+            </div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`:`<div class="empty">İncelemeniz için içerik yok.</div>`}`;
 }
 
 async function custApprove(fid,bid,cid,approve){
   const status=approve?'APPROVED':'REJECTED';
-  await updateCardStatus(fid,bid,cid,status,'cust');
+  await updateCard(fid,bid,'IG',cid,status);
   renderCust();
 }
 
 async function approveAllCards(fid,bid){
-  const b=gB(fid,bid);const cards=b?._igCards||[];
-  const pending=cards.filter(c=>c.status==='PENDING');
-  if(!pending.length){toast('Tüm kartlar zaten onaylı');return;}
+  const b=gB(fid,bid);if(!b)return;
+  const pending=(b._igCards||[]).filter(c=>c.status==='REVIEW');
+  if(!pending.length){toast('Onaylanacak kart yok','amb');return;}
   try{
-    await Promise.all(pending.map(c=>api(`/api/firms/${fid}/briefs/${bid}/cards/${c.id}`,{method:'PATCH',body:{status:'APPROVED'}})));
-    pending.forEach(c=>c.status='APPROVED');toast(`${pending.length} kart onaylandı ✓`);renderCust();
+    await Promise.all(pending.map(c=>api(`/api/firms/${fid}/briefs/${bid}/cards/${c.id}`,{method:'PUT',body:{status:'APPROVED'}})));
+    pending.forEach(c=>c.status='APPROVED');
+    renderCust();toast(`${pending.length} içerik onaylandı ✓`);
   }catch(e){toast(e.message,'err');}
 }
 
-// ── YAYIN ─────────────────────────────────────────────────
+// ── PAGE: YAYIN ───────────────────────────────────────────
 async function renderYayin(){
-  const el=document.getElementById('page-yayin');if(!el)return;
   const f=gF(_curFid),b=gB(_curFid,_curBid);
-  if(!f||!b){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3)">Brief seçin</div>';return;}
-  if(!b.igCells?.length)await loadIGCells(_curFid,_curBid);
-  const cells=b.igCells||[];
-  const mbIG=b._igCards||[];const mbKamp=b._kampCards||[];
-  const allCards=[...mbIG,...mbKamp];
-  const igAp=cells.filter(c=>c.approved===true).length;
-  const mbAp=allCards.filter(c=>c.status==='APPROVED').length;
-  const tasks=b.tasks||[];
-  const tDone=tasks.filter(t=>t.status==='DONE').length;
-  const scheduled=cells.filter(c=>c.publishDate).sort((a,c2)=>new Date(a.publishDate)-new Date(c2.publishDate));
+  if(!f||!b){document.getElementById('page-yayin').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  el.innerHTML=`
-    <div class="info ok"><div class="info-ico" style="background:var(--ok-c)"><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 7l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div>Yayın takvimi hazır. <strong>${igAp}</strong> içerik onaylandı, <strong>${tDone}/${tasks.length}</strong> görev tamamlandı.</div></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-      ${[['Moodboard',mbAp,allCards.length,'b-blk'],['IG Grid',igAp,cells.length,'b-wt'],['Görevler',tDone,tasks.length,'b-ok']].map(([l,v,tot,badge])=>`<div class="stat"><div class="stat-l">${l}</div><div class="stat-v">${v}<span style="font-size:14px;color:var(--t3)">/${tot}</span></div><div class="prog"><div class="pf" style="width:${tot?Math.round(v/tot*100):0}%"></div></div></div>`).join('')}
-    </div>
-    <div class="det-panel" style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:500">Yayın Takvimi <span style="font-weight:400;color:var(--t3);font-size:11px">(${scheduled.length} tarihli gönderi)</span></div>
-        <button class="btn amber sm" onclick="approveAllYayin('${f.id}','${b.id}')">Tümünü Onayla</button>
+  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
+    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
+
+  if(!b.igCells||!b.igCells.length){
+    try{b.igCells=await api(`/api/firms/${f.id}/briefs/${b.id}/ig`);}
+    catch{b.igCells=[];}
+  }
+  const cells=b.igCells||[];
+  const scheduled=cells.filter(c=>c.publishDate).sort((a,b)=>a.publishDate>b.publishDate?1:-1);
+  const approved=cells.filter(c=>c.approved===true).length;
+  const typeLbl={POST:'📷 Post',REELS:'🎬 Reels',CAROUSEL:'🎠 Carousel'};
+
+  document.getElementById('page-yayin').innerHTML=`
+    <div class="stage-bar">${pills}</div>
+    <div class="sec-hd">
+      <div>
+        <div style="font-size:18px;font-weight:700">Yayın Planı</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)}</div>
       </div>
-      ${scheduled.length?scheduled.map(cell=>{
-        const thumb=cell.mediaUrl||ytThumb(cell.videoUrl||'');
-        return`<div style="display:grid;grid-template-columns:48px 1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr)">
-          <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;background:${f.color||'#1a1a18'}22">${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:''}</div>
-          <div><div style="font-size:11px;font-weight:500;margin-bottom:2px">${cell.caption?.slice(0,50)||'—'}</div><div style="font-size:10px;color:var(--t3)">${cell.type} · ${fmtDate(cell.publishDate)}</div></div>
-          <span class="badge ${cell.approved===true?'b-ok':cell.approved===false?'b-er':'b-wt'}">${cell.approved===true?'✓ Onaylı':cell.approved===false?'✕ Reddedildi':'Bekliyor'}</span>
-          ${cell.approved!==true?`<button class="btn amber xs" onclick="toggleCellApprove('${f.id}','${b.id}','${cell.id}',true);renderYayin()">Onayla</button>`:`<button class="btn surface xs" onclick="toggleCellApprove('${f.id}','${b.id}','${cell.id}',null);renderYayin()">Geri Al</button>`}
-        </div>`;
-      }).join(''):`<div style="padding:20px;text-align:center;font-size:11px;color:var(--t3)">Tarihli gönderi yok. IG Grid'den tarih ekleyin.</div>`}
+      <div style="display:flex;gap:8px">
+        <button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
+        <button class="btn outline xs" onclick="window.print()">📄 PDF</button>
+      </div>
     </div>
-    <div class="det-panel">
-      <div style="font-size:12px;font-weight:600;margin-bottom:10px">Yayın İşlemleri</div>
-      <div style="display:flex;flex-direction:column;gap:7px">
-        <button class="btn amber" style="justify-content:center" onclick="window.print()">📄 PDF Rapor Oluştur</button>
-        <button class="btn solid" style="justify-content:center" onclick="navigator.clipboard.writeText(location.href).then(()=>toast('Link kopyalandı ✓'))">🔗 Müşteriyle Paylaş</button>
+
+    <div class="det-wrap">
+      <div>
+        <div class="card-grid card-grid-3" style="margin-bottom:20px">
+          ${[['Toplam',cells.length,'🗓'],['Onaylı',approved,'✓'],['Tarihli',scheduled.length,'📅']].map(([l,n,i])=>
+            `<div class="stat-card"><div style="font-size:18px">${i}</div><div class="stat-num">${n}</div><div class="stat-lbl">${l}</div></div>`
+          ).join('')}
+        </div>
+
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px">Yayın Takvimi</div>
+          ${scheduled.length?scheduled.map(cell=>{
+            const thumb=cell.mediaUrl||(cell.videoUrl?ytThumb(cell.videoUrl):null);
+            return`<div style="display:grid;grid-template-columns:48px 1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr)">
+              <div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:var(--gry1)">
+                ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:18px">📷</div>'}
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:500">${cell.caption?.slice(0,50)||'—'}</div>
+                <div style="font-size:10px;color:var(--t3)">${typeLbl[cell.type]||cell.type} · ${fmtDate(cell.publishDate)}</div>
+              </div>
+              <span class="badge ${cell.approved?'b-ok':cell.approved===false?'b-er':'b-gry'}">${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</span>
+              <button class="btn ${cell.approved?'surface':'ok'} xs" onclick="toggleIGApprove('${f.id}','${b.id}','${cell.id}',${!cell.approved})">
+                ${cell.approved?'Geri Al':'Onayla'}
+              </button>
+            </div>`;
+          }).join(''):`<div class="empty" style="padding:20px">Tarihli içerik yok. IG Grid'den tarih ekleyin.</div>`}
+        </div>
+      </div>
+
+      <div class="det-panel">
+        <div style="font-size:12px;font-weight:600;margin-bottom:12px">Yayın İşlemleri</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn amber" style="justify-content:center" onclick="window.print()">📄 PDF Rapor</button>
+          <button class="btn solid" style="justify-content:center" onclick="navigator.clipboard.writeText(location.href).then(()=>toast('Link kopyalandı ✓'))">🔗 Link Kopyala</button>
+        </div>
+        <div class="sep"></div>
+        <div style="font-size:11px;color:var(--t3)">
+          <div>Onay oranı: <strong>${cells.length?Math.round(approved/cells.length*100):0}%</strong></div>
+          <div class="prog-bar" style="margin-top:6px"><div class="prog-fill" style="width:${cells.length?Math.round(approved/cells.length*100):0}%"></div></div>
+        </div>
       </div>
     </div>`;
 }
 
-async function approveAllYayin(fid,bid){
-  const b=gB(fid,bid);if(!b)return;
-  const cells=(b.igCells||[]).filter(c=>c.approved!==true);
-  if(!cells.length){toast('Tümü zaten onaylı');return;}
-  try{
-    await Promise.all(cells.map(c=>api(`/api/firms/${fid}/briefs/${bid}/ig/${c.id}`,{method:'PUT',body:{approved:true}})));
-    cells.forEach(c=>c.approved=true);toast(`${cells.length} içerik onaylandı ✓`);renderYayin();
-  }catch(e){toast(e.message,'err');}
-}
-
-
-// ── MODAL SYSTEM ──────────────────────────────────────────
-function showModal(html){
-  document.getElementById('modal-box').innerHTML=html;
-  document.getElementById('modal-bg').style.display='flex';
-  requestAnimationFrame(()=>document.getElementById('modal-box').classList.add('open'));
-}
-function closeModal(){
-  const bg=document.getElementById('modal-bg');
-  const box=document.getElementById('modal-box');
-  box.classList.remove('open');
-  setTimeout(()=>{ bg.style.display='none'; box.innerHTML=''; },160);
-}
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-
-function modalHead(title){
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-    <div style="font-size:14px;font-weight:600">${title}</div>
-    <button class="btn surface xs ico" onclick="closeModal()">✕</button></div>`;
-}
-function fldRow(label,input){
-  return`<div style="margin-bottom:12px"><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">${label}</label>${input}</div>`;
-}
-function inp(id,type,placeholder,val=''){
-  return`<input id="${id}" type="${type}" placeholder="${placeholder}" value="${val}" class="fld" style="width:100%;box-sizing:border-box">`;
-}
-function sel(id,opts,cur=''){
-  return`<select id="${id}" class="fld" style="width:100%;box-sizing:border-box">${opts.map(([v,l])=>`<option value="${v}"${cur===v?' selected':''}>${l}</option>`).join('')}</select>`;
-}
-function ta(id,placeholder,val=''){
-  return`<textarea id="${id}" placeholder="${placeholder}" class="fld" style="width:100%;box-sizing:border-box;min-height:80px;resize:vertical">${val}</textarea>`;
-}
-
-// ── FIRM MODAL ────────────────────────────────────────────
+// ── MODAL: FIRMA ──────────────────────────────────────────
 async function openFirmModal(){
-  showModal(`${modalHead('Yeni Firma Ekle')}
-    ${fldRow('Firma Adı',inp('mf-name','text','Acme Ajansı'))}
-    ${fldRow('Renk',`<input id="mf-color" type="color" value="#6c63ff" style="width:100%;height:36px;border:1px solid var(--bdr);border-radius:6px;cursor:pointer">`)}
-    ${fldRow('Logo URL (opsiyonel)',inp('mf-logo','url','https://...'))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitFirm()">Ekle</button>
-    </div>`);
+  showModal(`${mHd('Yeni Firma Ekle')}
+    ${fRow('Firma Adı *',fInp('mf-name','text','Acme Ajansı'))}
+    ${fRow('Sektör',fInp('mf-sector','text','E-ticaret, Moda...'))}
+    ${fRow('Renk',`<input id="mf-color" type="color" value="#534AB7" class="fld" style="height:38px;padding:4px;cursor:pointer">`)}
+    ${fRow('İletişim (email)',fInp('mf-contact','email','musteri@marka.com'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitFirm()">Firma Ekle</button>`
+    )}`);
 }
+
 async function submitFirm(){
-  const name=document.getElementById('mf-name')?.value?.trim();
-  const color=document.getElementById('mf-color')?.value||'#6c63ff';
-  const logo=document.getElementById('mf-logo')?.value?.trim()||null;
+  const name=v('mf-name');
   if(!name){toast('Firma adı gerekli','err');return;}
+  const color=document.getElementById('mf-color')?.value||'#534AB7';
+  const sector=v('mf-sector')||undefined;
+  const contact=v('mf-contact')||undefined;
   try{
-    const f=await api('/api/firms',{method:'POST',body:{name,color,logo}});
-    firms.push(f);if(!f.briefs)f.briefs=[];
+    const f=await api('/api/firms',{method:'POST',body:{name,color,sector,contact}});
+    f.briefs=[];firms.push(f);
     closeModal();renderSB();renderHome();toast('Firma oluşturuldu ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── BRIEF MODAL ───────────────────────────────────────────
+// ── MODAL: BRIEF ──────────────────────────────────────────
 async function openBriefModal(fid){
   const f=firms.find(x=>x.id===fid);if(!f)return;
-  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const now=new Date();
-  showModal(`${modalHead(`"${f.name}" — Yeni Brief`)}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div>${fldRow('Ay',sel('mb-month',months.map((m,i)=>[(i+1).toString(),m]),(now.getMonth()+1).toString()))}</div>
-      <div>${fldRow('Yıl',inp('mb-year','number',now.getFullYear().toString(),now.getFullYear().toString()))}</div>
+  const monthOpts=MONTHS.map((m,i)=>[(i+1).toString(),m]);
+  showModal(`${mHd(`"${f.name}" — Yeni Brief`)}
+    <div class="fld-grid fld-grid-2">
+      <div>${fRow('Ay *',fSel('bm-month',monthOpts,(now.getMonth()+1).toString()))}</div>
+      <div>${fRow('Yıl *',fInp('bm-year','number','2026',now.getFullYear().toString()))}</div>
     </div>
-    ${fldRow('Ürünler / Hizmetler',inp('mb-products','text','Ürün A, Ürün B'))}
-    ${fldRow('Ton & Stil',sel('mb-tone',[['','Seçin'],['Profesyonel','Profesyonel'],['Samimi','Samimi'],['Eğlenceli','Eğlenceli'],['Lüks','Lüks'],['Minimal','Minimal']]))}
-    ${fldRow('Hedef Kitle',inp('mb-audience','text','25-45 yaş, kadın'))}
-    ${fldRow('Notlar',ta('mb-notes','Ekstra bilgiler...'))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitBrief('${fid}')">Oluştur</button>
-    </div>`);
+    ${fRow('Ürünler/Hizmetler',fInp('bm-products','text','Ürün A, Ürün B'))}
+    ${fRow('Ton',fSel('bm-tone',[['','Seçin'],['Profesyonel','Profesyonel'],['Samimi','Samimi'],['Eğlenceli','Eğlenceli'],['Lüks','Lüks'],['Minimal','Minimal']]))}
+    ${fRow('Notlar',fTa('bm-notes','Ekstra notlar...'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitBrief('${fid}')">Oluştur</button>`
+    )}`);
 }
+
 async function submitBrief(fid){
-  const month=parseInt(document.getElementById('mb-month')?.value)||1;
-  const year=parseInt(document.getElementById('mb-year')?.value)||new Date().getFullYear();
-  const products=document.getElementById('mb-products')?.value?.trim()||'';
-  const tone=document.getElementById('mb-tone')?.value||'';
-  const targetAudience=document.getElementById('mb-audience')?.value?.trim()||'';
-  const notes=document.getElementById('mb-notes')?.value?.trim()||'';
+  const monthIdx=parseInt(v('bm-month')||'1');
+  const month=MONTHS[monthIdx-1]||MONTHS[0];
+  const year=parseInt(v('bm-year')||new Date().getFullYear().toString());
+  const products=v('bm-products')||undefined;
+  const tone=v('bm-tone')||undefined;
+  const notes=v('bm-notes')||undefined;
   try{
-    const b=await api(`/api/firms/${fid}/briefs`,{method:'POST',body:{month,year,products,tone,targetAudience,notes}});
+    const b=await api(`/api/firms/${fid}/briefs`,{method:'POST',body:{month,year,products,tone,notes}});
     const f=firms.find(x=>x.id===fid);
     if(f){if(!f.briefs)f.briefs=[];f.briefs.push(b);}
     closeModal();renderSB();nav(fid,b.id,'brief');toast('Brief oluşturuldu ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── MOODBOARD CARD MODAL ──────────────────────────────────
+// ── MODAL: MOODBOARD KART ─────────────────────────────────
 async function openCardModal(fid,bid,which){
-  const platOpts=[['','Platform Seçin'],['YouTube','YouTube'],['Vimeo','Vimeo'],['TikTok','TikTok'],['Instagram','Instagram'],['Pinterest','Pinterest'],['Behance','Behance'],['Other','Diğer']];
-  showModal(`${modalHead(which==='IG'?'IG Referans Ekle':'Kampanya Referansı Ekle')}
-    ${fldRow('Link (URL)',`<div style="display:flex;gap:6px"><input id="mc-url" type="url" placeholder="https://youtube.com/..." class="fld" style="flex:1;min-width:0"><button class="btn surface xs" onclick="previewLink('${fid}','${bid}','${which}')">Önizle</button></div>`)}
-    <div id="mc-preview" style="display:none;margin-bottom:12px;background:var(--gry2);border-radius:8px;padding:8px;font-size:11px"></div>
-    ${fldRow('Platform',sel('mc-plat',platOpts))}
-    ${fldRow('Başlık',inp('mc-title','text','İçerik başlığı'))}
-    ${fldRow('Not',ta('mc-note','Referans açıklaması...'))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitCard('${fid}','${bid}','${which}')">Ekle</button>
-    </div>`);
+  const typeOpts=which==='IG'
+    ?[['Video Referansı','Video Referansı'],['Görsel Referans','Görsel Referans'],['Ürün Çekimi','Ürün Çekimi'],['Atmosfer','Atmosfer'],['Metin Tasarım','Metin Tasarım']]
+    :[['Kampanya Videosu','Kampanya Videosu'],['Ürün Tanıtımı','Ürün Tanıtımı'],['Reklam Afişi','Reklam Afişi'],['Sosyal Medya Reklamı','Sosyal Medya Reklamı']];
+
+  showModal(`${mHd(which==='IG'?'IG Referans Ekle':'Kampanya Kartı Ekle')}
+    ${fRow('Tip *',fSel('cm-type',typeOpts))}
+    ${fRow('Başlık / Etiket *',fInp('cm-label','text','İçerik başlığı...'))}
+    ${fRow('Açıklama',fTa('cm-desc','Referans notu, yön açıklaması...'))}
+    ${fRow('Video URL (YouTube/Vimeo)',`<div style="display:flex;gap:6px"><input id="cm-vurl" type="url" placeholder="https://youtube.com/..." class="fld" style="flex:1"><button class="btn surface xs" onclick="prevCard()">Önizle</button></div>`)}
+    <div id="cm-prev" style="display:none;margin-bottom:12px;background:var(--gry1);border-radius:var(--r);padding:8px;font-size:11px"></div>
+    ${fRow('Görsel URL',fInp('cm-murl','url','https://...'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitCard('${fid}','${bid}','${which}')">Ekle</button>`
+    )}`);
 }
-async function previewLink(fid,bid,which){
-  const url=document.getElementById('mc-url')?.value?.trim();
-  if(!url){toast('URL girin','err');return;}
-  const prev=document.getElementById('mc-preview');
+
+async function prevCard(){
+  const url=v('cm-vurl');if(!url)return;
+  const prev=document.getElementById('cm-prev');
   prev.style.display='block';prev.textContent='Yükleniyor...';
   try{
     const d=await api(`/api/link-preview?url=${encodeURIComponent(url)}`);
-    const titleEl=document.getElementById('mc-title');
-    if(d.title&&titleEl&&!titleEl.value) titleEl.value=d.title;
-    if(d.platform){const platEl=document.getElementById('mc-plat');if(platEl)platEl.value=d.platform;}
-    prev.innerHTML=`<div style="display:flex;gap:8px;align-items:center">${d.thumbnail?`<img src="${d.thumbnail}" style="width:56px;height:40px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">`:''}<div><div style="font-weight:500;margin-bottom:2px">${d.title||url}</div><div style="color:var(--t3)">${d.platform||''}</div></div></div>`;
-  }catch(e){prev.textContent='Önizleme alınamadı';}
+    if(d.title&&!v('cm-label')){const el=document.getElementById('cm-label');if(el)el.value=d.title;}
+    const thumb=d.thumbnail||ytThumb(url);
+    prev.innerHTML=`<div style="display:flex;gap:8px;align-items:center">
+      ${thumb?`<img src="${thumb}" style="width:56px;height:40px;object-fit:cover;border-radius:4px">`:''}
+      <div><div style="font-weight:500">${d.title||url}</div><div style="color:var(--t3)">${d.platform||''}</div></div>
+    </div>`;
+  }catch{prev.textContent='Önizleme alınamadı';}
 }
+
 async function submitCard(fid,bid,which){
-  const videoUrl=document.getElementById('mc-url')?.value?.trim()||'';
-  const platform=document.getElementById('mc-plat')?.value||'Other';
-  const title=document.getElementById('mc-title')?.value?.trim()||'';
-  const note=document.getElementById('mc-note')?.value?.trim()||'';
-  if(!videoUrl){toast('URL gerekli','err');return;}
+  const type=v('cm-type');
+  const label=v('cm-label');
+  const desc=v('cm-desc')||undefined;
+  const videoUrl=v('cm-vurl')||undefined;
+  const mediaUrl=v('cm-murl')||undefined;
+  if(!type||!label){toast('Tip ve başlık gerekli','err');return;}
   try{
-    const c=await api(`/api/firms/${fid}/briefs/${bid}/cards`,{method:'POST',body:{videoUrl,platform,title,note,which}});
+    const c=await api(`/api/firms/${fid}/briefs/${bid}/cards`,
+      {method:'POST',body:{which,type,label,desc,videoUrl,mediaUrl}});
     const b=gB(fid,bid);
     if(b){
       if(which==='IG'){if(!b._igCards)b._igCards=[];b._igCards.push(c);}
@@ -1437,162 +1395,134 @@ async function submitCard(fid,bid,which){
     }
     closeModal();
     if(which==='IG')renderMB();else renderMBKamp();
-    toast('Referans eklendi ✓');
+    toast('Kart eklendi ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── CARD DETAIL MODAL ─────────────────────────────────────
-async function openCardDet(fid,bid,which,cid){
-  const b=gB(fid,bid);if(!b)return;
-  const arr=which==='IG'?(b._igCards||[]):(b._kampCards||[]);
-  const c=arr.find(x=>x.id===cid);if(!c)return;
-  const f=firms.find(x=>x.id===fid);
-  const thumb=c.thumbnail||(c.videoUrl?ytThumb(c.videoUrl):'');
-  const embed=c.embedUrl||'';
-  const statusOpts=[['PENDING','Bekliyor'],['REVIEW','İncelemede'],['APPROVED','Onaylandı'],['REJECTED','Reddedildi']];
-  showModal(`${modalHead(c.title||'Kart Detayı')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div>
-        ${embed?`<div style="position:relative;padding-bottom:56.25%;background:#000;border-radius:8px;overflow:hidden;margin-bottom:10px"><iframe src="${embed}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allowfullscreen></iframe></div>`:thumb?`<img src="${thumb}" style="width:100%;border-radius:8px;margin-bottom:10px;object-fit:cover;max-height:180px">`:``}
-        <div style="font-size:11px;color:var(--t3);word-break:break-all"><a href="${c.videoUrl||'#'}" target="_blank" style="color:var(--amb)">${c.videoUrl||''}</a></div>
-        ${c.note?`<div style="font-size:11px;margin-top:8px;padding:8px;background:var(--gry1);border-radius:6px">${c.note}</div>`:''}
-      </div>
-      <div>
-        <div style="margin-bottom:12px">${fldRow('Durum',sel('cd-status',statusOpts,c.status||'PENDING'))}</div>
-        <div style="margin-bottom:12px">${fldRow('Sürüm Notu',ta('cd-vnote','Yeni versiyon notu...'))}</div>
-        <div style="font-size:11px;font-weight:600;margin-bottom:6px">Versiyon Geçmişi</div>
-        <div style="max-height:120px;overflow-y:auto;font-size:11px">
-          ${(c.versions||[]).length?c.versions.map(v=>`<div style="padding:4px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t3)">v${v.vNum}</span> — ${v.note||'—'} <span style="color:var(--t3)">${fmtDate(v.createdAt)}</span></div>`).join(''):
-          `<div style="color:var(--t3)">Henüz versiyon yok</div>`}
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">Kapat</button>
-      <button class="btn amber" onclick="saveCardDet('${fid}','${bid}','${which}','${cid}')">Kaydet</button>
-    </div>`);
-}
-async function saveCardDet(fid,bid,which,cid){
-  const status=document.getElementById('cd-status')?.value;
-  const vnote=document.getElementById('cd-vnote')?.value?.trim();
-  const body={status};
-  if(vnote) body.versionNote=vnote;
-  try{
-    const updated=await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}`,{method:'PATCH',body});
-    const b=gB(fid,bid);
-    if(b){
-      const arr=which==='IG'?(b._igCards||[]):(b._kampCards||[]);
-      const idx=arr.findIndex(x=>x.id===cid);
-      if(idx>=0) Object.assign(arr[idx],updated);
-    }
-    closeModal();
-    if(which==='IG')renderMB();else renderMBKamp();
-    toast('Kaydedildi ✓');
-  }catch(e){toast(e.message,'err');}
-}
-
-// ── TASK MODAL ────────────────────────────────────────────
+// ── MODAL: GÖREV ──────────────────────────────────────────
 async function openTaskModal(fid,bid){
-  const mem=members.filter(m=>{ const f=firms.find(x=>x.id===fid); return f&&(f.members||[]).some(fm=>fm.userId===m.id); });
-  const assigneeOpts=[['','Atanmamış'],...mem.map(m=>[m.id,m.name||m.email])];
-  showModal(`${modalHead('Yeni Görev')}
-    ${fldRow('Başlık',inp('mt-title','text','Görev başlığı'))}
-    ${fldRow('Açıklama',ta('mt-desc','Görev açıklaması...'))}
-    ${fldRow('Sorumlu',sel('mt-assignee',assigneeOpts))}
-    ${fldRow('Son Tarih',inp('mt-due','date',''))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitTask('${fid}','${bid}')">Ekle</button>
-    </div>`);
+  const f=gF(fid);
+  const mem=members.filter(m=>(f?.members||[]).some(fm=>fm.userId===m.id));
+  const assigneeOpts=[['','Atanmamış'],...mem.map(m=>[m.id,m.name||m.email||m.id])];
+  const typeOpts=[['Video','Video'],['Grafik','Grafik'],['Fotoğraf','Fotoğraf'],['Metin','Metin'],['Reklam','Reklam'],['Genel','Genel']];
+
+  showModal(`${mHd('Yeni Görev Ekle')}
+    ${fRow('Görev Başlığı / Referans *',fInp('tm-ref','text','ürün tanıtım videosu...'))}
+    ${fRow('Tip *',fSel('tm-type',typeOpts))}
+    ${fRow('Açıklama *',fTa('tm-desc','Görev detayları...'))}
+    ${fRow('Format',fInp('tm-fmt','text','9:16 Reels, 1:1 Feed...'))}
+    <div class="fld-grid fld-grid-2">
+      <div>${fRow('Sorumlu',fSel('tm-assignee',assigneeOpts))}</div>
+      <div>${fRow('Son Tarih',fInp('tm-due','date',''))}</div>
+    </div>
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitTask('${fid}','${bid}')">Görev Ekle</button>`
+    )}`);
 }
+
 async function submitTask(fid,bid){
-  const title=document.getElementById('mt-title')?.value?.trim();
-  const description=document.getElementById('mt-desc')?.value?.trim()||'';
-  const assigneeId=document.getElementById('mt-assignee')?.value||null;
-  const dueDate=document.getElementById('mt-due')?.value||null;
-  if(!title){toast('Başlık gerekli','err');return;}
+  const cardRef=v('tm-ref');
+  const type=v('tm-type');
+  const desc=v('tm-desc');
+  const format=v('tm-fmt')||undefined;
+  const assigneeId=v('tm-assignee')||undefined;
+  const deadline=v('tm-due')||undefined;
+  if(!cardRef||!type||!desc){toast('Başlık, tip ve açıklama gerekli','err');return;}
   try{
-    const body={title,description};
-    if(assigneeId) body.assigneeId=assigneeId;
-    if(dueDate) body.dueDate=new Date(dueDate).toISOString();
-    const t=await api(`/api/firms/${fid}/briefs/${bid}/tasks`,{method:'POST',body});
+    const t=await api(`/api/firms/${fid}/briefs/${bid}/tasks`,
+      {method:'POST',body:{cardRef,type,desc,format,assigneeId,deadline,source:'Manuel'}});
     const b=gB(fid,bid);
     if(b){if(!b.tasks)b.tasks=[];b.tasks.push(t);}
     closeModal();renderTasks();toast('Görev eklendi ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── IG CELL MODAL ─────────────────────────────────────────
-async function openIGCellModal(fid,bid,cid){
-  const b=gB(fid,bid);
-  let cell=null;
-  if(cid&&b) cell=(b.igCells||[]).find(x=>x.id===cid);
-  const typeOpts=[['IMAGE','Görsel'],['VIDEO','Video'],['CAROUSEL','Carousel'],['REEL','Reel'],['STORY','Story']];
-  showModal(`${modalHead(cid?'İçerik Düzenle':'Yeni IG İçeriği')}
-    ${fldRow('Tip',sel('ig-type',typeOpts,cell?.type||'IMAGE'))}
-    ${fldRow('Altyazı',ta('ig-cap','Altyazı metni...',cell?.caption||''))}
-    ${fldRow('Yayın Tarihi',inp('ig-date','date','',cell?.publishDate?cell.publishDate.slice(0,10):''))}
-    ${fldRow('Video URL',inp('ig-url','url','https://youtube.com/...',cell?.videoUrl||''))}
-    ${fldRow('Görsel URL',inp('ig-img','url','https://...',cell?.mediaUrl||''))}
-    ${fldRow('Konum',inp('ig-loc','text','İstanbul, Türkiye',cell?.location||''))}
-    ${fldRow('Sıra',inp('ig-ord','number','1',(cell?.order||0).toString()))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitIGCell('${fid}','${bid}','${cid||''}')">Kaydet</button>
-    </div>`);
+// ── MODAL: IG HÜCRESI ─────────────────────────────────────
+async function openIGCellModal(fid,bid,cellIndex){
+  const typeOpts=[['POST','📷 Post'],['REELS','🎬 Reels'],['CAROUSEL','🎠 Carousel']];
+  showModal(`${mHd('IG İçerik Ekle')}
+    ${fRow('İçerik Tipi',fSel('ig-type',typeOpts))}
+    ${fRow('Yayın Tarihi',fInp('ig-date','date',''))}
+    ${fRow('Altyazı',fTa('ig-cap','Altyazı metni...'))}
+    ${fRow('Video URL (Reels için)',fInp('ig-vurl','url','https://youtube.com/...'))}
+    ${fRow('Görsel URL (Post/Carousel için)',fInp('ig-murl','url','https://...'))}
+    ${fRow('Hashtag\'ler',fInp('ig-hash','text','#marka #kampanya'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitIGCell('${fid}','${bid}',${cellIndex!=null?cellIndex:'null'})">Ekle</button>`
+    )}`);
 }
-async function submitIGCell(fid,bid,cid){
-  const type=document.getElementById('ig-type')?.value||'IMAGE';
-  const caption=document.getElementById('ig-cap')?.value?.trim()||'';
-  const publishDate=document.getElementById('ig-date')?.value||null;
-  const videoUrl=document.getElementById('ig-url')?.value?.trim()||null;
-  const mediaUrl=document.getElementById('ig-img')?.value?.trim()||null;
-  const location=document.getElementById('ig-loc')?.value?.trim()||null;
-  const order=parseInt(document.getElementById('ig-ord')?.value)||0;
-  const body={type,caption,order};
-  if(publishDate) body.publishDate=new Date(publishDate).toISOString();
-  if(videoUrl) body.videoUrl=videoUrl;
-  if(mediaUrl) body.mediaUrl=mediaUrl;
-  if(location) body.location=location;
+
+async function submitIGCell(fid,bid,cellIndex){
+  const type=v('ig-type')||'POST';
+  const publishDate=v('ig-date')||undefined;
+  const caption=v('ig-cap')||undefined;
+  const videoUrl=v('ig-vurl')||undefined;
+  const mediaUrl=v('ig-murl')||undefined;
+  const hashtags=v('ig-hash')||undefined;
   try{
-    const b=gB(fid,bid);
-    if(cid){
-      const updated=await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'PUT',body});
-      if(b){const idx=(b.igCells||[]).findIndex(x=>x.id===cid);if(idx>=0)b.igCells[idx]=updated;}
+    const body={type,publishDate,caption,videoUrl,mediaUrl,hashtags};
+    // If a specific cell index is known, use PUT with index
+    let cell;
+    if(cellIndex!=null&&!isNaN(cellIndex)){
+      cell=await api(`/api/firms/${fid}/briefs/${bid}/ig/${cellIndex}`,{method:'PUT',body});
     }else{
-      const created=await api(`/api/firms/${fid}/briefs/${bid}/ig`,{method:'POST',body});
-      if(b){if(!b.igCells)b.igCells=[];b.igCells.push(created);}
+      cell=await api(`/api/firms/${fid}/briefs/${bid}/ig`,{method:'POST',body});
     }
-    closeModal();renderIG();toast('İçerik kaydedildi ✓');
+    const b=gB(fid,bid);
+    if(b){
+      if(!b.igCells)b.igCells=[];
+      const idx=(b.igCells).findIndex(c=>c.id===cell.id);
+      if(idx>=0)b.igCells[idx]=cell;else b.igCells.push(cell);
+    }
+    closeModal();renderIG();toast('İçerik eklendi ✓');
   }catch(e){toast(e.message,'err');}
 }
 
-// ── INFO MODAL ────────────────────────────────────────────
-function showInfoModal(title,content){
-  showModal(`${modalHead(title)}<div style="font-size:13px;line-height:1.6;color:var(--t2)">${content}</div>
-    <div style="display:flex;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">Kapat</button></div>`);
-}
-
-// ── MEMBER MODAL ──────────────────────────────────────────
+// ── MODAL: ÜYE ────────────────────────────────────────────
 async function openMemberModal(fid){
   const f=firms.find(x=>x.id===fid);if(!f)return;
-  const roleOpts=[['EDITOR','Editör'],['PROD','Prodüksiyon'],['CLIENT','Müşteri']];
-  showModal(`${modalHead(`"${f.name}" — Üye Ekle`)}
-    ${fldRow('E-posta',inp('mm-email','email','kullanici@ajans.com'))}
-    ${fldRow('Rol',sel('mm-role',roleOpts))}
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn surface" onclick="closeModal()">İptal</button>
-      <button class="btn solid" onclick="submitMember('${fid}')">Ekle</button>
-    </div>`);
+  // Show existing members + add by email
+  const currentMems=f.members||[];
+  showModal(`${mHd(`"${f.name}" — Üye Yönetimi`)}
+    ${currentMems.length?`<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">MEVCUT ÜYELER</div>
+      ${currentMems.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)">
+        <div>
+          <div style="font-size:12px;font-weight:500">${m.user?.name||'—'}</div>
+          <div style="font-size:10px;color:var(--t3)">${m.user?.role||''}</div>
+        </div>
+        <button class="btn er xs" onclick="removeMember('${fid}','${m.userId}')">Çıkar</button>
+      </div>`).join('')}
+    </div>`:''}
+    <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">ÜYE EKLE</div>
+    ${fRow('E-posta',fInp('mm-email','email','kullanici@ajans.com'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
+      `<button class="btn amber" onclick="submitMember('${fid}')">Ekle</button>`
+    )}`);
 }
+
 async function submitMember(fid){
-  const email=document.getElementById('mm-email')?.value?.trim();
-  const role=document.getElementById('mm-role')?.value||'EDITOR';
+  const email=v('mm-email');
   if(!email){toast('E-posta gerekli','err');return;}
   try{
-    await api(`/api/firms/${fid}/members`,{method:'POST',body:{email,role}});
-    closeModal();toast('Üye eklendi ✓');
+    const member=await api(`/api/firms/${fid}/members`,{method:'POST',body:{email}});
+    const f=firms.find(x=>x.id===fid);
+    if(f){if(!f.members)f.members=[];f.members.push(member);}
+    // Refresh modal
+    closeModal();openMemberModal(fid);toast('Üye eklendi ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function removeMember(fid,userId){
+  if(!confirm('Üyeyi firmadan çıkarmak istiyor musunuz?'))return;
+  try{
+    await api(`/api/firms/${fid}/members/${userId}`,{method:'DELETE'});
+    const f=firms.find(x=>x.id===fid);
+    if(f)f.members=(f.members||[]).filter(m=>m.userId!==userId);
+    closeModal();openMemberModal(fid);toast('Üye çıkarıldı');
   }catch(e){toast(e.message,'err');}
 }
 
@@ -1610,139 +1540,144 @@ function backToLogin(){
   document.getElementById('reg-wrap').style.display='none';
   document.getElementById('login-wrap').style.display='flex';
 }
+
 async function doLogin(){
-  const email=document.getElementById('li-email')?.value?.trim();
-  const password=document.getElementById('li-pass')?.value;
+  const email=v('li-email'),password=document.getElementById('li-pass')?.value;
   if(!email||!password){toast('E-posta ve şifre girin','err');return;}
   try{
     const data=await api('/api/auth/login',{method:'POST',body:{email,password},noAuth:true});
-    _token=data.token;localStorage.setItem('mk_token',_token);
+    _token=data.token;_me=data.user;
+    localStorage.setItem('mk_token',_token);
     document.getElementById('login-wrap').style.display='none';
     await initApp();
   }catch(e){toast(e.message||'Giriş başarısız','err');}
 }
+
 async function doRegister(){
-  const name=document.getElementById('re-name')?.value?.trim();
-  const email=document.getElementById('re-email')?.value?.trim();
-  const password=document.getElementById('re-pass')?.value;
-  const role=document.getElementById('re-role')?.value||'EDITOR';
-  const title=document.getElementById('re-title')?.value?.trim()||'';
+  const name=v('re-name'),email=v('re-email'),password=document.getElementById('re-pass')?.value;
+  const role=v('re-role')||'EDITOR',title=v('re-title')||undefined;
   if(!name||!email||!password){toast('Ad, e-posta ve şifre gerekli','err');return;}
+  if(password.length<8){toast('Şifre en az 8 karakter olmalı','err');return;}
   try{
     const data=await api('/api/auth/register',{method:'POST',body:{name,email,password,role,title},noAuth:true});
-    _token=data.token;localStorage.setItem('mk_token',_token);
+    _token=data.token;_me=data.user;
+    localStorage.setItem('mk_token',_token);
     document.getElementById('reg-wrap').style.display='none';
     await initApp();
   }catch(e){toast(e.message||'Kayıt başarısız','err');}
 }
+
 async function doLogout(){
-  try{ await api('/api/auth/logout',{method:'POST'}); }catch(_){}
-  _token=null;_me=null;firms=[];members=[];_curFid=null;_curBid=null;
+  try{await api('/api/auth/logout',{method:'POST'});}catch{}
+  _token=null;_me=null;firms=[];members=[];_myTasks=[];_curFid=null;_curBid=null;
   localStorage.removeItem('mk_token');
   showLogin();
 }
 
 // ── SEARCH ────────────────────────────────────────────────
-let _searchTimer=null;
+let _srTimer=null;
 function onSearch(val){
-  clearTimeout(_searchTimer);
+  clearTimeout(_srTimer);
   const drop=document.getElementById('search-drop');
   if(!val||val.length<2){if(drop)drop.style.display='none';return;}
-  _searchTimer=setTimeout(async()=>{
+  _srTimer=setTimeout(async()=>{
     try{
       const res=await api(`/api/search?q=${encodeURIComponent(val)}`);
       if(!drop)return;
-      if(!res||(!res.briefs?.length&&!res.cards?.length&&!res.tasks?.length)){
+      let html='';
+      const briefs=res.briefs||[];const cards=res.cards||[];const tasks=res.tasks||[];
+      if(!briefs.length&&!cards.length&&!tasks.length){
         drop.innerHTML='<div style="padding:10px;font-size:11px;color:var(--t3)">Sonuç bulunamadı</div>';
         drop.style.display='block';return;
       }
-      let html='';
-      if(res.briefs?.length){
-        html+=`<div style="padding:6px 10px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase">Brief</div>`;
-        html+=res.briefs.slice(0,5).map(b=>`<div class="sr-item" onclick="nav('${b.firmId}','${b.id}','brief');document.getElementById('search-drop').style.display='none';document.querySelector('.tb-search input').value=''">${b.firm?.name||''} <span style="color:var(--t3)">→</span> ${b.month}/${b.year}</div>`).join('');
+      if(briefs.length){
+        html+=`<div style="padding:4px 10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Brief</div>`;
+        html+=briefs.slice(0,4).map(b=>`<div class="sr-item" onclick="nav('${b.firmId}','${b.id}','brief');closeSR()">${b.firm?.name||''} › ${b.month} ${b.year}</div>`).join('');
       }
-      if(res.cards?.length){
-        html+=`<div style="padding:6px 10px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase">Kart</div>`;
-        html+=res.cards.slice(0,5).map(c=>`<div class="sr-item" onclick="nav('${c.brief?.firmId}','${c.briefId}','${c.which==='IG'?'mb':'mb-kamp'}');document.getElementById('search-drop').style.display='none';document.querySelector('.tb-search input').value=''">${c.title||c.videoUrl||'—'}</div>`).join('');
+      if(cards.length){
+        html+=`<div style="padding:4px 10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Kart</div>`;
+        html+=cards.slice(0,4).map(c=>`<div class="sr-item" onclick="nav('${c.brief?.firmId||''}','${c.briefId}','${c.which==='IG'?'mb':'mb-kamp'}');closeSR()">${c.label}</div>`).join('');
       }
-      if(res.tasks?.length){
-        html+=`<div style="padding:6px 10px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase">Görev</div>`;
-        html+=res.tasks.slice(0,5).map(t=>`<div class="sr-item" onclick="nav('${t.brief?.firmId}','${t.briefId}','tasks');document.getElementById('search-drop').style.display='none';document.querySelector('.tb-search input').value=''">${t.title||'—'}</div>`).join('');
+      if(tasks.length){
+        html+=`<div style="padding:4px 10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Görev</div>`;
+        html+=tasks.slice(0,4).map(t=>`<div class="sr-item" onclick="nav('${t.brief?.firmId||''}','${t.briefId}','tasks');closeSR()">${t.desc||t.cardRef}</div>`).join('');
       }
       drop.innerHTML=html;drop.style.display='block';
-    }catch(_){if(drop)drop.style.display='none';}
+    }catch{if(drop)drop.style.display='none';}
   },300);
 }
-document.addEventListener('click',e=>{
+function closeSR(){
   const drop=document.getElementById('search-drop');
-  if(drop&&!e.target.closest('.tb-search'))drop.style.display='none';
-});
+  const inp=document.querySelector('.tb-search input');
+  if(drop)drop.style.display='none';
+  if(inp)inp.value='';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.tb-search'))closeSR();});
+
+// ── WEBSOCKET ─────────────────────────────────────────────
+function initWS(){
+  if(!_token)return;
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  const ws=new WebSocket(`${proto}//${location.host}?token=${_token}`);
+  ws.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.notif||m.title)toast((m.notif||m).title||'Bildirim','amb');}catch{}};
+  ws.onclose=()=>setTimeout(initWS,5000);
+  ws.onerror=()=>ws.close();
+}
 
 // ── INIT APP ──────────────────────────────────────────────
 async function initApp(){
   try{
-    _me=await api('/api/auth/me');
-  }catch(e){
+    if(!_me)_me=await api('/api/auth/me');
+  }catch{
     showLogin();return;
   }
+
   document.getElementById('app').style.display='flex';
   document.getElementById('login-wrap').style.display='none';
   document.getElementById('reg-wrap').style.display='none';
-  const nm=document.getElementById('tb-nm');
+
+  // Topbar
   const av=document.getElementById('tb-av');
+  const nm=document.getElementById('tb-nm');
   const rl=document.getElementById('tb-role');
-  if(nm) nm.textContent=_me.name||_me.email;
-  if(av) av.textContent=(_me.name||_me.email||'?')[0].toUpperCase();
+  if(av)av.textContent=(_me.name||_me.email||'?')[0].toUpperCase();
+  if(nm)nm.textContent=_me.name||_me.email||'—';
   if(rl){
-    const roleMap={ADMIN:'Admin',EDITOR:'Editör',PROD:'Prodüksiyon',CLIENT:'Müşteri'};
-    rl.textContent=roleMap[_me.role]||_me.role;
-    rl.className='badge '+(_me.role==='ADMIN'?'b-amb':_me.role==='CLIENT'?'b-ok':'b-gry');
+    const rlMap={ADMIN:'Admin',EDITOR:'Editör',PROD:'Prodüksiyon',CLIENT:'Müşteri'};
+    rl.textContent=rlMap[_me.role]||_me.role;
   }
+
+  // CLIENT role: show portal link
+  const custLnk=document.getElementById('si-cust');
+  if(custLnk)custLnk.style.display=_me.role==='CLIENT'?'flex':'none';
+  // Non-admin: hide firm add button
+  const addFirm=document.getElementById('sb-add-firm');
+  if(addFirm)addFirm.style.display=_me.role==='ADMIN'?'':'none';
+
   try{
     await Promise.all([loadMembers(),loadFirms()]);
-  }catch(e){ console.error('Load error',e); }
-  try{
     await Promise.all(firms.map(f=>loadBriefs(f.id)));
-  }catch(e){ console.error('Briefs load error',e); }
+  }catch(e){console.error('Load error',e);}
+
   renderSB();
+
   if(_me.role==='CLIENT'){
-    renderClientPortal();
+    // Find first firm the client belongs to
+    const myFirm=firms.find(f=>(f.members||[]).some(m=>m.userId===_me.id));
+    const myBrief=myFirm?.briefs?.[0];
+    if(myFirm&&myBrief){nav(myFirm.id,myBrief.id,'cust');}
+    else go('home');
   }else{
     go('home');
   }
+
   initWS();
 }
 
-function renderClientPortal(){
-  const myFirms=firms.filter(f=>(f.members||[]).some(m=>m.userId===_me.id));
-  if(!myFirms.length){ go('home'); return; }
-  const f=myFirms[0];
-  const briefs=f.briefs||[];
-  const b=briefs[briefs.length-1];
-  if(b) nav(f.id,b.id,'cust');
-  else go('home');
-}
+// Enter key support for login
+document.getElementById('li-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('li-email')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass')?.focus();});
 
-// ── WEBSOCKET ─────────────────────────────────────────────
-function initWS(){
-  if(!_token) return;
-  const proto=location.protocol==='https:'?'wss:':'ws:';
-  const ws=new WebSocket(`${proto}//${location.host}?token=${_token}`);
-  ws.onmessage=e=>{
-    try{
-      const msg=JSON.parse(e.data);
-      if(msg.type==='notification'||msg.notif){
-        const n=msg.notif||msg;
-        renderN(n);
-      }
-    }catch(_){}
-  };
-  ws.onclose=()=>{ setTimeout(initWS,5000); };
-  ws.onerror=()=>{ ws.close(); };
-}
-function renderN(n){
-  toast(n.message||n.body||'Bildirim','wt');
-}
 // ── BOOTSTRAP ─────────────────────────────────────────────
 if(_token){
   initApp();

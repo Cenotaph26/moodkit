@@ -12,6 +12,7 @@ const FirmSchema = z.object({
   sector: z.string().optional(),
   color: z.string().optional(),
   contact: z.string().optional(),
+  logoUrl: z.string().optional(),
 })
 
 // GET /api/firms - tüm firmalar (admin: hepsi, diğerleri: üyesi olduğu)
@@ -120,18 +121,36 @@ router.delete('/:firmId', requireAuth, requireRole('ADMIN'), async (req: AuthReq
   }
 })
 
-// POST /api/firms/:firmId/members - üye ekle
+// POST /api/firms/:firmId/members - üye ekle (userId veya email ile)
 router.post('/:firmId/members', requireAuth, requireRole('ADMIN'), async (req: AuthRequest, res: Response) => {
   try {
-    const { userId } = z.object({ userId: z.string() }).parse(req.body)
+    const body = z.object({
+      userId: z.string().optional(),
+      email: z.string().email().optional(),
+    }).parse(req.body)
+
+    let userId = body.userId
+    if (!userId && body.email) {
+      const user = await db.user.findUnique({ where: { email: body.email } })
+      if (!user) return res.status(404).json({ error: 'Bu e-posta ile kayıtlı kullanıcı bulunamadı' })
+      userId = user.id
+    }
+    if (!userId) return res.status(400).json({ error: 'userId veya email gerekli' })
+
+    const existing = await db.firmMember.findUnique({
+      where: { firmId_userId: { firmId: req.params.firmId, userId } }
+    })
+    if (existing) return res.status(400).json({ error: 'Bu kullanıcı zaten üye' })
+
     const member = await db.firmMember.create({
       data: { firmId: req.params.firmId, userId },
-      include: { user: { select: { id: true, name: true, role: true } } }
+      include: { user: { select: { id: true, name: true, email: true, role: true } } }
     })
     await cacheDelete(`firm:${req.params.firmId}`)
     await cacheDeletePattern('firms:*')
     res.status(201).json(member)
   } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message })
     res.status(500).json({ error: 'Üye eklenemedi' })
   }
 })
