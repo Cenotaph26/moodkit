@@ -310,6 +310,7 @@ textarea.fld{min-height:80px;resize:vertical}
       <div class="sb-nav">
         <div class="sb-lnk on" id="si-home" onclick="go('home')"><span class="ico">⌂</span>Ana Sayfa</div>
         <div class="sb-lnk" id="si-pers" onclick="go('pers')"><span class="ico">✓</span>Görevlerim</div>
+        <div class="sb-lnk" id="si-team" onclick="go('team')" style="display:none"><span class="ico">👥</span>Ekip Yönetimi</div>
         <div class="sb-lnk" id="si-cust" onclick="go('cust')" style="display:none"><span class="ico">👁</span>Müşteri Portalı</div>
       </div>
       <div class="firms-list" id="flist"></div>
@@ -348,6 +349,9 @@ textarea.fld{min-height:80px;resize:vertical}
       <!-- PAGE: YAYIN -->
       <div class="page" id="page-yayin"></div>
 
+      <!-- PAGE: EKİP -->
+      <div class="page" id="page-team"></div>
+
     </div>
   </div>
 </div>
@@ -366,7 +370,7 @@ const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağust
 const STAGE_PAGES={BRIEF:'brief',MB_IG:'mb',MB_KAMP:'mb-kamp',TASKS:'tasks',YAYIN:'yayin'};
 const PAGE_STAGES={'brief':'BRIEF','mb':'MB_IG','mb-kamp':'MB_KAMP','tasks':'TASKS','yayin':'YAYIN'};
 const STAGE_ORDER=['brief','mb','mb-kamp','tasks','yayin'];
-const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın',pers:'Görevlerim',cust:'Müşteri Portalı'};
+const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın',pers:'Görevlerim',cust:'Müşteri Portalı',team:'Ekip Yönetimi'};
 const STATUS_CLS={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
 const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
@@ -485,7 +489,7 @@ function go(page){
   }
 
   // Sidebar active links
-  ['home','pers','cust'].forEach(id=>{
+  ['home','pers','cust','team'].forEach(id=>{
     const el=document.getElementById('si-'+id);
     if(el)el.classList.toggle('on',page===id);
   });
@@ -495,16 +499,13 @@ function go(page){
 
   // Render the page
   const renders={home:renderHome,brief:renderBrief,mb:renderMB,'mb-kamp':renderMBKamp,
-    ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin};
+    ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin,team:renderTeam};
   if(renders[page])renders[page]();
 }
 
 function nav(fid,bid,page){
-  _curFid=fid;_curBid=bid;
-  // Open firm accordion
-  document.querySelectorAll('.firm-row').forEach(el=>{
-    el.classList.toggle('open',el.dataset.fid===fid);
-  });
+  _curFid=fid;_curBid=bid;_curPage=page; // Set page first so renderSB highlights correctly
+  renderSB(); // Re-render sidebar so sub-links (IG Grid etc.) appear
   go(page);
 }
 
@@ -551,81 +552,123 @@ function renderSB(){
 // ── PAGE: HOME ────────────────────────────────────────────
 function renderHome(){
   const allBriefs=firms.flatMap(f=>f.briefs||[]);
-  const allCards=allBriefs.flatMap(b=>b.moodboardCards||[]);
   const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
-  const allCells=allBriefs.flatMap(b=>b.igCells||[]);
   const done=allTasks.filter(t=>t.status==='DONE').length;
-  const approved=allCards.filter(c=>c.status==='APPROVED').length;
+  const total=allTasks.length;
+  const taskProg=total?Math.round(done/total*100):0;
+  const isAdmin=_me?.role==='ADMIN';
 
   const recentBriefs=allBriefs.slice(0,6);
-  const activeTasks=allTasks.filter(t=>t.status!=='DONE').slice(0,6);
+  const activeTasks=allTasks.filter(t=>t.status!=='DONE').slice(0,5);
+
+  // Firm cards with brief counts
+  const firmCards=firms.slice(0,6).map(f=>{
+    const bs=f.briefs||[];
+    const lastB=bs[bs.length-1];
+    const stage=lastB?STAGE_PAGES[lastB.stage]||'brief':null;
+    return`<div class="card" style="cursor:pointer;padding:14px;border-left:3px solid ${f.color||'#534AB7'}"
+      onclick="${lastB?`nav('${f.id}','${lastB.id}','${stage}')`:`openBriefModal('${f.id}')`}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${f.name}</div>
+        ${isAdmin?`<button class="btn surface xs ico" style="flex-shrink:0;margin-left:6px" onclick="event.stopPropagation();openMemberModal('${f.id}')">👥</button>`:''}
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">${bs.length} brief · ${f.members?.length||0} üye</div>
+      ${lastB?`<div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:11px;font-weight:500">${briefTitle(lastB)}</span>
+        <span class="badge b-gry">${STAGE_LABELS[stage]||stage}</span>
+      </div>`:`<div style="font-size:11px;color:var(--amb);font-weight:500">+ Brief ekle</div>`}
+    </div>`;
+  }).join('');
 
   document.getElementById('page-home').innerHTML=`
-    <!-- Stats -->
+    <!-- Greeting + top stats -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:2px">Hoş geldiniz, ${(_me?.name||'').split(' ')[0]||'—'} 👋</div>
+        <div style="font-size:12px;color:var(--t3)">${firms.length} firma · ${allBriefs.length} brief · ${total} görev</div>
+      </div>
+      ${isAdmin?`<div style="display:flex;gap:8px">
+        <button class="btn outline xs" onclick="go('team')">👥 Ekip Yönetimi</button>
+        <button class="btn amber xs" onclick="openFirmModal()">+ Firma Ekle</button>
+      </div>`:''}
+    </div>
+
+    <!-- Stat row -->
     <div class="card-grid card-grid-4" style="margin-bottom:20px">
       ${[
-        ['Firma',firms.length,'🏢'],
-        ['Brief',allBriefs.length,'📋'],
-        ['Kart',approved+'/'+allCards.length,'🎨'],
-        ['Görev',done+'/'+allTasks.length,'✓'],
-      ].map(([l,n,i])=>`<div class="stat-card">
-        <div style="font-size:20px;margin-bottom:6px">${i}</div>
-        <div class="stat-num">${n}</div>
-        <div class="stat-lbl">${l}</div>
+        {l:'Firma',n:firms.length,clr:'var(--amb)',sub:''},
+        {l:'Brief',n:allBriefs.length,clr:'var(--blk)',sub:''},
+        {l:'Görev',n:`${done}/${total}`,clr:'var(--ok)',sub:`%${taskProg} tamamlandı`},
+        {l:'Ekip',n:members.length,clr:'var(--rv)',sub:isAdmin?'üye':''},
+      ].map(({l,n,clr,sub})=>`<div class="stat-card" style="padding:14px">
+        <div style="font-size:11px;font-weight:500;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">${l}</div>
+        <div style="font-size:26px;font-weight:700;color:${clr};line-height:1">${n}</div>
+        ${sub?`<div style="font-size:11px;color:var(--t3);margin-top:4px">${sub}</div>`:''}
+        ${l==='Görev'?`<div class="prog-bar" style="margin-top:8px"><div class="prog-fill" style="width:${taskProg}%"></div></div>`:''}
       </div>`).join('')}
     </div>
 
-    <div class="card-grid card-grid-2">
-      <!-- Recent briefs -->
+    <!-- Two-column layout -->
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
       <div>
-        <div class="sec-hd">
-          <div class="sec-ttl">Son Briefler</div>
-          ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openFirmModal()">+ Firma</button>`:''}
+        <!-- Firmalar -->
+        <div class="sec-hd" style="margin-bottom:12px">
+          <div class="sec-ttl">Firmalar</div>
+          ${isAdmin?`<button class="btn outline xs" onclick="openFirmModal()">+ Firma</button>`:''}
         </div>
-        ${recentBriefs.length?`<div class="card-grid" style="gap:10px">
+        ${firms.length?`<div class="card-grid card-grid-2" style="gap:10px;margin-bottom:20px">${firmCards}</div>`
+          :`<div class="empty">Henüz firma yok. + Firma Ekle butonuna tıklayın.</div>`}
+
+        <!-- Son briefler -->
+        ${recentBriefs.length?`
+        <div class="sec-hd" style="margin-bottom:12px">
+          <div class="sec-ttl">Son Briefler</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
           ${recentBriefs.map(b=>{
             const f=gF(b.firmId);
             const stg=STAGE_PAGES[b.stage]||'brief';
-            const cards=b.moodboardCards||[];
-            const tasks=b.tasks||[];
-            const prog=tasks.length?Math.round(tasks.filter(t=>t.status==='DONE').length/tasks.length*100):0;
-            return`<div class="card" style="cursor:pointer;padding:12px" onclick="nav('${b.firmId}','${b.id}','${stg}')">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                <span style="width:8px;height:8px;border-radius:50%;background:${f?.color||'#534AB7'};flex-shrink:0"></span>
-                <span style="font-size:11px;color:var(--t3)">${f?.name||'—'}</span>
-                <span class="badge b-gry" style="margin-left:auto">${STAGE_LABELS[stg]}</span>
+            return`<div class="cell card" style="padding:10px 14px;border-radius:var(--r)" onclick="nav('${b.firmId}','${b.id}','${stg}')">
+              <span style="width:8px;height:8px;border-radius:50%;background:${f?.color||'#534AB7'};flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:12px">${briefTitle(b)}</div>
+                <div style="font-size:11px;color:var(--t3)">${f?.name||'—'}</div>
               </div>
-              <div style="font-weight:600;font-size:13px;margin-bottom:8px">${briefTitle(b)}</div>
-              <div style="font-size:11px;color:var(--t3);margin-bottom:6px">${cards.length} kart · ${tasks.length} görev</div>
-              <div class="prog-bar"><div class="prog-fill" style="width:${prog}%"></div></div>
+              <span class="badge b-gry">${STAGE_LABELS[stg]}</span>
             </div>`;
           }).join('')}
-        </div>`:
-        `<div class="empty">Henüz brief yok. Firma ekleyip başlayın.</div>`}
+        </div>`:''}
       </div>
 
-      <!-- Active tasks -->
+      <!-- Right sidebar: Active tasks + quick actions -->
       <div>
-        <div class="sec-hd">
+        <div class="sec-hd" style="margin-bottom:12px">
           <div class="sec-ttl">Aktif Görevler</div>
           <button class="btn outline xs" onclick="go('pers')">Tümü →</button>
         </div>
-        ${activeTasks.length?`<div style="display:flex;flex-direction:column;gap:8px">
-          ${activeTasks.map(t=>{
-            const b=allBriefs.find(b=>b.id===t.briefId);
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
+          ${activeTasks.length?activeTasks.map(t=>{
+            const b=allBriefs.find(x=>x.id===t.briefId);
             const f=b?gF(b.firmId):null;
-            const stsCls={TODO:'b-gry',DOING:'b-rv',DONE:'b-ok'}[t.status]||'b-gry';
-            return`<div class="card" style="padding:10px;cursor:pointer" onclick="nav('${b?.firmId||''}','${t.briefId}','tasks')">
-              <div style="display:flex;align-items:flex-start;gap:8px">
-                <span class="badge ${stsCls}">${t.status==='TODO'?'Yapılacak':t.status==='DOING'?'Yapılıyor':'Tamam'}</span>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||t.cardRef}</div>
-                  <div style="font-size:10px;color:var(--t3)">${f?.name||'—'} · ${b?briefTitle(b):''}</div>
-                </div>
+            const clr=t.status==='DOING'?'var(--amb)':'var(--gry2)';
+            return`<div class="card" style="padding:10px;cursor:pointer;display:flex;gap:8px;align-items:flex-start"
+              onclick="nav('${b?.firmId||''}','${t.briefId||''}','tasks')">
+              <div style="width:3px;border-radius:2px;background:${clr};align-self:stretch;flex-shrink:0"></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||t.cardRef||'—'}</div>
+                <div style="font-size:10px;color:var(--t3);margin-top:2px">${f?.name||'—'} · ${t.type||''}</div>
               </div>
             </div>`;
-          }).join('')}
-        </div>`:`<div class="empty">Aktif görev yok.</div>`}
+          }).join(''):`<div class="empty" style="padding:16px">Aktif görev yok.</div>`}
+        </div>
+
+        ${isAdmin?`
+        <!-- Quick links for admin -->
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Hızlı Erişim</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn outline xs" style="justify-content:flex-start;width:100%" onclick="go('team')">👥 Ekip Üyelerini Yönet</button>
+          <button class="btn outline xs" style="justify-content:flex-start;width:100%" onclick="openFirmModal()">🏢 Yeni Firma Ekle</button>
+        </div>`:''}
       </div>
     </div>`;
 }
@@ -1723,6 +1766,161 @@ async function removeMember(fid,userId){
   }catch(e){toast(e.message,'err');}
 }
 
+// ── PAGE: EKİP YÖNETİMİ ──────────────────────────────────
+async function renderTeam(){
+  if(_me?.role!=='ADMIN'){document.getElementById('page-team').innerHTML='<div class="empty">Erişim yok</div>';return;}
+  // Refresh members list
+  await loadMembers();
+  const el=document.getElementById('page-team');
+  const roleMap={ADMIN:'Admin',EDITOR:'Editör',PROD:'Prodüksiyon',CLIENT:'Müşteri'};
+  const roleClr={ADMIN:'b-blk',EDITOR:'b-wt',PROD:'b-ok',CLIENT:'b-gry'};
+  const prodRoleMap={ART_DIRECTOR:'Art Director',COPYWRITER:'Copywriter',VIDEO_EDITOR:'Video Editor',
+    SOCIAL_MEDIA:'Social Media',PHOTOGRAPHER:'Fotoğrafçı',STRATEGIST:'Stratejist'};
+
+  // Group members by firm membership
+  const memberFirms={};
+  firms.forEach(f=>{
+    (f.members||[]).forEach(m=>{
+      if(!memberFirms[m.userId])memberFirms[m.userId]=[];
+      memberFirms[m.userId].push(f.name);
+    });
+  });
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:18px;font-weight:700">Ekip Yönetimi</div>
+        <div style="font-size:12px;color:var(--t3)">${members.length} kayıtlı üye</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn outline xs" onclick="openAddMemberToFirmModal()">👥 Firmaya Üye Ekle</button>
+        <button class="btn amber xs" onclick="openInviteModal()">+ Üye Davet Et</button>
+      </div>
+    </div>
+
+    <!-- Per-firm team overview -->
+    ${firms.length?`
+    <div class="sec-hd" style="margin-bottom:12px"><div class="sec-ttl">Firma Ekipleri</div></div>
+    <div class="card-grid card-grid-2" style="gap:14px;margin-bottom:24px">
+      ${firms.map(f=>{
+        const mems=(f.members||[]).map(m=>{
+          const u=members.find(x=>x.id===m.userId)||{};
+          return`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:${f.color||'#534AB7'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;flex-shrink:0">${(u.name||u.email||'?')[0].toUpperCase()}</div>
+              <div>
+                <div style="font-size:12px;font-weight:500">${u.name||u.email||'—'}</div>
+                <div style="font-size:10px;color:var(--t3)">${u.title||prodRoleMap[u.prodRole]||roleMap[u.role]||u.role||''}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="badge ${roleClr[u.role]||'b-gry'}">${roleMap[u.role]||u.role||'?'}</span>
+              <button class="btn er xs ico" onclick="removeMember('${f.id}','${m.userId}')" title="Firmadan çıkar">✕</button>
+            </div>
+          </div>`;
+        }).join('');
+        return`<div class="card" style="padding:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:10px;height:10px;border-radius:50%;background:${f.color||'#534AB7'}"></span>
+              <div style="font-weight:600;font-size:13px">${f.name}</div>
+            </div>
+            <button class="btn amber xs" onclick="openMemberModal('${f.id}')">+ Üye Ekle</button>
+          </div>
+          ${mems||'<div style="font-size:11px;color:var(--t3);padding:8px 0">Henüz üye yok</div>'}
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    <!-- All users list -->
+    <div class="sec-hd" style="margin-bottom:12px"><div class="sec-ttl">Tüm Kayıtlı Üyeler</div></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${members.length?members.map(u=>{
+        const firmNames=(memberFirms[u.id]||[]).join(', ')||'—';
+        return`<div class="cell">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--amb);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">${(u.name||u.email||'?')[0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:12px">${u.name||'—'}</div>
+            <div style="font-size:11px;color:var(--t3)">${u.email||''} · ${u.title||prodRoleMap[u.prodRole]||''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span class="badge ${roleClr[u.role]||'b-gry'}">${roleMap[u.role]||u.role}</span>
+            <span style="font-size:11px;color:var(--t3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${firmNames}">${firmNames}</span>
+          </div>
+        </div>`;
+      }).join(''):`<div class="empty">Kayıtlı üye yok.</div>`}
+    </div>`;
+}
+
+function openAddMemberToFirmModal(){
+  const firmOpts=firms.map(f=>[f.id,f.name]);
+  if(!firmOpts.length){toast('Önce firma ekleyin','err');return;}
+  showModal(`${mHd('Firmaya Üye Ekle')}
+    <div class="info wt"><span class="info-ico">ℹ</span><div>Mevcut kayıtlı kullanıcıyı e-posta adresiyle bir firmaya ekleyin.</div></div>
+    ${fRow('Firma *',fSel('atf-firm',firmOpts))}
+    ${fRow('E-posta *',fInp('atf-email','email','kullanici@ajans.com'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitAddToFirm()">Ekle</button>`
+    )}`);
+}
+
+async function submitAddToFirm(){
+  const fid=v('atf-firm');
+  const email=v('atf-email');
+  if(!fid||!email){toast('Firma ve e-posta gerekli','err');return;}
+  try{
+    const member=await api(`/api/firms/${fid}/members`,{method:'POST',body:{email}});
+    const f=firms.find(x=>x.id===fid);
+    if(f){if(!f.members)f.members=[];f.members.push(member);}
+    closeModal();renderTeam();toast('Üye firmaya eklendi ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+function openInviteModal(){
+  // Admin can register a new user directly
+  showModal(`${mHd('Yeni Üye Oluştur')}
+    <div class="info ok"><span class="info-ico">ℹ</span><div>Yeni bir kullanıcı hesabı oluşturun. Kullanıcı bu bilgilerle giriş yapabilir.</div></div>
+    <div class="fld-grid fld-grid-2">
+      ${fRow('Ad Soyad *',fInp('inv-name','text','Ali Veli'))}
+      ${fRow('E-posta *',fInp('inv-email','email','ali@ajans.com'))}
+    </div>
+    <div class="fld-grid fld-grid-2">
+      ${fRow('Şifre *',fInp('inv-pass','password','min 8 karakter'))}
+      ${fRow('Unvan',fInp('inv-title','text','Kreatif Direktör'))}
+    </div>
+    ${fRow('Rol *',fSel('inv-role',[['EDITOR','Editör'],['PROD','Prodüksiyon'],['CLIENT','Müşteri'],['ADMIN','Admin']]))}
+    ${firms.length?fRow('Firmaya Ekle (isteğe bağlı)',fSel('inv-firm',[['','Seçme'],...firms.map(f=>[f.id,f.name])])):''}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitInvite()">Oluştur</button>`
+    )}`);
+}
+
+async function submitInvite(){
+  const name=v('inv-name'),email=v('inv-email');
+  const password=document.getElementById('inv-pass')?.value;
+  const title=v('inv-title')||undefined;
+  const role=v('inv-role')||'EDITOR';
+  const firmId=v('inv-firm')||null;
+  if(!name||!email||!password){toast('Ad, e-posta ve şifre gerekli','err');return;}
+  if(password.length<8){toast('Şifre en az 8 karakter olmalı','err');return;}
+  try{
+    // Register via auth/register (admin creates account)
+    await api('/api/auth/register',{method:'POST',body:{name,email,password,role,title},noAuth:true});
+    // If firm selected, add as member
+    if(firmId){
+      try{
+        const member=await api(`/api/firms/${firmId}/members`,{method:'POST',body:{email}});
+        const f=firms.find(x=>x.id===firmId);
+        if(f){if(!f.members)f.members=[];f.members.push(member);}
+      }catch{}
+    }
+    await loadMembers();
+    closeModal();renderTeam();toast('Üye oluşturuldu ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
 // ── AUTH ──────────────────────────────────────────────────
 function showLogin(){
   document.getElementById('login-wrap').style.display='flex';
@@ -1847,6 +2045,9 @@ async function initApp(){
   // CLIENT role: show portal link
   const custLnk=document.getElementById('si-cust');
   if(custLnk)custLnk.style.display=_me.role==='CLIENT'?'flex':'none';
+  // ADMIN: show team management link
+  const teamLnk=document.getElementById('si-team');
+  if(teamLnk)teamLnk.style.display=_me.role==='ADMIN'?'flex':'none';
   // Non-admin: hide firm add button
   const addFirm=document.getElementById('sb-add-firm');
   if(addFirm)addFirm.style.display=_me.role==='ADMIN'?'':'none';
