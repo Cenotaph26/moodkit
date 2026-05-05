@@ -9,14 +9,15 @@
 <style>
 /* ── TOKENS ─────────────────────────────────────────────── */
 :root{
-  --bg:#f5f3ee; --blk:#1a1a18; --amb:#c8a96e;
+  --bg:#f0ede6; --blk:#1a1a18; --blk2:#2c2c2a; --amb:#C8720A; --ambL:#f4e2cf;
   --gry:#8a857c; --gry1:#ede9e0; --gry2:#d8d4ca;
   --t1:#1a1a18; --t2:#3d3c38; --t3:#8a857c;
-  --bdr:#e0dbd0;
-  --ok:#2d7a4f; --ok2:#d4edda;
-  --wt:#c8a96e; --wt2:#fff3cd;
-  --er:#8b1a1a; --er2:#f8d7da;
-  --rv:#1a4f8b; --rv2:#cce5ff;
+  --bdr:rgba(26,26,24,.09); --card:#fff;
+  --bg2:#f7f4ef; --bg3:#eae7e0;
+  --ok:#2d7a4f; --ok2:#d4edda; --ok-c:#2d7a4f; --ok-bg:#d4edda; --ok-br:#a8d5b8;
+  --wt:#C8720A; --wt2:#fce9d6; --wt-c:#7a4200; --wt-bg:#fce9d6; --wt-br:#f4c99e;
+  --er:#8b1a1a; --er2:#f8d7da; --er-c:#8b1a1a; --er-bg:#f8d7da; --er-br:#f1aab0;
+  --rv:#4a4a48; --rv2:#e8e6e1;
   --r:8px; --r2:12px; --sh:0 2px 12px rgba(0,0,0,.08);
   --tr:160ms ease;
 }
@@ -69,23 +70,28 @@ body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:va
 .sb-add{padding:10px 12px;border-top:1px solid var(--bdr)}
 
 /* ── BUTTONS ─────────────────────────────────────────────── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;height:34px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;font-family:inherit}
+.btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.5;cursor:default}
-.btn.solid{background:var(--blk);color:#fff}.btn.solid:hover{background:#333}
-.btn.amber{background:var(--amb);color:#fff}.btn.amber:hover{background:#b8964f}
+.btn.solid{background:var(--blk);color:#fff}.btn.solid:hover{background:var(--blk2)}
+.btn.amber{background:var(--amb);color:#fff}.btn.amber:hover{opacity:.9}
 .btn.outline{background:transparent;color:var(--t1);border:1px solid var(--bdr)}.btn.outline:hover{background:var(--gry1)}
-.btn.surface{background:var(--gry2);color:var(--t1)}.btn.surface:hover{background:var(--gry)}
-.btn.ok{background:var(--ok2);color:var(--ok);border:1px solid var(--ok)}.btn.ok:hover{background:var(--ok);color:#fff}
-.btn.er{background:var(--er2);color:var(--er);border:1px solid var(--er)}.btn.er:hover{background:var(--er);color:#fff}
-.btn.xs{padding:4px 8px;font-size:11px}.btn.sm{padding:5px 10px;font-size:11px}.btn.lg{padding:10px 20px;font-size:14px}
-.btn.ico{padding:6px;border-radius:var(--r)}.btn.xs.ico{padding:4px}
+.btn.out-a{background:transparent;color:var(--amb);border:1px solid var(--amb)}.btn.out-a:hover{background:var(--ambL)}
+.btn.surface{background:var(--gry2);color:var(--t1)}.btn.surface:hover{opacity:.8}
+.btn.ok{background:var(--ok-bg);color:var(--ok-c);border:1px solid var(--ok-br)}.btn.ok:hover{background:var(--ok);color:#fff}
+.btn.er{background:var(--er-bg);color:var(--er-c);border:1px solid var(--er-br)}.btn.er:hover{background:var(--er);color:#fff}
+.btn.xs{padding:4px 10px;font-size:11px;height:26px}.btn.sm{padding:5px 12px;font-size:11px;height:30px}.btn.lg{padding:10px 24px;font-size:14px;height:42px}
+.btn.ico{padding:0;width:34px;justify-content:center;border-radius:999px}.btn.xs.ico{width:26px;padding:0}
 
 /* ── BADGES ──────────────────────────────────────────────── */
 .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap}
-.b-ok{background:var(--ok2);color:var(--ok)}.b-rv{background:var(--rv2);color:var(--rv)}
-.b-wt{background:var(--wt2);color:#7a5c00}.b-er{background:var(--er2);color:var(--er)}
-.b-blk{background:var(--blk);color:#fff}.b-amb{background:var(--amb);color:#fff}
-.b-gry{background:var(--gry2);color:var(--t2)}
+.b-ok{background:var(--ok-bg);color:var(--ok-c);border:1px solid var(--ok-br)}
+.b-rv{background:var(--rv2);color:var(--rv);border:1px solid rgba(74,74,72,.15)}
+.b-wt{background:var(--wt-bg);color:var(--wt-c);border:1px solid var(--wt-br)}
+.b-er{background:var(--er-bg);color:var(--er-c);border:1px solid var(--er-br)}
+.b-blk{background:var(--blk);color:#fff}
+.b-amb{background:var(--amb);color:#fff}
+.b-gry{background:var(--rv2);color:var(--t2);border:1px solid rgba(26,26,24,.12)}
 
 /* ── FORMS ───────────────────────────────────────────────── */
 .fld{padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;font-family:inherit;color:var(--t1);background:#fff;width:100%;outline:none;transition:border var(--tr)}
@@ -187,12 +193,50 @@ textarea.fld{min-height:80px;resize:vertical}
 .sec-ttl{font-size:14px;font-weight:600}
 
 /* ── PROGRESS ────────────────────────────────────────────── */
-.prog-bar{background:var(--gry1);border-radius:999px;height:6px;overflow:hidden}
+.prog-bar{background:var(--gry1);border-radius:999px;height:2px;overflow:hidden}
 .prog-fill{height:100%;border-radius:999px;background:var(--amb);transition:width .3s ease}
+.prog-bar.thick{height:6px}
 
 /* ── INFO BLOCK ──────────────────────────────────────────── */
 .info-block{background:var(--gry1);border-radius:var(--r2);padding:16px;font-size:12px;color:var(--t2)}
 .info-block strong{color:var(--t1)}
+.info{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r);font-size:12px;margin-bottom:12px}
+.info.ok{background:var(--ok-bg);color:var(--ok-c);border:1px solid var(--ok-br)}
+.info.wt{background:var(--wt-bg);color:var(--wt-c);border:1px solid var(--wt-br)}
+.info.er{background:var(--er-bg);color:var(--er-c);border:1px solid var(--er-br)}
+.info-ico{font-size:16px;flex-shrink:0;line-height:1.4}
+
+/* ── SEGMENTED CONTROL ───────────────────────────────────── */
+.seg{display:inline-flex;background:var(--gry1);border-radius:999px;padding:2px;gap:0}
+.seg-b{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;color:var(--t3);transition:all var(--tr);white-space:nowrap;border:none;background:transparent;font-family:inherit}
+.seg-b.on{background:#fff;color:var(--blk);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* ── FILTER TAGS ─────────────────────────────────────────── */
+.tag{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:#fff;color:var(--t2);transition:all var(--tr)}
+.tag:hover{background:var(--gry1)}
+.tag.on,.tag.filled{background:var(--blk);color:#fff;border-color:var(--blk)}
+.tag.ot{background:var(--ok-bg);color:var(--ok-c);border-color:var(--ok-br)}
+.tag.sf{background:var(--wt-bg);color:var(--wt-c);border-color:var(--wt-br)}
+
+/* ── CELL (list row) ─────────────────────────────────────── */
+.cell{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background var(--tr)}
+.cell:last-child{border-bottom:none}
+.cell:hover{background:var(--bg2)}
+
+/* ── TASK CARD STRIP ─────────────────────────────────────── */
+.tc-acc{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0}
+.tc-inner{flex:1;min-width:0}
+.tc-check{display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:11px;color:var(--t2)}
+.tc-check input[type=checkbox]{accent-color:var(--amb);width:13px;height:13px;flex-shrink:0;cursor:pointer}
+.tc-check.done-item{text-decoration:line-through;color:var(--t3)}
+
+/* ── IG CELL EMPTY ───────────────────────────────────────── */
+.igcell.empty{border:2px dashed var(--gry2)}
+.igcell.empty .igcell-ph{opacity:.5}
+
+/* ── SKELETON ────────────────────────────────────────────── */
+.skel{background:linear-gradient(90deg,var(--gry1) 25%,var(--gry2) 50%,var(--gry1) 75%);background-size:200% 100%;animation:skl 1.4s infinite;border-radius:var(--r)}
+@keyframes skl{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── PRINT ───────────────────────────────────────────────── */
 @media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
@@ -484,12 +528,19 @@ function renderSB(){
       </div>
       <div class="acc-body">
         ${bs.map(b=>{
-          const pg=STAGE_PAGES[b.stage]||'brief';
-          const isOn=_curBid===b.id&&_curFid===f.id;
-          return`<div class="sub-lnk${isOn?' on':''}" data-fid="${f.id}" data-bid="${b.id}" data-page="${pg}"
-            onclick="nav('${f.id}','${b.id}','${pg}')">
-            <span class="stage-dot"></span>${briefTitle(b)}
-          </div>`;
+          const isOnFirm=_curBid===b.id&&_curFid===f.id;
+          const activePg=isOnFirm?_curPage:null;
+          const subLinks=[['brief','📋'],['mb','🎨'],['mb-kamp','🎬'],['ig','📷'],['tasks','✓'],['yayin','🚀']];
+          const subLbls={brief:'Brief',mb:'IG MB',  'mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın'};
+          return`<div class="sub-lnk${isOnFirm?' on':''}" data-fid="${f.id}" data-bid="${b.id}" data-page="brief"
+            onclick="nav('${f.id}','${b.id}','brief')" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:6px"><span class="stage-dot"></span>${briefTitle(b)}</span>
+          </div>
+          ${isOnFirm?`<div style="padding-left:16px;padding-bottom:4px">
+            ${subLinks.map(([pg,ico])=>`<div class="sub-lnk${activePg===pg?' on':''}"
+              style="padding:4px 8px;border-radius:4px;font-size:10px"
+              onclick="nav('${f.id}','${b.id}','${pg}')">${ico} ${subLbls[pg]}</div>`).join('')}
+          </div>`:''}`;
         }).join('')}
         <div class="sub-lnk" onclick="openBriefModal('${f.id}')" style="color:var(--amb)">+ Brief Ekle</div>
       </div>
@@ -751,7 +802,7 @@ async function renderMBKamp(){
     </div>
     ${cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
       ${cards.map(c=>{
-        const v0=c.versions?.[0];
+        const v0=c.versions?.at(-1)||c.versions?.[0];
         const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
         return`<div class="mb-card" data-s="${c.status}" onclick="openCardDet('${f.id}','${b.id}','KAMP','${c.id}')">
           ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -889,7 +940,7 @@ async function renderIG(){
   const cellsHtml=Array.from({length:9},(_,i)=>{
     const cell=cells.find(c=>c.cellIndex===i);
     const thumb=cell?.mediaUrl||(cell?.videoUrl?ytThumb(cell.videoUrl):null);
-    return`<div class="igcell" onclick="${cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:
+    return`<div class="igcell${cell?'':' empty'}" onclick="${cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:
       `openIGCellModal('${f.id}','${b.id}',${i})`}">
       ${thumb?`<img src="${thumb}" onerror="this.parentElement.innerHTML='<div class=igcell-ph>📷<span>${i+1}</span></div>'">`:
         `<div class="igcell-ph">📷<span>${i+1}</span></div>`}
@@ -1051,17 +1102,21 @@ async function renderTasks(){
       </div>
       ${colTasks.map(t=>{
         const assignee=mem.find(m=>m.id===t.assigneeId)||t.assignee;
-        return`<div class="tc">
-          <div class="tc-ref">${t.type} ${t.cardRef?'· '+t.cardRef:''}</div>
-          <div class="tc-title">${t.desc}</div>
-          <div class="tc-meta">
-            ${t.deadline?`<span class="badge b-gry">${fmtDate(t.deadline)}</span>`:''}
-            ${assignee?`<span class="badge b-blk">${assignee.name||assignee.email||'?'}</span>`:''}
-            ${t.format?`<span class="badge b-rv">${t.format}</span>`:''}
-          </div>
-          <div class="tc-actions">
-            <button class="btn outline xs" onclick="cycleTask('${f.id}','${b.id}','${t.id}')">${nextStatus[t.status]} →</button>
-            <button class="btn er xs ico" onclick="deleteTask('${f.id}','${b.id}','${t.id}')">🗑</button>
+        const stripClr=status==='TODO'?'var(--gry2)':status==='DOING'?'var(--amb)':'var(--ok)';
+        return`<div class="tc" style="display:flex;gap:8px;padding:0;overflow:hidden">
+          <div class="tc-acc" style="background:${stripClr}"></div>
+          <div class="tc-inner" style="padding:10px 10px 10px 0">
+            <div class="tc-ref">${t.type} ${t.cardRef?'· '+t.cardRef:''}</div>
+            <div class="tc-title">${t.desc}</div>
+            <div class="tc-meta">
+              ${t.deadline?`<span class="badge b-gry">${fmtDate(t.deadline)}</span>`:''}
+              ${assignee?`<span class="badge b-blk">${assignee.name||assignee.email||'?'}</span>`:''}
+              ${t.format?`<span class="badge b-gry">${t.format}</span>`:''}
+            </div>
+            <div class="tc-actions">
+              <button class="btn outline xs" onclick="cycleTask('${f.id}','${b.id}','${t.id}')">${nextStatus[t.status]} →</button>
+              <button class="btn er xs ico" onclick="deleteTask('${f.id}','${b.id}','${t.id}')">🗑</button>
+            </div>
           </div>
         </div>`;
       }).join('')}
@@ -1102,66 +1157,122 @@ async function deleteTask(fid,bid,tid){
 }
 
 // ── PAGE: PERSONEL ────────────────────────────────────────
+let _persFilter='active'; // 'active'|'week'|'done'
+
 async function renderPers(){
   await loadMyTasks();
-  const tasks=_myTasks||[];
-  const done=tasks.filter(t=>t.status==='DONE').length;
-  const doing=tasks.filter(t=>t.status==='DOING').length;
-  const todo=tasks.filter(t=>t.status==='TODO').length;
-  const stsCls={TODO:'b-gry',DOING:'b-rv',DONE:'b-ok'};
+  const allTasks=_myTasks||[];
+  const now=new Date();
+  const weekEnd=new Date(now);weekEnd.setDate(weekEnd.getDate()+(7-weekEnd.getDay()));
+
+  const filtered=allTasks.filter(t=>{
+    if(_persFilter==='active')return t.status!=='DONE';
+    if(_persFilter==='done')return t.status==='DONE';
+    if(_persFilter==='week'){
+      if(t.status==='DONE')return false;
+      if(!t.deadline)return true;
+      return new Date(t.deadline)<=weekEnd;
+    }
+    return true;
+  });
+
+  const done=allTasks.filter(t=>t.status==='DONE').length;
+  const doing=allTasks.filter(t=>t.status==='DOING').length;
+  const todo=allTasks.filter(t=>t.status==='TODO').length;
+  const total=allTasks.length;
+  const progPct=total?Math.round(done/total*100):0;
+  const stsCls={TODO:'b-gry',DOING:'b-wt',DONE:'b-ok'};
   const stsLbl={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
+  const accClr={TODO:'var(--gry2)',DOING:'var(--amb)',DONE:'var(--ok)'};
 
   document.getElementById('page-pers').innerHTML=`
-    <div style="font-size:18px;font-weight:700;margin-bottom:20px">Görevlerim</div>
-    <div class="card-grid card-grid-3" style="margin-bottom:24px">
-      ${[['Yapılacak',todo,'b-gry'],['Yapılıyor',doing,'b-rv'],['Tamamlandı',done,'b-ok']].map(([l,n,cls])=>`
-        <div class="stat-card">
-          <div class="stat-num">${n}</div>
-          <div class="stat-lbl">${l}</div>
-          <div style="margin-top:8px"><span class="badge ${cls}">${l}</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:18px;font-weight:700">Görevlerim</div>
+        <div style="font-size:12px;color:var(--t3)">${done}/${total} tamamlandı</div>
+      </div>
+      <div class="seg">
+        <button class="seg-b${_persFilter==='active'?' on':''}" onclick="_persFilter='active';renderPers()">Aktif</button>
+        <button class="seg-b${_persFilter==='week'?' on':''}" onclick="_persFilter='week';renderPers()">Bu Hafta</button>
+        <button class="seg-b${_persFilter==='done'?' on':''}" onclick="_persFilter='done';renderPers()">Tamamlanan</button>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-3" style="margin-bottom:20px">
+      ${[['Yapılacak',todo,'var(--gry2)'],['Yapılıyor',doing,'var(--amb)'],['Tamamlandı',done,'var(--ok)']].map(([l,n,clr])=>`
+        <div class="stat-card" style="padding:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--t3);font-weight:500">${l}</div>
+            <div style="width:10px;height:10px;border-radius:50%;background:${clr}"></div>
+          </div>
+          <div class="stat-num" style="font-size:24px">${n}</div>
+          <div class="prog-bar thick" style="margin-top:8px"><div class="prog-fill" style="width:${total?Math.round(n/total*100):0}%;background:${clr}"></div></div>
         </div>`).join('')}
     </div>
-    ${tasks.length?`<div style="display:flex;flex-direction:column;gap:8px">
-      ${tasks.map(t=>{
+
+    <div style="margin-bottom:16px">
+      <div class="prog-bar" style="height:4px"><div class="prog-fill" style="width:${progPct}%"></div></div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;text-align:right">Genel ilerleme: %${progPct}</div>
+    </div>
+
+    ${filtered.length?`<div style="display:flex;flex-direction:column;gap:10px">
+      ${filtered.map(t=>{
         const briefLabel=t.brief?briefTitle(t.brief):t.briefId?.slice(0,8)||'—';
         const firmLabel=t.brief?.firm?.name||'—';
-        return`<div class="card" style="padding:12px">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span class="badge ${stsCls[t.status]||'b-gry'}">${stsLbl[t.status]||t.status}</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:13px;margin-bottom:2px">${t.desc||t.cardRef}</div>
-              <div style="font-size:11px;color:var(--t3)">${firmLabel} · ${briefLabel} · ${t.type}</div>
-              ${t.deadline?`<div style="font-size:11px;color:var(--t3);margin-top:2px">Son tarih: ${fmtDate(t.deadline)}</div>`:''}
+        const isDone=t.status==='DONE';
+        const isOverdue=t.deadline&&!isDone&&new Date(t.deadline)<now;
+        return`<div class="card" style="padding:0;overflow:hidden">
+          <div style="display:flex;gap:0">
+            <div class="tc-acc" style="background:${accClr[t.status]||'var(--gry2)'};width:4px;flex-shrink:0;border-radius:0"></div>
+            <div style="flex:1;padding:12px 14px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:600;font-size:13px;margin-bottom:2px;${isDone?'text-decoration:line-through;color:var(--t3)':''}">${t.desc||t.cardRef}</div>
+                  <div style="font-size:11px;color:var(--t3)">${firmLabel} · ${briefLabel} · <span class="badge ${stsCls[t.status]||'b-gry'}">${stsLbl[t.status]||t.status}</span></div>
+                </div>
+                <div style="display:flex;gap:6px;flex-shrink:0">
+                  ${!isDone?`<button class="btn amber xs" onclick="submitMyTask('${t.briefId}','${t.id}','DONE')">✓ Teslim Et</button>`:''}
+                  ${t.status==='TODO'?`<button class="btn out-a xs" onclick="submitMyTask('${t.briefId}','${t.id}','DOING')">Başla</button>`:''}
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                ${t.type?`<span class="tag" style="cursor:default">${t.type}</span>`:''}
+                ${t.format?`<span class="tag" style="cursor:default">${t.format}</span>`:''}
+                ${t.deadline?`<span class="tag${isOverdue?' filled':''}" style="cursor:default${isOverdue?';background:var(--er-bg);color:var(--er-c);border-color:var(--er-br)':''}">${isOverdue?'⚠ ':''}${fmtDate(t.deadline)}</span>`:''}
+              </div>
             </div>
-            ${t.status!=='DONE'?`<button class="btn ok xs" onclick="markMyTaskDone('${t.briefId}','${t.id}')">✓ Tamamla</button>`:''}
           </div>
         </div>`;
       }).join('')}
-    </div>`:`<div class="empty">Size atanmış görev yok.</div>`}`;
+    </div>`:`<div class="empty">${_persFilter==='done'?'Henüz tamamlanan görev yok.':_persFilter==='week'?'Bu hafta için görev yok.':'Size atanmış aktif görev yok.'}</div>`}`;
 }
 
-async function markMyTaskDone(bid,tid){
+async function submitMyTask(bid,tid,status){
   const t=_myTasks.find(x=>x.id===tid);if(!t)return;
-  // mytasks API includes brief with firmId field and nested firm.id
   const fid=t.brief?.firmId||t.brief?.firm?.id;
   if(!fid){
-    // fallback: look in local firms state
     const b=firms.flatMap(f=>f.briefs||[]).find(b=>b.id===bid);
     const ff=b?gF(b.firmId):null;
     if(!ff){toast('Firma bilgisi eksik','err');return;}
-    return markMyTaskDoneWith(ff.id,bid,tid,t);
+    return _doMyTask(ff.id,bid,tid,t,status);
   }
-  return markMyTaskDoneWith(fid,bid,tid,t);
+  return _doMyTask(fid,bid,tid,t,status);
 }
-async function markMyTaskDoneWith(fid,bid,tid,t){
+async function _doMyTask(fid,bid,tid,t,status){
   try{
-    const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status:'DONE'}});
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status}});
     Object.assign(t,updated);
-    renderPers();toast('Görev tamamlandı ✓');
+    renderPers();
+    toast(status==='DONE'?'Görev teslim edildi ✓':status==='DOING'?'Görev başlatıldı':'Güncellendi','ok');
   }catch(e){toast(e.message,'err');}
 }
 
+// Legacy alias (kept for any existing inline references)
+async function markMyTaskDone(bid,tid){return submitMyTask(bid,tid,'DONE');}
+
 // ── PAGE: MÜŞTERI PORTALI ─────────────────────────────────
+let _custFilter='all'; // 'all'|'review'|'approved'|'rejected'
+
 async function renderCust(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-cust').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
@@ -1170,49 +1281,116 @@ async function renderCust(){
     try{b._igCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`);}
     catch{b._igCards=[];}
   }
-  // Show all cards except PENDING (REVIEW = awaiting approval, APPROVED/REJECTED = decided)
   const allCards=b._igCards||[];
-  const cards=allCards.filter(c=>c.status!=='PENDING');
-  const reviewCards=cards.filter(c=>c.status==='REVIEW');
-  const stsCls={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
-  const stsLbl={PENDING:'Bekliyor',REVIEW:'İnceleme Bekliyor',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
+  // Exclude PENDING from client view — they haven't been sent for review yet
+  const viewable=allCards.filter(c=>c.status!=='PENDING');
+  const reviewCards=viewable.filter(c=>c.status==='REVIEW');
+  const approvedCards=viewable.filter(c=>c.status==='APPROVED');
+  const rejectedCards=viewable.filter(c=>c.status==='REJECTED');
+
+  const filtered=_custFilter==='all'?viewable
+    :_custFilter==='review'?reviewCards
+    :_custFilter==='approved'?approvedCards
+    :rejectedCards;
+
+  const stsCls={REVIEW:'b-wt',APPROVED:'b-ok',REJECTED:'b-er'};
+  const stsLbl={REVIEW:'İnceleme Bekliyor',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
   document.getElementById('page-cust').innerHTML=`
-    <div style="background:${f.color||'#534AB7'};border-radius:var(--r2);padding:20px;color:#fff;margin-bottom:20px">
-      <div style="font-size:20px;font-weight:700;margin-bottom:4px">${f.name}</div>
-      <div style="font-size:13px;opacity:.8">${briefTitle(b)} · Müşteri Onay Paneli</div>
-      <div style="margin-top:10px;font-size:12px;opacity:.7">${allCards.length} içerik · ${reviewCards.length} onay bekliyor</div>
-    </div>
-    ${cards.length?`
-      <div class="sec-hd">
-        <div class="sec-ttl">İçerikler (${cards.length})</div>
-        ${reviewCards.length?`<button class="btn ok xs" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla</button>`:''}
+    <!-- Black header banner -->
+    <div style="background:var(--blk);border-radius:var(--r2);padding:20px 24px;color:#fff;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="font-size:20px;font-weight:700">${f.name}</div>
+          <span class="badge" style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;border:1px solid rgba(255,255,255,.25)">Müşteri Görünümü</span>
+        </div>
+        <div style="font-size:12px;opacity:.7">${briefTitle(b)} · ${viewable.length} içerik</div>
+        <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;opacity:.8">
+          <span>✓ ${approvedCards.length} onaylı</span>
+          <span>⏳ ${reviewCards.length} bekliyor</span>
+          <span>✕ ${rejectedCards.length} reddedildi</span>
+        </div>
       </div>
-      <div class="card-grid card-grid-3" style="gap:16px">
-        ${cards.map(c=>{
-          const v0=c.versions?.[0];
-          const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
-          return`<div class="mb-card" data-s="${c.status}">
-            ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none'">`:
-              `<div class="mb-thumb-ph">🎨</div>`}
-            <div class="mb-body">
-              <div class="mb-label">${c.label}</div>
-              <div class="mb-meta">
-                <span style="font-size:10px;color:var(--t3)">${c.type}</span>
-                <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
-              </div>
+      ${reviewCards.length?`<button class="btn amber sm" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla (${reviewCards.length})</button>`:''}
+    </div>
+
+    <!-- Info block -->
+    ${reviewCards.length?`<div class="info wt" style="margin-bottom:16px">
+      <span class="info-ico">ℹ</span>
+      <div><strong>${reviewCards.length} içerik onayınızı bekliyor.</strong> Onaylamak için her kartın altındaki "Onayla" butonuna basın. Revize istemek için "Reddet" seçeneğini kullanın.</div>
+    </div>`:''}
+    ${rejectedCards.length?`<div class="info er" style="margin-bottom:16px">
+      <span class="info-ico">⚠</span>
+      <div><strong>${rejectedCards.length} içerik reddedildi.</strong> Ekibimiz revize notlarınızı inceleyerek içerikleri güncelleyecektir.</div>
+    </div>`:''}
+
+    <!-- Filter tabs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[['all','Tümü',viewable.length],['review','Bekliyor',reviewCards.length],['approved','Onaylı',approvedCards.length],['rejected','Reddedildi',rejectedCards.length]].map(([k,l,n])=>
+          `<button class="tag${_custFilter===k?' on':''}" onclick="_custFilter='${k}';renderCust()">${l} <span style="opacity:.6">${n}</span></button>`
+        ).join('')}
+      </div>
+    </div>
+
+    ${filtered.length?`<div class="card-grid card-grid-3" style="gap:16px">
+      ${filtered.map(c=>{
+        const v0=c.versions?.at(-1)||c.versions?.[0];
+        const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+        const isReview=c.status==='REVIEW';
+        const isRejected=c.status==='REJECTED';
+        return`<div class="mb-card" data-s="${c.status}">
+          ${thumb?`<img class="mb-thumb" src="${thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="mb-thumb-ph" style="display:none">🎨</div>`
+            :`<div class="mb-thumb-ph">🎨</div>`}
+          <div class="mb-body">
+            <div class="mb-label">${c.label}</div>
+            <div class="mb-meta">
+              <span style="font-size:10px;color:var(--t3)">${c.type} · v${(c.versions||[]).length}</span>
+              <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
             </div>
-            ${c.status==='REVIEW'?`<div class="mb-actions">
-              <button class="btn ok xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',true)">✓ Onayla</button>
-              <button class="btn er xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',false)">✕ Reddet</button>
-            </div>`:''}
-          </div>`;
-        }).join('')}
-      </div>`:`<div class="empty">İncelemeniz için içerik yok.</div>`}`;
+            ${isRejected&&v0?.desc?`<div style="font-size:11px;color:var(--er-c);margin-top:6px;padding:6px 8px;background:var(--er-bg);border-radius:4px">📝 ${v0.desc}</div>`:''}
+          </div>
+          ${isReview?`<div class="mb-actions">
+            <button class="btn ok xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',true)">✓ Onayla</button>
+            <button class="btn er xs" onclick="openCustReject('${f.id}','${b.id}','${c.id}')">✕ Reddet</button>
+          </div>`:isRejected?`<div class="mb-actions" style="justify-content:flex-start">
+            <span style="font-size:10px;color:var(--er-c)">Revize bekleniyor</span>
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`:`<div class="empty">Bu kategoride içerik yok.</div>`}`;
+}
+
+function openCustReject(fid,bid,cid){
+  showModal(`${mHd('İçeriği Reddet')}
+    <div class="info wt"><span class="info-ico">ℹ</span><div>Reddederken revize notunuzu ekleyebilirsiniz. Ekibimiz bu notlara göre içeriği güncelleyecektir.</div></div>
+    ${fRow('Revize Notu (isteğe bağlı)',fTa('cr-note','Lütfen şunu değiştirin...'))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn er" onclick="submitCustReject('${fid}','${bid}','${cid}')">✕ Reddet</button>`
+    )}`);
+}
+
+async function submitCustReject(fid,bid,cid){
+  const note=v('cr-note')||undefined;
+  // First update card status to REJECTED
+  await updateCard(fid,bid,'IG',cid,'REJECTED');
+  // If note provided, add as a version note
+  if(note){
+    try{
+      await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}/versions`,
+        {method:'POST',body:{note:'Müşteri Notu: '+note}});
+      const b=gB(fid,bid);
+      if(b){const c=(b._igCards||[]).find(x=>x.id===cid);if(c){if(!c.versions)c.versions=[];c.versions.push({note:'Müşteri Notu: '+note,vNum:(c.versions.length+1),createdAt:new Date()});}}
+    }catch{}
+  }
+  closeModal();renderCust();toast('İçerik reddedildi');
 }
 
 async function custApprove(fid,bid,cid,approve){
   const status=approve?'APPROVED':'REJECTED';
+  if(!approve){openCustReject(fid,bid,cid);return;}
   await updateCard(fid,bid,'IG',cid,status);
   renderCust();
 }
