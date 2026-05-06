@@ -9,27 +9,30 @@
 <style>
 /* ── TOKENS ─────────────────────────────────────────────── */
 :root{
-  --bg:#f0ede6; --blk:#1a1a18; --blk2:#2c2c2a; --amb:#C8720A; --ambL:#f4e2cf;
-  --gry:#8a857c; --gry1:#ede9e0; --gry2:#d8d4ca;
-  --t1:#1a1a18; --t2:#3d3c38; --t3:#8a857c;
-  --bdr:rgba(26,26,24,.09); --card:#fff;
-  --bg2:#f7f4ef; --bg3:#eae7e0;
-  --ok:#2d7a4f; --ok2:#d4edda; --ok-c:#2d7a4f; --ok-bg:#d4edda; --ok-br:#a8d5b8;
-  --wt:#C8720A; --wt2:#fce9d6; --wt-c:#7a4200; --wt-bg:#fce9d6; --wt-br:#f4c99e;
-  --er:#8b1a1a; --er2:#f8d7da; --er-c:#8b1a1a; --er-bg:#f8d7da; --er-br:#f1aab0;
-  --rv:#4a4a48; --rv2:#e8e6e1;
+  --bg:#f0ede6; --bg2:#e8e4da; --bg3:#dedad0; --card:#fff;
+  --blk:#1a1a18; --blk2:#2c2c28;
+  --amb:#C8720A; --ambL:#FEF3DC;
+  --gry:#ede9e0; --gry1:#ede9e0; --gry2:#d8d4ca; --gry3:#b4b0a6;
+  --t1:#1a1a18; --t2:#5c5852; --t3:#9c9890;
+  --bdr:rgba(26,26,24,.09); --bdr2:rgba(26,26,24,.18);
+  --ok-c:#1a5c1a; --ok-bg:rgba(26,92,26,.08); --ok-br:rgba(26,92,26,.18);
+  --wt-c:#8a5000; --wt-bg:#FEF3DC; --wt-br:rgba(200,114,10,.22);
+  --er-c:#7a1818; --er-bg:rgba(160,30,30,.08); --er-br:rgba(160,30,30,.18);
+  --rv:#4a4a48; --rv2:#e0ddd6;
   --r:8px; --r2:12px; --sh:0 2px 12px rgba(0,0,0,.08);
-  --tr:160ms ease;
+  --tr:120ms ease;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:var(--t1);line-height:1.5;overflow:hidden;height:100vh}
 
 /* ── APP SHELL ───────────────────────────────────────────── */
-.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.tb{height:52px;background:#fff;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;padding:0 16px;flex-shrink:0;z-index:100}
-.layout{display:flex;flex:1;min-height:0;overflow:hidden}
-.sb{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
-.cnt{flex:1;min-height:0;overflow-y:auto;padding:24px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+.app{display:flex;flex-direction:column;height:100vh}
+.tb{height:48px;background:var(--card);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;padding:0 18px;flex-shrink:0;z-index:100}
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.sb{width:196px;flex-shrink:0;background:var(--card);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;padding:10px 0 12px}
+.cnt{flex:1;min-height:0;overflow-y:auto;padding:20px 22px;background:var(--bg)}
 .page{display:none}.page.on{display:block}
 
 /* ── TOPBAR ──────────────────────────────────────────────── */
@@ -49,25 +52,29 @@ body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:va
 .tb-role-badge{font-size:10px;color:var(--t3)}
 
 /* ── SIDEBAR ─────────────────────────────────────────────── */
-.sb-top{padding:12px;border-bottom:1px solid var(--bdr);display:flex;gap:6px}
-.sb-nav{padding:8px 0;border-bottom:1px solid var(--bdr)}
-.sb-lnk{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:12px;color:var(--t2);cursor:pointer;border-radius:0;transition:background var(--tr)}
-.sb-lnk:hover{background:var(--gry1)}.sb-lnk.on{background:var(--gry1);color:var(--blk);font-weight:600}
-.sb-lnk .ico{font-size:14px;width:18px;text-align:center}
+.sb-lbl{font-size:10px;font-weight:500;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;padding:10px 14px 4px;display:block}
+.sb-lnk{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:8px;margin:0 6px 1px;font-size:12px;color:var(--t2);cursor:pointer;transition:background var(--tr),color var(--tr);white-space:nowrap}
+.sb-lnk:hover{background:var(--gry);color:var(--t1)}
+.sb-lnk.on{background:var(--blk);color:#fff;font-weight:500}
+.sb-lnk .ico{font-size:13px;opacity:.6;flex-shrink:0}
+.sb-lnk.on .ico{opacity:1}
+.sb-hr{height:1px;background:var(--bdr);margin:8px 12px}
 .firms-list{flex:1;overflow-y:auto}
 .firm-row{padding:0}
-.firm-hd{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:500;transition:background var(--tr)}
-.firm-hd:hover{background:var(--gry1)}
-.firm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.firm-ch{margin-left:auto;font-size:10px;color:var(--t3);transition:transform var(--tr)}
+.firm-hd{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;margin:0 6px 1px;cursor:pointer;font-size:12px;font-weight:500;color:var(--t1);transition:background var(--tr)}
+.firm-hd:hover{background:var(--gry)}
+.firm-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.firm-cnt{font-size:10px;font-weight:400;color:var(--t3)}
+.firm-ch{font-size:10px;color:var(--t3);transition:transform var(--tr)}
 .firm-row.open .firm-ch{transform:rotate(90deg)}
-.acc-body{display:none;padding-left:28px;padding-bottom:4px}
+.acc-body{display:none;padding-bottom:4px}
 .firm-row.open .acc-body{display:block}
-.sub-lnk{display:flex;align-items:center;gap:6px;padding:5px 8px;font-size:11px;color:var(--t3);cursor:pointer;border-radius:var(--r);transition:background var(--tr)}
-.sub-lnk:hover{background:var(--gry1);color:var(--t1)}.sub-lnk.on{color:var(--blk);font-weight:600}
-.sub-lnk .stage-dot{width:6px;height:6px;border-radius:50%;background:var(--gry2);flex-shrink:0}
-.sub-lnk.on .stage-dot{background:var(--amb)}
-.sb-add{padding:10px 12px;border-top:1px solid var(--bdr)}
+.sub-lnk{display:block;padding:5px 10px 5px 22px;border-radius:8px;margin:0 6px 1px;font-size:11px;color:var(--t3);cursor:pointer;transition:background var(--tr),color var(--tr)}
+.sub-lnk:hover{background:var(--gry);color:var(--t2)}
+.sub-lnk.on{color:var(--t1);font-weight:500}
+.sub-lnk.on::before{content:"";display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--t1);margin-right:6px;vertical-align:middle;margin-bottom:1px}
+.sb-add{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px;margin:4px 6px 0;font-size:12px;color:var(--amb);cursor:pointer;transition:background var(--tr)}
+.sb-add:hover{background:var(--ambL)}
 
 /* ── BUTTONS ─────────────────────────────────────────────── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;height:34px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;font-family:inherit}
@@ -84,14 +91,14 @@ body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:va
 .btn.ico{padding:0;width:34px;justify-content:center;border-radius:999px}.btn.xs.ico{width:26px;padding:0}
 
 /* ── BADGES ──────────────────────────────────────────────── */
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap}
-.b-ok{background:var(--ok-bg);color:var(--ok-c);border:1px solid var(--ok-br)}
-.b-rv{background:var(--rv2);color:var(--rv);border:1px solid rgba(74,74,72,.15)}
-.b-wt{background:var(--wt-bg);color:var(--wt-c);border:1px solid var(--wt-br)}
-.b-er{background:var(--er-bg);color:var(--er-c);border:1px solid var(--er-br)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:9px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--ok-bg);color:var(--ok-c);border:.5px solid var(--ok-br)}
+.b-rv{background:#e0ddd6;color:#3a3832;border:.5px solid #c4c0b8}
+.b-wt{background:var(--wt-bg);color:var(--wt-c);border:.5px solid var(--wt-br)}
+.b-er{background:var(--er-bg);color:var(--er-c);border:.5px solid var(--er-br)}
 .b-blk{background:var(--blk);color:#fff}
-.b-amb{background:var(--amb);color:#fff}
-.b-gry{background:var(--rv2);color:var(--t2);border:1px solid rgba(26,26,24,.12)}
+.b-amb{background:var(--ambL);color:#7a4000;border:.5px solid var(--wt-br)}
+.b-gry{background:#c8c4bc;color:#2a2a24;border:.5px solid #a8a49c}
 
 /* ── FORMS ───────────────────────────────────────────────── */
 .fld{padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;font-family:inherit;color:var(--t1);background:#fff;width:100%;outline:none;transition:border var(--tr)}
@@ -100,12 +107,15 @@ textarea.fld{min-height:80px;resize:vertical}
 .fld-row{margin-bottom:12px}.fld-row label{font-size:11px;color:var(--t3);font-weight:500;display:block;margin-bottom:4px}
 .fld-grid{display:grid;gap:12px}.fld-grid-2{grid-template-columns:1fr 1fr}
 
-/* ── STAGE PILLS ─────────────────────────────────────────── */
-.stage-bar{display:flex;gap:0;margin-bottom:24px;background:var(--gry1);border-radius:var(--r2);padding:3px}
-.stage-pill{flex:1;padding:7px 8px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;transition:all var(--tr);white-space:nowrap;position:relative}
-.stage-pill.done{color:var(--ok)}.stage-pill.done::after{content:'✓';margin-left:4px}
-.stage-pill.active{background:#fff;color:var(--blk);box-shadow:var(--sh);font-weight:600}
-.stage-pill.todo{color:var(--gry2)}
+/* ── STAGE NAV ───────────────────────────────────────────── */
+.stage-nav{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;margin-bottom:20px;scrollbar-width:none}
+.stage-nav::-webkit-scrollbar{display:none}
+.stage-pill{padding:5px 12px;border-radius:999px;font-size:10px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all var(--tr);user-select:none;border:none}
+.stage-pill.done{background:var(--ok-bg);color:var(--ok-c);border:.5px solid var(--ok-br)}
+.stage-pill.active{background:var(--blk);color:#fff}
+.stage-pill.todo{background:var(--gry2);color:var(--t2);border:.5px solid var(--bdr)}
+.stage-pill.todo:hover{background:var(--gry3);color:var(--t1)}
+.stage-arrow{color:var(--t3);font-size:11px;flex-shrink:0}
 
 /* ── CARDS ───────────────────────────────────────────────── */
 .card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
@@ -115,42 +125,52 @@ textarea.fld{min-height:80px;resize:vertical}
 .card-grid-4{grid-template-columns:repeat(4,1fr)}
 
 /* ── MOODBOARD CARDS ─────────────────────────────────────── */
-.mb-card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden;position:relative;cursor:pointer;transition:box-shadow var(--tr)}
-.mb-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.12)}
-.mb-card[data-s="PENDING"]{border-left:3px solid var(--gry2)}
-.mb-card[data-s="REVIEW"]{border-left:3px solid var(--rv)}
-.mb-card[data-s="APPROVED"]{border-left:3px solid var(--ok)}
-.mb-card[data-s="REJECTED"]{border-left:3px solid var(--er)}
-.mb-thumb{width:100%;height:140px;object-fit:cover;display:block;background:var(--gry1)}
-.mb-thumb-ph{width:100%;height:140px;background:var(--gry1);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gry2)}
-.mb-body{padding:10px}
-.mb-label{font-size:12px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mb-meta{font-size:10px;color:var(--t3);display:flex;align-items:center;justify-content:space-between}
+.mb-card{background:var(--card);border-radius:12px;border:1px solid var(--bdr);overflow:hidden;position:relative;cursor:pointer;transition:border-color var(--tr),transform var(--tr)}
+.mb-card:hover{border-color:var(--bdr2);transform:translateY(-1px)}
+.mb-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;z-index:1}
+.mb-card[data-s="PENDING"]::before,.mb-card[data-s="wt"]::before{background:var(--amb)}
+.mb-card[data-s="REVIEW"]::before,.mb-card[data-s="rv"]::before{background:var(--gry3)}
+.mb-card[data-s="APPROVED"]::before,.mb-card[data-s="ok"]::before{background:rgba(26,92,26,.55)}
+.mb-card[data-s="REJECTED"]::before,.mb-card[data-s="er"]::before{background:rgba(160,30,30,.6)}
+.mb-ov{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity var(--tr);display:flex;align-items:center;justify-content:center;gap:5px;z-index:2}
+.mb-card:hover .mb-ov{opacity:1}
+.mb-ov-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
+.mb-thumb{width:100%;height:82px;object-fit:cover;display:block;background:var(--gry)}
+.mb-thumb-ph{width:100%;height:82px;background:var(--gry);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--gry2)}
+.mb-body{padding:8px 9px 9px 11px}
+.mb-label{font-size:11px;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-meta{font-size:9px;color:var(--t3);display:flex;align-items:center;justify-content:space-between}
 .mb-actions{padding:8px;border-top:1px solid var(--bdr);display:flex;gap:6px;justify-content:flex-end}
 
 /* ── KANBAN ──────────────────────────────────────────────── */
-.kb-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
-.kb-col{background:var(--gry1);border-radius:var(--r2);padding:12px}
-.kb-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.kb-col-ttl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)}
-.kb-cnt{font-size:11px;background:#fff;border-radius:999px;padding:1px 7px;color:var(--t2);font-weight:600}
-.tc{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:10px;margin-bottom:8px;cursor:grab}
+.kb-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start}
+.kb-col{background:var(--gry);border-radius:12px;padding:10px}
+.kb-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.kb-col-ttl{font-size:12px;font-weight:500;color:var(--t1)}
+.kb-cnt{font-size:10px;background:var(--card);border-radius:999px;padding:1px 7px;color:var(--t2);font-weight:600}
+.tc{background:var(--card);border-radius:10px;border:1px solid var(--bdr);padding:0;margin-bottom:5px;cursor:grab;overflow:hidden;position:relative}
+.tc:hover{border-color:var(--bdr2)}
 .tc:last-child{margin-bottom:0}
-.tc-ref{font-size:11px;color:var(--t3);margin-bottom:4px}
-.tc-title{font-size:12px;font-weight:600;margin-bottom:6px}
-.tc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tc-acc{position:absolute;left:0;top:0;bottom:0;width:3px}
+.tc-ref{font-size:9px;color:var(--t3);margin-bottom:2px}
+.tc-title{font-size:11px;font-weight:500;margin-bottom:6px}
+.tc-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .tc-actions{display:flex;gap:4px;margin-top:8px;justify-content:flex-end}
 .tc.drg{opacity:.4;box-shadow:0 0 0 2px var(--amb)}
 
 /* ── IG GRID ─────────────────────────────────────────────── */
-.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-.igcell{aspect-ratio:1;background:var(--gry1);position:relative;overflow:hidden;cursor:pointer}
+.ig-wrap{display:grid;grid-template-columns:1fr 184px;gap:14px;align-items:start}
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.igcell{border-radius:8px;overflow:hidden;position:relative;cursor:pointer;background:var(--gry2);aspect-ratio:1}
 .igcell img,.igcell video{width:100%;height:100%;object-fit:cover;display:block}
-.igcell-ov{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0;transition:opacity var(--tr)}
+.igcell-ov{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity var(--tr);display:flex;align-items:flex-end;justify-content:space-between;padding:6px;z-index:2}
 .igcell:hover .igcell-ov{opacity:1}
-.igcell-idx{position:absolute;top:4px;left:5px;font-size:10px;font-weight:700;color:#fff;opacity:.7}
-.igcell-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-size:22px;color:var(--gry2);gap:4px}
-.igcell-ph span{font-size:10px;color:var(--t3)}
+.igcell-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
+.igcell-idx{position:absolute;top:5px;left:6px;font-size:9px;font-weight:700;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));z-index:1}
+.igcell-type{position:absolute;top:5px;right:6px;font-size:10px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:1}
+.igcell-appr{position:absolute;bottom:5px;right:5px;font-size:10px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:1}
+.igcell-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-size:20px;color:var(--gry3);gap:4px}
+.igcell-ph span{font-size:9px;color:var(--t3)}
 
 /* ── IG PHONE ────────────────────────────────────────────── */
 .ig-phone{width:184px;flex-shrink:0;background:#fff;border:1px solid var(--bdr);border-radius:20px;overflow:hidden;padding:8px}
@@ -162,13 +182,31 @@ textarea.fld{min-height:80px;resize:vertical}
 .ig-ph-cell img{width:100%;height:100%;object-fit:cover}
 
 /* ── STAT CARD ───────────────────────────────────────────── */
-.stat-card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:16px}
-.stat-num{font-size:28px;font-weight:700;line-height:1}
-.stat-lbl{font-size:11px;color:var(--t3);margin-top:4px}
+.stat{background:var(--card);border-radius:12px;border:1px solid var(--bdr);padding:14px 16px}
+.stat-l{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.stat-v{font-size:22px;font-weight:600;color:var(--t1);letter-spacing:-.5px;line-height:1}
+.stat-c{font-size:10px;margin-top:3px}
+.stat-card{background:var(--card);border-radius:12px;border:1px solid var(--bdr);padding:14px 16px}
+.stat-num{font-size:22px;font-weight:600;color:var(--t1);letter-spacing:-.5px;line-height:1}
+.stat-lbl{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+
+/* ── PROGRESS ────────────────────────────────────────────── */
+.prog{height:2px;background:var(--gry2);border-radius:2px;overflow:hidden;margin:4px 0}
+.pf{height:100%;border-radius:2px;background:var(--blk)}
+.prog-bar{background:var(--gry2);border-radius:2px;height:2px;overflow:hidden}
+.prog-bar.thick{height:6px}
+.prog-fill{height:100%;border-radius:2px;background:var(--amb);transition:width .3s ease}
+
+/* ── IG PHONE ────────────────────────────────────────────── */
+.ig-phone{background:#fff;border:.5px solid #dbdbdb;border-radius:13px;overflow:hidden}
+.ig-ph-top{padding:3px 9px 0;display:flex;justify-content:space-between;font-size:8px;font-weight:700;color:#1a1a1a;font-family:system-ui}
+.ig-ph-hdr{display:flex;align-items:center;padding:6px 9px;border-bottom:.5px solid #dbdbdb;gap:6px}
+.ig-ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;padding:1px}
+.ig-ph-cell{aspect-ratio:1;background:#f0f0f0}
 
 /* ── MODAL ───────────────────────────────────────────────── */
 #modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:16px}
-#modal-box{background:#fff;border-radius:var(--r2);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);transform:translateY(8px);opacity:0;transition:all var(--tr)}
+#modal-box{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);transform:translateY(8px);opacity:0;transition:all var(--tr)}
 #modal-box.open{transform:none;opacity:1}
 .modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .modal-ttl{font-size:15px;font-weight:600}
@@ -176,67 +214,72 @@ textarea.fld{min-height:80px;resize:vertical}
 
 /* ── TOAST ───────────────────────────────────────────────── */
 #toast-wrap{position:fixed;bottom:20px;right:20px;z-index:600;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-.toast-msg{padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;box-shadow:var(--sh);animation:tin .2s ease;max-width:300px}
+.toast-msg{padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:var(--sh);animation:tin .2s ease;max-width:300px}
 .toast-msg.ok{background:var(--blk);color:#fff}
-.toast-msg.err{background:var(--er);color:#fff}
+.toast-msg.err{background:rgba(160,30,30,.9);color:#fff}
 .toast-msg.amb{background:var(--amb);color:#fff}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ── LOGIN / REGISTER ────────────────────────────────────── */
 .auth-wrap{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;align-items:center;justify-content:center}
-.auth-box{background:#fff;border:1px solid var(--bdr);border-radius:var(--r2);padding:32px;width:360px;box-shadow:var(--sh)}
+.auth-box{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:32px;width:360px;box-shadow:var(--sh)}
 .auth-logo{font-size:22px;font-weight:700;margin-bottom:24px;text-align:center}
 .auth-logo span{color:var(--amb)}
 
 /* ── SECTION HEADER ──────────────────────────────────────── */
-.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.sec-ttl{font-size:14px;font-weight:600}
-
-/* ── PROGRESS ────────────────────────────────────────────── */
-.prog-bar{background:var(--gry1);border-radius:999px;height:2px;overflow:hidden}
-.prog-fill{height:100%;border-radius:999px;background:var(--amb);transition:width .3s ease}
-.prog-bar.thick{height:6px}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-ttl{font-size:13px;font-weight:600;letter-spacing:-.2px}
 
 /* ── INFO BLOCK ──────────────────────────────────────────── */
-.info-block{background:var(--gry1);border-radius:var(--r2);padding:16px;font-size:12px;color:var(--t2)}
+.info-block{background:var(--gry);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--t2)}
 .info-block strong{color:var(--t1)}
-.info{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r);font-size:12px;margin-bottom:12px}
-.info.ok{background:var(--ok-bg);color:var(--ok-c);border:1px solid var(--ok-br)}
-.info.wt{background:var(--wt-bg);color:var(--wt-c);border:1px solid var(--wt-br)}
-.info.er{background:var(--er-bg);color:var(--er-c);border:1px solid var(--er-br)}
-.info-ico{font-size:16px;flex-shrink:0;line-height:1.4}
+.info{display:flex;gap:9px;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.55;margin-bottom:10px}
+.info.ok{background:var(--ok-bg);color:var(--ok-c)}
+.info.wt{background:var(--wt-bg);color:var(--wt-c)}
+.info.er{background:var(--er-bg);color:var(--er-c)}
+.info-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px}
 
 /* ── SEGMENTED CONTROL ───────────────────────────────────── */
-.seg{display:inline-flex;background:var(--gry1);border-radius:999px;padding:2px;gap:0}
-.seg-b{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;color:var(--t3);transition:all var(--tr);white-space:nowrap;border:none;background:transparent;font-family:inherit}
-.seg-b.on{background:#fff;color:var(--blk);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.seg{display:inline-flex;background:var(--gry2);border-radius:10px;padding:2px;gap:1px}
+.seg-b{padding:4px 11px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;color:var(--t2);border:none;background:transparent;font-family:'Inter',system-ui;transition:all .1s}
+.seg-b.on{background:var(--card);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 
 /* ── FILTER TAGS ─────────────────────────────────────────── */
-.tag{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:#fff;color:var(--t2);transition:all var(--tr)}
-.tag:hover{background:var(--gry1)}
-.tag.on,.tag.filled{background:var(--blk);color:#fff;border-color:var(--blk)}
-.tag.ot{background:var(--ok-bg);color:var(--ok-c);border-color:var(--ok-br)}
-.tag.sf{background:var(--wt-bg);color:var(--wt-c);border-color:var(--wt-br)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:500;cursor:pointer;transition:all .1s;border:none;background:transparent}
+.tag.filled{background:var(--blk);color:#fff}
+.tag.ot{background:var(--card);color:var(--t1);border:1.5px solid var(--bdr2)}
+.tag.ot:hover{background:var(--gry)}
+.tag.sf{background:var(--gry2);color:var(--t1)}
+.tag.sf:hover{background:var(--gry3)}
+.tag.on{background:var(--blk);color:#fff}
 
 /* ── CELL (list row) ─────────────────────────────────────── */
-.cell{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background var(--tr)}
-.cell:last-child{border-bottom:none}
-.cell:hover{background:var(--bg2)}
+.cell{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--bdr);background:var(--card);cursor:pointer;transition:all .1s;margin-bottom:5px}
+.cell:hover{background:var(--gry);border-color:var(--bdr2)}
 
 /* ── TASK CARD STRIP ─────────────────────────────────────── */
-.tc-acc{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0}
-.tc-inner{flex:1;min-width:0}
 .tc-check{display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:11px;color:var(--t2)}
 .tc-check input[type=checkbox]{accent-color:var(--amb);width:13px;height:13px;flex-shrink:0;cursor:pointer}
 .tc-check.done-item{text-decoration:line-through;color:var(--t3)}
 
 /* ── IG CELL EMPTY ───────────────────────────────────────── */
-.igcell.empty{border:2px dashed var(--gry2)}
-.igcell.empty .igcell-ph{opacity:.5}
+.igcell.empty{border:1.5px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;background:transparent}
+.igcell.empty:hover{border-color:var(--blk)}
+
+/* ── MISC ────────────────────────────────────────────────── */
+.sep{height:1px;background:var(--bdr);margin:14px 0}
+.empty{padding:32px;text-align:center;color:var(--t3);font-size:12px}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:500;background:var(--gry);color:var(--t2);border:1px solid var(--bdr);cursor:pointer;transition:all var(--tr)}
+.chip.on{background:var(--blk);color:#fff;border-color:var(--blk)}
+.det-wrap{display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start}
+.det-panel{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;position:sticky;top:0}
 
 /* ── SKELETON ────────────────────────────────────────────── */
-.skel{background:linear-gradient(90deg,var(--gry1) 25%,var(--gry2) 50%,var(--gry1) 75%);background-size:200% 100%;animation:skl 1.4s infinite;border-radius:var(--r)}
-@keyframes skl{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel{background:var(--gry);border-radius:6px;animation:sk 1.4s ease infinite}
+@keyframes sk{0%,100%{opacity:.75}50%{opacity:.38}}
+
+/* ── PRINT ───────────────────────────────────────────────── */
+@media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
 
 /* ── PRINT ───────────────────────────────────────────────── */
 @media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
@@ -307,12 +350,13 @@ textarea.fld{min-height:80px;resize:vertical}
   <div class="layout">
     <!-- SIDEBAR -->
     <div class="sb">
-      <div class="sb-nav">
-        <div class="sb-lnk on" id="si-home" onclick="go('home')"><span class="ico">⌂</span>Ana Sayfa</div>
-        <div class="sb-lnk" id="si-pers" onclick="go('pers')"><span class="ico">✓</span>Görevlerim</div>
-        <div class="sb-lnk" id="si-team" onclick="go('team')" style="display:none"><span class="ico">👥</span>Ekip Yönetimi</div>
-        <div class="sb-lnk" id="si-cust" onclick="go('cust')" style="display:none"><span class="ico">👁</span>Müşteri Portalı</div>
-      </div>
+      <span class="sb-lbl">Genel</span>
+      <div class="sb-lnk on" id="si-home" onclick="go('home')"><span class="ico">⌂</span>Ana Sayfa</div>
+      <div class="sb-lnk" id="si-pers" onclick="go('pers')"><span class="ico">✓</span>Görevlerim</div>
+      <div class="sb-lnk" id="si-team" onclick="go('team')" style="display:none"><span class="ico">👥</span>Ekip Yönetimi</div>
+      <div class="sb-lnk" id="si-cust" onclick="go('cust')" style="display:none"><span class="ico">👁</span>Müşteri Portalı</div>
+      <div class="sb-hr"></div>
+      <span class="sb-lbl">Firmalar</span>
       <div class="firms-list" id="flist"></div>
       <div class="sb-add">
         <button class="btn outline xs" style="width:100%;justify-content:center" id="sb-add-firm" onclick="openFirmModal()">+ Firma Ekle</button>
@@ -553,124 +597,145 @@ function renderSB(){
 function renderHome(){
   const allBriefs=firms.flatMap(f=>f.briefs||[]);
   const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
-  const done=allTasks.filter(t=>t.status==='DONE').length;
-  const total=allTasks.length;
-  const taskProg=total?Math.round(done/total*100):0;
+  const doneTasks=allTasks.filter(t=>t.status==='DONE').length;
+  const totalTasks=allTasks.length;
   const isAdmin=_me?.role==='ADMIN';
+  const allCards=allBriefs.flatMap(b=>b._igCards||[]);
+  const pendingApproval=allCards.filter(c=>c.status==='REVIEW').length;
+  const allCells=allBriefs.flatMap(b=>b.igCells||[]);
+  const approvedCells=allCells.filter(c=>c.approved===true).length;
+  const igPct=allCells.length?Math.round(approvedCells/allCells.length*100):0;
+  const stsCls2={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
+  const stsLbl2={PENDING:'Bekliyor',REVIEW:'İnceleme',APPROVED:'Onaylı',REJECTED:'Reddedildi'};
 
-  const recentBriefs=allBriefs.slice(0,6);
-  const activeTasks=allTasks.filter(t=>t.status!=='DONE').slice(0,5);
-
-  // Firm cards with brief counts
-  const firmCards=firms.slice(0,6).map(f=>{
+  const firmCards=firms.map(f=>{
     const bs=f.briefs||[];
     const lastB=bs[bs.length-1];
     const stage=lastB?STAGE_PAGES[lastB.stage]||'brief':null;
-    return`<div class="card" style="cursor:pointer;padding:14px;border-left:3px solid ${f.color||'#534AB7'}"
-      onclick="${lastB?`nav('${f.id}','${lastB.id}','${stage}')`:`openBriefModal('${f.id}')`}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${f.name}</div>
-        ${isAdmin?`<button class="btn surface xs ico" style="flex-shrink:0;margin-left:6px" onclick="event.stopPropagation();openMemberModal('${f.id}')">👥</button>`:''}
+    const fCards=allBriefs.filter(b=>b.firmId===f.id).flatMap(b=>b._igCards||[]);
+    const fAppr=fCards.filter(c=>c.status==='APPROVED').length;
+    const fPct=fCards.length?Math.round(fAppr/fCards.length*100):0;
+    const clickAct=lastB?`nav('${f.id}','${lastB.id}','${stage}')`:`openBriefModal('${f.id}')`;
+    return`<div style="background:var(--card);border-radius:12px;border:1px solid var(--bdr);overflow:hidden;cursor:pointer" onclick="${clickAct}">
+      <div style="height:70px;background:#1a1a18;position:relative;display:flex;align-items:flex-end;padding:8px 12px">
+        <div style="position:absolute;inset:0;background:linear-gradient(155deg,#2c2c28,#1a1a18)"></div>
+        <div style="position:relative;z-index:1">
+          <div style="font-size:12px;font-weight:600;color:#fff">${f.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.38);margin-top:1px">${f.sector||'—'}</div>
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">${bs.length} brief · ${f.members?.length||0} üye</div>
-      ${lastB?`<div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:11px;font-weight:500">${briefTitle(lastB)}</span>
-        <span class="badge b-gry">${STAGE_LABELS[stage]||stage}</span>
-      </div>`:`<div style="font-size:11px;color:var(--amb);font-weight:500">+ Brief ekle</div>`}
+      <div style="padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          ${lastB?`<span class="badge b-wt">${briefTitle(lastB)}</span><span class="badge b-rv">${STAGE_LABELS[stage]||'—'}</span>`:'<span class="badge b-gry">Brief yok</span><span></span>'}
+        </div>
+        <div class="prog"><div class="pf" style="width:${fPct}%"></div></div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px">${fAppr}/${fCards.length} onaylı · ${bs.length} brief</div>
+      </div>
     </div>`;
   }).join('');
 
+  const ff=firms[0],fb=ff?.briefs?.[0];
+  const initials=(ff?.name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+  const handle=(ff?.name||'firma').toLowerCase().replace(/\s+/g,'_');
+  const igBtnAct=fb?`nav('${ff.id}','${fb.id}','ig')`:'openFirmModal()';
+  const mbBtnAct=fb?`nav('${ff.id}','${fb.id}','mb')`:'openFirmModal()';
+  const phoneCells=Array.from({length:6},()=>'<div class="ig-ph-cell"></div>').join('');
+  const recentCards=allCards.filter(c=>c.status!=='PENDING').slice(0,3);
+  const activeTasks=allTasks.filter(t=>t.status!=='DONE');
+
   document.getElementById('page-home').innerHTML=`
-    <!-- Greeting + top stats -->
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-size:20px;font-weight:700;margin-bottom:2px">Hoş geldiniz, ${(_me?.name||'').split(' ')[0]||'—'} 👋</div>
-        <div style="font-size:12px;color:var(--t3)">${firms.length} firma · ${allBriefs.length} brief · ${total} görev</div>
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.35px">Hoş geldiniz, ${(_me?.name||'').split(' ')[0]||'—'}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px">${firms.length} firma · ${allBriefs.length} brief · ${totalTasks} görev</div>
       </div>
-      ${isAdmin?`<div style="display:flex;gap:8px">
-        <button class="btn outline xs" onclick="go('team')">👥 Ekip Yönetimi</button>
-        <button class="btn amber xs" onclick="openFirmModal()">+ Firma Ekle</button>
-      </div>`:''}
+      ${isAdmin?`<div style="display:flex;gap:8px"><button class="btn outline sm" onclick="go('team')">Ekip Yönetimi</button><button class="btn amber sm" onclick="openFirmModal()">+ Firma Ekle</button></div>`:''}
     </div>
 
-    <!-- Stat row -->
-    <div class="card-grid card-grid-4" style="margin-bottom:20px">
-      ${[
-        {l:'Firma',n:firms.length,clr:'var(--amb)',sub:''},
-        {l:'Brief',n:allBriefs.length,clr:'var(--blk)',sub:''},
-        {l:'Görev',n:`${done}/${total}`,clr:'var(--ok)',sub:`%${taskProg} tamamlandı`},
-        {l:'Ekip',n:members.length,clr:'var(--rv)',sub:isAdmin?'üye':''},
-      ].map(({l,n,clr,sub})=>`<div class="stat-card" style="padding:14px">
-        <div style="font-size:11px;font-weight:500;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">${l}</div>
-        <div style="font-size:26px;font-weight:700;color:${clr};line-height:1">${n}</div>
-        ${sub?`<div style="font-size:11px;color:var(--t3);margin-top:4px">${sub}</div>`:''}
-        ${l==='Görev'?`<div class="prog-bar" style="margin-top:8px"><div class="prog-fill" style="width:${taskProg}%"></div></div>`:''}
-      </div>`).join('')}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      <div class="stat"><div class="stat-l">Firmalar</div><div class="stat-v">${firms.length}</div></div>
+      <div class="stat"><div class="stat-l">Bekleyen Onay</div><div class="stat-v">${pendingApproval}</div><div class="stat-c" style="color:${pendingApproval?'var(--wt-c)':'var(--t3)'}">${pendingApproval?pendingApproval+' kart':'Onay yok'}</div></div>
+      <div class="stat"><div class="stat-l">Aktif Görev</div><div class="stat-v">${activeTasks.length}</div><div class="stat-c">${doneTasks}/${totalTasks} tamamlandı</div></div>
+      <div class="stat"><div class="stat-l">IG Onay %</div><div class="stat-v">${igPct}%</div><div class="stat-c">${approvedCells}/${allCells.length} onaylı</div></div>
     </div>
 
-    <!-- Two-column layout -->
-    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-bottom:16px">
+      ${firmCards}${isAdmin?`<div style="background:transparent;border-radius:12px;border:1.5px dashed var(--bdr2);cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--t3);font-size:12px" onclick="openFirmModal()">+ Firma Ekle</div>`:''}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 272px;gap:12px;align-items:start">
       <div>
-        <!-- Firmalar -->
-        <div class="sec-hd" style="margin-bottom:12px">
-          <div class="sec-ttl">Firmalar</div>
-          ${isAdmin?`<button class="btn outline xs" onclick="openFirmModal()">+ Firma</button>`:''}
-        </div>
-        ${firms.length?`<div class="card-grid card-grid-2" style="gap:10px;margin-bottom:20px">${firmCards}</div>`
-          :`<div class="empty">Henüz firma yok. + Firma Ekle butonuna tıklayın.</div>`}
-
-        <!-- Son briefler -->
-        ${recentBriefs.length?`
-        <div class="sec-hd" style="margin-bottom:12px">
-          <div class="sec-ttl">Son Briefler</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          ${recentBriefs.map(b=>{
-            const f=gF(b.firmId);
-            const stg=STAGE_PAGES[b.stage]||'brief';
-            return`<div class="cell card" style="padding:10px 14px;border-radius:var(--r)" onclick="nav('${b.firmId}','${b.id}','${stg}')">
-              <span style="width:8px;height:8px;border-radius:50%;background:${f?.color||'#534AB7'};flex-shrink:0"></span>
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:600;font-size:12px">${briefTitle(b)}</div>
-                <div style="font-size:11px;color:var(--t3)">${f?.name||'—'}</div>
-              </div>
-              <span class="badge b-gry">${STAGE_LABELS[stg]}</span>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">IG Moodboard Önizleme</div></div>
+        ${recentCards.length?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+          ${recentCards.map(c=>{
+            const v0=c.versions?.at(-1)||c.versions?.[0];
+            const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
+            const bRef=allBriefs.find(b=>(b._igCards||[]).some(x=>x.id===c.id));
+            const cClick=bRef?`nav('${bRef.firmId}','${bRef.id}','mb')`:'';
+            return`<div class="mb-card" data-s="${c.status}" onclick="${cClick}">
+              ${thumb?`<img style="width:100%;height:82px;object-fit:cover;display:block" src="${thumb}" loading="lazy">`:`<div style="height:82px;background:var(--gry2);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gry3)">🎨</div>`}
+              <div class="mb-body"><div class="mb-label">${c.label}</div><div class="mb-meta"><span class="badge ${stsCls2[c.status]||'b-gry'}">${stsLbl2[c.status]||c.status}</span></div></div>
             </div>`;
           }).join('')}
-        </div>`:''}
-      </div>
+        </div>`:`<div class="empty" style="padding:16px;text-align:left;margin-bottom:16px">Henüz moodboard kartı yok.</div>`}
 
-      <!-- Right sidebar: Active tasks + quick actions -->
-      <div>
-        <div class="sec-hd" style="margin-bottom:12px">
-          <div class="sec-ttl">Aktif Görevler</div>
-          <button class="btn outline xs" onclick="go('pers')">Tümü →</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
-          ${activeTasks.length?activeTasks.map(t=>{
-            const b=allBriefs.find(x=>x.id===t.briefId);
-            const f=b?gF(b.firmId):null;
-            const clr=t.status==='DOING'?'var(--amb)':'var(--gry2)';
-            return`<div class="card" style="padding:10px;cursor:pointer;display:flex;gap:8px;align-items:flex-start"
-              onclick="nav('${b?.firmId||''}','${t.briefId||''}','tasks')">
-              <div style="width:3px;border-radius:2px;background:${clr};align-self:stretch;flex-shrink:0"></div>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Görevler</div><button class="btn outline xs" onclick="go('pers')">Tümü →</button></div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${activeTasks.slice(0,5).map(t=>{
+            const bRef=allBriefs.find(x=>x.id===t.briefId);
+            const fRef=bRef?gF(bRef.firmId):null;
+            const tClick=bRef?`nav('${bRef.firmId}','${t.briefId}','tasks')`:'';
+            return`<div class="cell" onclick="${tClick}">
               <div style="flex:1;min-width:0">
                 <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||t.cardRef||'—'}</div>
-                <div style="font-size:10px;color:var(--t3);margin-top:2px">${f?.name||'—'} · ${t.type||''}</div>
+                <div style="font-size:10px;color:var(--t3)">${fRef?.name||'—'}</div>
+              </div>
+              <span class="badge ${t.status==='DOING'?'b-wt':'b-gry'}">${t.status==='DOING'?'Yapılıyor':'Bekliyor'}</span>
+            </div>`;
+          }).join('')||'<div class="empty" style="padding:12px">Aktif görev yok</div>'}
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">IG Önizleme</div></div>
+        <div class="ig-phone" style="width:100%;margin-bottom:10px">
+          <div class="ig-ph-top"><span>9:41</span><span>●●●</span></div>
+          <div class="ig-ph-hdr">
+            <div style="width:22px;height:22px;border-radius:50%;background:#1a1a18;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;font-family:system-ui;flex-shrink:0">${initials}</div>
+            <span style="font-size:9px;font-weight:700;color:#1a1a1a;font-family:system-ui">${handle}</span>
+          </div>
+          <div class="ig-ph-grid">${phoneCells}</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:16px">
+          <button class="btn solid xs" style="flex:1;justify-content:center" onclick="${igBtnAct}">IG Grid Aç</button>
+          <button class="btn outline xs" onclick="${mbBtnAct}">Moodboard</button>
+        </div>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Son Aktivite</div></div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          ${allBriefs.slice(0,3).map(b=>{
+            const fRef=gF(b.firmId);
+            const stg=STAGE_PAGES[b.stage]||'brief';
+            return`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr)">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--amb);flex-shrink:0;margin-top:4px"></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fRef?.name||'—'}</div>
+                <div style="font-size:10px;color:var(--t3)">${briefTitle(b)} · ${STAGE_LABELS[stg]||stg}</div>
               </div>
             </div>`;
-          }).join(''):`<div class="empty" style="padding:16px">Aktif görev yok.</div>`}
+          }).join('')||'<div style="font-size:11px;color:var(--t3)">Aktivite yok</div>'}
         </div>
-
-        ${isAdmin?`
-        <!-- Quick links for admin -->
-        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Hızlı Erişim</div></div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn outline xs" style="justify-content:flex-start;width:100%" onclick="go('team')">👥 Ekip Üyelerini Yönet</button>
-          <button class="btn outline xs" style="justify-content:flex-start;width:100%" onclick="openFirmModal()">🏢 Yeni Firma Ekle</button>
-        </div>`:''}
       </div>
     </div>`;
+}
+
+function stageNav(f,b){
+  const si=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
+  return '<div class="stage-nav">'+STAGE_ORDER.map((pg,i)=>{
+    const cl=i<si?'done':i===si?'active':'todo';
+    const lb=(i<si?'✓ ':'')+STAGE_LABELS[pg];
+    return(i>0?'<span class="stage-arrow">→</span>':'')+
+      `<span class="stage-pill ${cl}" onclick="nav('${f.id}','${b.id}','${pg}')">${lb}</span>`;
+  }).join('')+'</div>';
 }
 
 // ── PAGE: BRIEF ───────────────────────────────────────────
@@ -678,15 +743,12 @@ function renderBrief(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-brief').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   const pfOpts=[['Meta','Meta'],['Google','Google'],['YouTube','YouTube'],['TikTok','TikTok'],['LinkedIn','LinkedIn'],['Twitter','Twitter']];
   const plats=b.platforms||[];
 
   document.getElementById('page-brief').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
@@ -767,9 +829,6 @@ async function renderMB(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-mb').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   // Load cards if needed
   if(!b._igCards){
@@ -806,7 +865,7 @@ async function renderMB(){
   </div>`:`<div class="empty">Henüz IG referansı eklenmedi.</div>`;
 
   document.getElementById('page-mb').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
     <div class="sec-hd">
       <div>
         <div style="font-size:18px;font-weight:700">IG Moodboard</div>
@@ -822,9 +881,6 @@ async function renderMBKamp(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-mb-kamp').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   if(!b._kampCards){
     try{b._kampCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=KAMP`);}
@@ -835,7 +891,7 @@ async function renderMBKamp(){
   const stsLbl={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
   document.getElementById('page-mb-kamp').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
     <div class="sec-hd">
       <div>
         <div style="font-size:18px;font-weight:700">Kampanya Moodboard</div>
@@ -968,9 +1024,6 @@ async function renderIG(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-ig').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   if(!b.igCells||!b.igCells.length){
     try{b.igCells=await api(`/api/firms/${f.id}/briefs/${b.id}/ig`);}
@@ -995,28 +1048,24 @@ async function renderIG(){
     </div>`;
   }).join('');
 
-  // Sidebar stats
+  // Stats + phone mockup data
   const approved=cells.filter(c=>c.approved===true).length;
   const pending=cells.filter(c=>c.approved==null).length;
-  const distHtml=`
-    <div style="display:flex;flex-direction:column;gap:8px">
-      ${cells.slice(0,6).map(c=>{
-        const thumb=c.mediaUrl||(c.videoUrl?ytThumb(c.videoUrl):null);
-        return`<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="openIGCell('${f.id}','${b.id}','${c.id}')">
-          <div style="width:40px;height:40px;border-radius:6px;background:var(--gry1);overflow:hidden;flex-shrink:0">
-            ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:16px">📷</div>'}
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.caption?.slice(0,30)||'—'}</div>
-            <div style="font-size:10px;color:var(--t3)">${typeLbl[c.type]||c.type} · ${fmtDate(c.publishDate)}</div>
-          </div>
-          <span class="badge ${c.approved?'b-ok':c.approved===false?'b-er':'b-gry'}" style="font-size:9px">${c.approved?'✓':c.approved===false?'✕':'?'}</span>
-        </div>`;
-      }).join('')}
-    </div>`;
+  const postCnt=cells.filter(c=>c.type==='POST').length;
+  const reelsCnt=cells.filter(c=>c.type==='REELS').length;
+  const carouselCnt=cells.filter(c=>c.type==='CAROUSEL').length;
+  const ct=cells.length||1;
+  const fInit=(f.name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+  const fHndl=(f.name||'firma').toLowerCase().replace(/\s+/g,'_');
+  const phoneCells=Array.from({length:9},(_,i)=>{
+    const c=cells[i];
+    const thumb=c?.mediaUrl||(c?.videoUrl?ytThumb(c.videoUrl):null);
+    if(thumb)return`<div class="ig-ph-cell" style="background:url('${thumb}') center/cover;cursor:pointer" onclick="openIGCell('${f.id}','${b.id}','${c.id}')"></div>`;
+    return`<div class="ig-ph-cell"></div>`;
+  }).join('');
 
   document.getElementById('page-ig').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
     <div class="sec-hd">
       <div>
         <div style="font-size:18px;font-weight:700">IG Grid</div>
@@ -1027,7 +1076,7 @@ async function renderIG(){
         <button class="btn amber" onclick="openIGCellModal('${f.id}','${b.id}')">+ İçerik Ekle</button>
       </div>
     </div>
-    <div class="det-wrap">
+    <div class="ig-wrap">
       <div>
         <div class="ig-grid">${cellsHtml}</div>
         <div style="display:flex;gap:12px;margin-top:12px">
@@ -1035,10 +1084,25 @@ async function renderIG(){
           <span class="badge b-gry">${pending} bekliyor</span>
           <span class="badge b-er">${cells.filter(c=>c.approved===false).length} reddedildi</span>
         </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:8px">Tıkla → detay · Boş hücre → içerik ekle</div>
       </div>
-      <div class="det-panel">
-        <div style="font-size:12px;font-weight:600;margin-bottom:12px">İçerik Listesi</div>
-        ${cells.length?distHtml:`<div class="empty" style="padding:12px">İçerik yok</div>`}
+      <div>
+        <div class="ig-phone" style="width:100%;margin-bottom:10px">
+          <div class="ig-ph-top"><span>9:41</span><span>●●●</span></div>
+          <div class="ig-ph-hdr">
+            <div style="width:22px;height:22px;border-radius:50%;background:#1a1a18;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;font-family:system-ui;flex-shrink:0">${fInit}</div>
+            <span style="font-size:9px;font-weight:700;color:#1a1a1a;font-family:system-ui">${fHndl}</span>
+          </div>
+          <div class="ig-ph-grid">${phoneCells}</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:10px">
+          <div style="font-size:11px;font-weight:600;margin-bottom:8px">İçerik Dağılımı</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${[['Post',postCnt,Math.round(postCnt/ct*100)],['Reels',reelsCnt,Math.round(reelsCnt/ct*100)],['Carousel',carouselCnt,Math.round(carouselCnt/ct*100)]].map(([lbl,cnt,pct])=>
+              `<div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-bottom:2px"><span>${lbl}</span><span>${cnt}</span></div><div class="prog"><div class="pf" style="width:${pct}%"></div></div></div>`
+            ).join('')}
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -1118,9 +1182,6 @@ async function renderTasks(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-tasks').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   // Always reload for kanban — brief load doesn't include assignee details
   try{b.tasks=await api(`/api/firms/${f.id}/briefs/${b.id}/tasks`);}
@@ -1167,7 +1228,7 @@ async function renderTasks(){
   }).join('');
 
   document.getElementById('page-tasks').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
     <div class="sec-hd">
       <div>
         <div style="font-size:18px;font-weight:700">Görevler</div>
@@ -1454,9 +1515,6 @@ async function renderYayin(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-yayin').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  const stgIdx=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  const pills=STAGE_ORDER.map((pg,i)=>`<div class="stage-pill ${i<stgIdx?'done':i===stgIdx?'active':'todo'}"
-    onclick="nav('${f.id}','${b.id}','${pg}')">${STAGE_LABELS[pg]}</div>`).join('');
 
   if(!b.igCells||!b.igCells.length){
     try{b.igCells=await api(`/api/firms/${f.id}/briefs/${b.id}/ig`);}
@@ -1468,7 +1526,7 @@ async function renderYayin(){
   const typeLbl={POST:'📷 Post',REELS:'🎬 Reels',CAROUSEL:'🎠 Carousel'};
 
   document.getElementById('page-yayin').innerHTML=`
-    <div class="stage-bar">${pills}</div>
+    ${stageNav(f,b)}
     <div class="sec-hd">
       <div>
         <div style="font-size:18px;font-weight:700">Yayın Planı</div>
