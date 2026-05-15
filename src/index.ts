@@ -24,6 +24,7 @@ import templatesRouter from './routes/templates'
 import myTasksRouter from './routes/mytasks'
 import oembedRouter from './routes/oembed'
 import linkPreviewRouter from './routes/link-preview'
+import timeRouter from './routes/time'
 
 import { startNotifWorker } from './lib/notifWorker'
 import { getSession } from './lib/redis'
@@ -69,6 +70,7 @@ app.use('/api/firms/:firmId/briefs', briefsRouter)
 app.use('/api/firms/:firmId/briefs/:briefId/cards', moodboardRouter)
 app.use('/api/firms/:firmId/briefs/:briefId/tasks', tasksRouter)
 app.use('/api/firms/:firmId/briefs/:briefId/ig', igRouter)
+app.use('/api/firms/:firmId/briefs/:briefId/tasks/:taskId/time', timeRouter)
 
 // ── FRONTEND FALLBACK ─────────────────────────────────────
 app.get('*', (_req, res) => {
