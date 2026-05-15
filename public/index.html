@@ -157,6 +157,19 @@ textarea.fld{min-height:80px;resize:vertical}
 .tc-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .tc-actions{display:flex;gap:4px;margin-top:8px;justify-content:flex-end}
 .tc.drg{opacity:.4;box-shadow:0 0 0 2px var(--amb)}
+.kb-col.drag-over{background:rgba(255,196,0,.08);border:2px dashed var(--amb)}
+
+/* ── CALENDAR ────────────────────────────────────────────── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-hd{font-size:10px;font-weight:600;color:var(--t3);text-align:center;padding:4px 0}
+.cal-day{background:var(--card);border:1px solid var(--bdr);border-radius:8px;min-height:80px;padding:6px;position:relative}
+.cal-day.other-month{opacity:.35}
+.cal-day.today{border-color:var(--amb)}
+.cal-day-num{font-size:10px;font-weight:600;color:var(--t2);margin-bottom:4px}
+.cal-day.today .cal-day-num{color:var(--amb)}
+.cal-ev{font-size:9px;border-radius:4px;padding:2px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-ev.ig{background:rgba(83,74,183,.15);color:#534AB7}
+.cal-ev.task{background:rgba(255,196,0,.2);color:#b08000}
 
 /* ── IG GRID ─────────────────────────────────────────────── */
 .ig-wrap{display:grid;grid-template-columns:1fr 184px;gap:14px;align-items:start}
@@ -281,9 +294,6 @@ textarea.fld{min-height:80px;resize:vertical}
 /* ── PRINT ───────────────────────────────────────────────── */
 @media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
 
-/* ── PRINT ───────────────────────────────────────────────── */
-@media print{.tb,.sb,#modal-bg,#toast-wrap,.btn,.sb-add{display:none!important}.cnt{padding:0}.app{height:auto;overflow:visible}.layout{overflow:visible}.cnt{overflow:visible}}
-
 /* ── MISC ────────────────────────────────────────────────── */
 .sep{height:1px;background:var(--bdr);margin:16px 0}
 .empty{padding:32px;text-align:center;color:var(--t3);font-size:12px}
@@ -396,6 +406,9 @@ textarea.fld{min-height:80px;resize:vertical}
       <!-- PAGE: EKİP -->
       <div class="page" id="page-team"></div>
 
+      <!-- PAGE: TAKVİM -->
+      <div class="page" id="page-cal"></div>
+
     </div>
   </div>
 </div>
@@ -414,7 +427,7 @@ const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağust
 const STAGE_PAGES={BRIEF:'brief',MB_IG:'mb',MB_KAMP:'mb-kamp',TASKS:'tasks',YAYIN:'yayin'};
 const PAGE_STAGES={'brief':'BRIEF','mb':'MB_IG','mb-kamp':'MB_KAMP','tasks':'TASKS','yayin':'YAYIN'};
 const STAGE_ORDER=['brief','mb','mb-kamp','tasks','yayin'];
-const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın',pers:'Görevlerim',cust:'Müşteri Portalı',team:'Ekip Yönetimi'};
+const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',cal:'Takvim',yayin:'Yayın',pers:'Görevlerim',cust:'Müşteri Portalı',team:'Ekip Yönetimi'};
 const STATUS_CLS={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
 const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
@@ -543,7 +556,7 @@ function go(page){
 
   // Render the page
   const renders={home:renderHome,brief:renderBrief,mb:renderMB,'mb-kamp':renderMBKamp,
-    ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin,team:renderTeam};
+    ig:renderIG,tasks:renderTasks,pers:renderPers,cust:renderCust,yayin:renderYayin,team:renderTeam,cal:renderCal};
   if(renders[page])renders[page]();
 }
 
@@ -575,8 +588,8 @@ function renderSB(){
         ${bs.map(b=>{
           const isOnFirm=_curBid===b.id&&_curFid===f.id;
           const activePg=isOnFirm?_curPage:null;
-          const subLinks=[['brief','📋'],['mb','🎨'],['mb-kamp','🎬'],['ig','📷'],['tasks','✓'],['yayin','🚀']];
-          const subLbls={brief:'Brief',mb:'IG MB',  'mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',yayin:'Yayın'};
+          const subLinks=[['brief','📋'],['mb','🎨'],['mb-kamp','🎬'],['ig','📷'],['tasks','✓'],['cal','📅'],['yayin','🚀']];
+          const subLbls={brief:'Brief',mb:'IG MB','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',cal:'Takvim',yayin:'Yayın'};
           return`<div class="sub-lnk${isOnFirm?' on':''}" data-fid="${f.id}" data-bid="${b.id}" data-page="brief"
             onclick="nav('${f.id}','${b.id}','brief')" style="justify-content:space-between">
             <span style="display:flex;align-items:center;gap:6px"><span class="stage-dot"></span>${briefTitle(b)}</span>
@@ -1196,7 +1209,10 @@ async function renderTasks(){
 
   const kanban=cols.map(status=>{
     const colTasks=tasks.filter(t=>t.status===status);
-    return`<div class="kb-col">
+    return`<div class="kb-col" data-status="${status}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="dropTask(event,'${f.id}','${b.id}','${status}')">
       <div class="kb-col-hd">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="width:8px;height:8px;border-radius:50%;background:${colColors[status]}"></span>
@@ -1207,7 +1223,10 @@ async function renderTasks(){
       ${colTasks.map(t=>{
         const assignee=mem.find(m=>m.id===t.assigneeId)||t.assignee;
         const stripClr=status==='TODO'?'var(--gry2)':status==='DOING'?'var(--amb)':'var(--ok)';
-        return`<div class="tc" style="display:flex;gap:8px;padding:0;overflow:hidden">
+        return`<div class="tc" draggable="true" data-tid="${t.id}"
+          style="display:flex;gap:8px;padding:0;overflow:hidden"
+          ondragstart="this.classList.add('drg');event.dataTransfer.setData('text/plain','${t.id}')"
+          ondragend="this.classList.remove('drg')">
           <div class="tc-acc" style="background:${stripClr}"></div>
           <div class="tc-inner" style="padding:10px 10px 10px 0">
             <div class="tc-ref">${t.type} ${t.cardRef?'· '+t.cardRef:''}</div>
@@ -1257,6 +1276,23 @@ async function deleteTask(fid,bid,tid){
     const b=gB(fid,bid);
     if(b)b.tasks=(b.tasks||[]).filter(t=>t.id!==tid);
     renderTasks();toast('Görev silindi');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function dropTask(event,fid,bid,newStatus){
+  event.preventDefault();
+  document.querySelectorAll('.kb-col').forEach(el=>el.classList.remove('drag-over'));
+  const tid=event.dataTransfer.getData('text/plain');
+  if(!tid)return;
+  const b=gB(fid,bid);if(!b)return;
+  const t=(b.tasks||[]).find(x=>x.id===tid);
+  if(!t||t.status===newStatus)return;
+  try{
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}`,{method:'PUT',body:{status:newStatus}});
+    Object.assign(t,updated);
+    renderTasks();
+    const lbl={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
+    toast(`${lbl[newStatus]} ✓`);
   }catch(e){toast(e.message,'err');}
 }
 
@@ -1579,6 +1615,105 @@ async function renderYayin(){
           <div class="prog-bar" style="margin-top:6px"><div class="prog-fill" style="width:${cells.length?Math.round(approved/cells.length*100):0}%"></div></div>
         </div>
       </div>
+    </div>`;
+}
+
+// ── PAGE: TAKVİM ─────────────────────────────────────────
+let _calYear=new Date().getFullYear();
+let _calMonth=new Date().getMonth(); // 0-based
+
+async function renderCal(){
+  const f=gF(_curFid),b=gB(_curFid,_curBid);
+  if(!f||!b){document.getElementById('page-cal').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
+
+  // Load IG cells and tasks if not loaded
+  if(!b.igCells){
+    try{b.igCells=await api(`/api/firms/${f.id}/briefs/${b.id}/ig`);}
+    catch{b.igCells=[];}
+  }
+  if(!b.tasks){
+    try{b.tasks=await api(`/api/firms/${f.id}/briefs/${b.id}/tasks`);}
+    catch{b.tasks=[];}
+  }
+
+  _renderCalGrid(f,b);
+}
+
+function _renderCalGrid(f,b){
+  const year=_calYear,month=_calMonth;
+  const monthNames=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const dayNames=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+
+  const firstDay=new Date(year,month,1);
+  const lastDay=new Date(year,month+1,0);
+  const totalDays=lastDay.getDate();
+  // getDay(): 0=Sun,1=Mon...6=Sat → convert to Mon-based offset
+  const startOffset=(firstDay.getDay()+6)%7;
+
+  const today=new Date();
+  const isToday=(y,m,d)=>y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();
+
+  // Build event map: "YYYY-MM-DD" → [{type,label,color}]
+  const evMap={};
+  const addEv=(dateStr,ev)=>{if(!dateStr)return;const k=dateStr.slice(0,10);if(!evMap[k])evMap[k]=[];evMap[k].push(ev);};
+
+  (b.igCells||[]).forEach(cell=>{
+    if(cell.publishDate){
+      const lbl=cell.type?(cell.type==='POST'?'📷':cell.type==='REELS'?'🎬':'🎠')+' '+(cell.caption?.slice(0,20)||'İçerik'):'İçerik';
+      addEv(cell.publishDate,{type:'ig',label:lbl,action:`nav('${f.id}','${b.id}','ig')`});
+    }
+  });
+  (b.tasks||[]).forEach(t=>{
+    if(t.deadline){
+      addEv(t.deadline,{type:'task',label:'✓ '+t.desc?.slice(0,20),action:`nav('${f.id}','${b.id}','tasks')`});
+    }
+  });
+
+  // Build calendar cells (prev month filler + current month + next filler)
+  let cells='';
+  const prevMonthDays=new Date(year,month,0).getDate();
+  for(let i=0;i<startOffset;i++){
+    const d=prevMonthDays-startOffset+1+i;
+    cells+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+  for(let d=1;d<=totalDays;d++){
+    const mm=String(month+1).padStart(2,'0');
+    const dd=String(d).padStart(2,'0');
+    const key=`${year}-${mm}-${dd}`;
+    const evs=evMap[key]||[];
+    const todayCls=isToday(year,month,d)?' today':'';
+    cells+=`<div class="cal-day${todayCls}">
+      <div class="cal-day-num">${d}</div>
+      ${evs.map(ev=>`<div class="cal-ev ${ev.type}" onclick="${ev.action}" title="${ev.label}">${ev.label}</div>`).join('')}
+    </div>`;
+  }
+  // Fill trailing cells to complete last row
+  const total=startOffset+totalDays;
+  const trail=(7-total%7)%7;
+  for(let i=1;i<=trail;i++){
+    cells+=`<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  }
+
+  document.getElementById('page-cal').innerHTML=`
+    ${stageNav(f,b)}
+    <div class="sec-hd">
+      <div>
+        <div style="font-size:18px;font-weight:700">Takvim</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn surface xs" onclick="_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}_renderCalGrid(gF('${f.id}'),gB('${f.id}','${b.id}'))">←</button>
+        <span style="font-size:13px;font-weight:600;min-width:120px;text-align:center">${monthNames[month]} ${year}</span>
+        <button class="btn surface xs" onclick="_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}_renderCalGrid(gF('${f.id}'),gB('${f.id}','${b.id}'))">→</button>
+      </div>
+    </div>
+    <div class="cal-grid" style="margin-bottom:4px">
+      ${dayNames.map(d=>`<div class="cal-day-hd">${d}</div>`).join('')}
+    </div>
+    <div class="cal-grid">${cells}</div>
+    <div style="display:flex;gap:12px;margin-top:12px;font-size:11px">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(83,74,183,.3);margin-right:4px"></span>IG İçerik</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,196,0,.3);margin-right:4px"></span>Görev Son Tarihi</span>
     </div>`;
 }
 
