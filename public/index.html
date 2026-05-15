@@ -434,6 +434,12 @@ const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',
 
 // CLIENT role: can only approve/reject cards in cust portal; viewer elsewhere
 const isClient=()=>_me?.role==='CLIENT';
+// PROD role: can manage tasks, but content (briefs/cards/IG) is read-only
+const isProd=()=>_me?.role==='PROD';
+// canEdit: ADMIN or EDITOR — can create/edit/delete content and change approvals
+const canEdit=()=>['ADMIN','EDITOR'].includes(_me?.role);
+// canTask: everyone except CLIENT — ADMIN, EDITOR, PROD can manage tasks
+const canTask=()=>_me?.role!=='CLIENT';
 
 // ── STATE ─────────────────────────────────────────────────
 let _me=null, _token=localStorage.getItem('mk_token');
@@ -611,7 +617,9 @@ function renderSB(){
 }
 
 // ── PAGE: HOME ────────────────────────────────────────────
-function renderHome(){
+async function renderHome(){
+  // PROD sees a task-focused home dashboard
+  if(isProd()){await renderHomeProd();return;}
   const allBriefs=firms.flatMap(f=>f.briefs||[]);
   const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
   const doneTasks=allTasks.filter(t=>t.status==='DONE').length;
@@ -745,11 +753,88 @@ function renderHome(){
     </div>`;
 }
 
+// ── HOME: PROD (TASK-FOCUSED) ─────────────────────────────
+async function renderHomeProd(){
+  await loadMyTasks();
+  const myTasks=_myTasks||[];
+  const todo=myTasks.filter(t=>t.status==='TODO');
+  const doing=myTasks.filter(t=>t.status==='DOING');
+  const done=myTasks.filter(t=>t.status==='DONE');
+  const allBriefs=firms.flatMap(f=>f.briefs||[]);
+  const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
+  const deadlineSoon=myTasks.filter(t=>{
+    if(!t.deadline||t.status==='DONE')return false;
+    const d=new Date(t.deadline);d.setHours(0,0,0,0);
+    const now=new Date();now.setHours(0,0,0,0);
+    return(d-now)<=3*86400000;
+  });
+
+  document.getElementById('page-home').innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:16px;font-weight:600;letter-spacing:-.35px">Hoş geldiniz, ${(_me?.name||'').split(' ')[0]||'—'}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px">Prodüksiyon · ${firms.length} firma · ${allTasks.length} toplam görev</div>
+      </div>
+      <button class="btn outline sm" onclick="go('pers')">Tüm Görevlerim →</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      <div class="stat"><div class="stat-l">Yapılacak</div><div class="stat-v">${todo.length}</div></div>
+      <div class="stat"><div class="stat-l">Yapılıyor</div><div class="stat-v" style="color:var(--amb)">${doing.length}</div></div>
+      <div class="stat"><div class="stat-l">Tamamlandı</div><div class="stat-v" style="color:var(--ok)">${done.length}</div></div>
+      <div class="stat"><div class="stat-l">Yaklaşan Son Tarih</div><div class="stat-v" style="color:${deadlineSoon.length?'var(--er-c)':'var(--ok)'}">${deadlineSoon.length}</div></div>
+    </div>
+
+    ${deadlineSoon.length?`<div class="info er" style="margin-bottom:16px">
+      <span class="info-ico">⚠</span>
+      <div><strong>${deadlineSoon.length} görevin son tarihi yaklaşıyor.</strong> 3 gün içinde teslim edilmesi gereken görevler var.</div>
+    </div>`:''}
+
+    <div style="display:grid;grid-template-columns:1fr 272px;gap:12px;align-items:start">
+      <div>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Aktif Görevlerim</div><button class="btn outline xs" onclick="go('pers')">Tümü →</button></div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${[...doing,...todo].slice(0,8).map(t=>{
+            const bRef=allBriefs.find(x=>x.id===t.briefId);
+            const fRef=bRef?gF(bRef.firmId):null;
+            return`<div class="cell" onclick="nav('${bRef?.firmId||''}','${t.briefId}','tasks')">
+              <div style="width:8px;height:8px;border-radius:50%;background:${t.status==='DOING'?'var(--amb)':'var(--gry2)'};flex-shrink:0"></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||t.cardRef||'—'}</div>
+                <div style="font-size:10px;color:var(--t3)">${fRef?.name||'—'}${t.deadline?' · '+fmtDate(t.deadline):''}</div>
+              </div>
+              <span class="badge ${t.status==='DOING'?'b-wt':'b-gry'}">${t.status==='DOING'?'Yapılıyor':'Bekliyor'}</span>
+            </div>`;
+          }).join('')||'<div class="empty" style="padding:12px">Aktif görev yok</div>'}
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Projeler</div></div>
+        ${firms.map(f=>{
+          const bs=f.briefs||[];
+          const lastB=bs[bs.length-1];
+          const stage=lastB?STAGE_PAGES[lastB.stage]||'brief':null;
+          return`<div class="card" style="padding:10px 12px;margin-bottom:8px;cursor:pointer" onclick="${lastB?`nav('${f.id}','${lastB.id}','tasks')`:''}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="width:8px;height:8px;border-radius:50%;background:${f.color||'#534AB7'}"></span>
+              <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+            </div>
+            ${lastB?`<div style="font-size:10px;color:var(--t3)">${briefTitle(lastB)} · ${STAGE_LABELS[stage]||'—'}</div>`:'<div style="font-size:10px;color:var(--t3)">Brief yok</div>'}
+          </div>`;
+        }).join('')||'<div class="empty">Proje yok</div>'}
+      </div>
+    </div>`;
+}
+
 function stageNav(f,b){
   const si=STAGE_ORDER.indexOf(STAGE_PAGES[b.stage]||'brief');
-  return '<div class="stage-nav">'+STAGE_ORDER.map((pg,i)=>{
-    const cl=i<si?'done':i===si?'active':'todo';
-    const lb=(i<si?'✓ ':'')+STAGE_LABELS[pg];
+  // CLIENT cannot access the tasks stage; filter it out of the nav
+  const visOrder=isClient()?STAGE_ORDER.filter(pg=>pg!=='tasks'):STAGE_ORDER;
+  return '<div class="stage-nav">'+visOrder.map((pg,i)=>{
+    const origIdx=STAGE_ORDER.indexOf(pg);
+    const cl=origIdx<si?'done':origIdx===si?'active':'todo';
+    const lb=(origIdx<si?'✓ ':'')+STAGE_LABELS[pg];
     return(i>0?'<span class="stage-arrow">→</span>':'')+
       `<span class="stage-pill ${cl}" onclick="nav('${f.id}','${b.id}','${pg}')">${lb}</span>`;
   }).join('')+'</div>';
@@ -770,15 +855,15 @@ function renderBrief(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
         <div style="font-size:18px;font-weight:700">${briefTitle(b)}</div>
-        <div style="font-size:12px;color:var(--t3)">${f.name} · Brief Formu${isClient()?' · <span style="color:var(--t3)">Salt Okunur</span>':''}</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · Brief Formu${!canEdit()?' · <span style="color:var(--t3)">Salt Okunur</span>':''}</div>
       </div>
-      ${isClient()?'':`<div style="display:flex;gap:8px">
+      ${!canEdit()?'':`<div style="display:flex;gap:8px">
         ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openMemberModal('${f.id}')">+ Üye</button>`:''}
         <button class="btn amber" onclick="saveBrief('${f.id}','${b.id}')">💾 Kaydet</button>
       </div>`}
     </div>
 
-    <div class="fld-grid fld-grid-2" style="${isClient()?'pointer-events:none;opacity:.85':''}">
+    <div class="fld-grid fld-grid-2" style="${!canEdit()?'pointer-events:none;opacity:.85':''}">
       <div>
         <div class="card" style="margin-bottom:16px">
           <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Ürün & İçerik</div>
@@ -872,7 +957,7 @@ async function renderMB(){
             <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
           </div>
         </div>
-        ${isClient()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
+        ${!canEdit()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
           ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','APPROVED')">✓ Onayla</button>`:''}
           ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','REJECTED')">✕</button>`:''}
           <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','IG','${c.id}')">🗑</button>
@@ -888,7 +973,7 @@ async function renderMB(){
         <div style="font-size:18px;font-weight:700">IG Moodboard</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} referans</div>
       </div>
-      ${isClient()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','IG')">+ Referans Ekle</button>`}
+      ${!canEdit()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','IG')">+ Referans Ekle</button>`}
     </div>
     ${cardsHtml}`;
 }
@@ -914,7 +999,7 @@ async function renderMBKamp(){
         <div style="font-size:18px;font-weight:700">Kampanya Moodboard</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} kart</div>
       </div>
-      ${isClient()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>`}
+      ${!canEdit()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>`}
     </div>
     ${cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
       ${cards.map(c=>{
@@ -931,7 +1016,7 @@ async function renderMBKamp(){
               <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
             </div>
           </div>
-          ${isClient()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
+          ${!canEdit()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
             ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','APPROVED')">✓ Onayla</button>`:''}
             ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','REJECTED')">✕</button>`:''}
             <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','KAMP','${c.id}')">🗑</button>
@@ -990,10 +1075,10 @@ async function openCardDet(fid,bid,which,cid){
         ${v0?.desc?`<div class="info-block">${v0.desc}</div>`:''}
       </div>
       <div>
-        ${isClient()?
+        ${!canEdit()?
           `<div style="margin-bottom:8px"><span class="badge ${STATUS_CLS[c.status]||'b-gry'}" style="font-size:12px">${STATUS_LBL[c.status]||c.status}</span></div>`
           :fRow('Durum',fSel('cd-status',[['PENDING','Bekliyor'],['REVIEW','İncelemede'],['APPROVED','Onaylandı'],['REJECTED','Reddedildi']],c.status))}
-        ${isClient()?'':`<div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--t3)">Yeni Versiyon Ekle</div>
+        ${!canEdit()?'':`<div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--t3)">Yeni Versiyon Ekle</div>
         ${fRow('Versiyon Notu',fInp('cd-vnote','text','v2 açıklaması...'))}
         ${fRow('Video URL',fInp('cd-vurl','url','https://youtube.com/...'))}
         ${fRow('Görsel URL',fInp('cd-vimg','url','https://...'))}
@@ -1008,7 +1093,7 @@ async function openCardDet(fid,bid,which,cid){
     </div>
     ${mFt(
       `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
-      ...isClient()?[]:[
+      ...!canEdit()?[]:[
         `<button class="btn outline" onclick="addCardVersion('${fid}','${bid}','${cid}')">+ Versiyon</button>`,
         `<button class="btn amber" onclick="saveCardStatus('${fid}','${bid}','${which}','${cid}')">Kaydet</button>`
       ]
@@ -1058,8 +1143,8 @@ async function renderIG(){
   const cellsHtml=Array.from({length:9},(_,i)=>{
     const cell=cells.find(c=>c.cellIndex===i);
     const thumb=cell?.mediaUrl||(cell?.videoUrl?ytThumb(cell.videoUrl):null);
-    const clickAct=cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:isClient()?'':(`openIGCellModal('${f.id}','${b.id}',${i})`);
-    return`<div class="igcell${cell?'':' empty'}${isClient()&&!cell?' no-pointer':''}" ${clickAct?`onclick="${clickAct}"`:''}>
+    const clickAct=cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:!canEdit()?'':(`openIGCellModal('${f.id}','${b.id}',${i})`);
+    return`<div class="igcell${cell?'':' empty'}${!canEdit()&&!cell?' no-pointer':''}" ${clickAct?`onclick="${clickAct}"`:''}>
       ${thumb?`<img src="${thumb}" onerror="this.parentElement.innerHTML='<div class=igcell-ph>📷<span>${i+1}</span></div>'">`:
         `<div class="igcell-ph">📷<span>${i+1}</span></div>`}
       ${cell?`<div class="igcell-ov">
@@ -1093,7 +1178,7 @@ async function renderIG(){
         <div style="font-size:18px;font-weight:700">IG Grid</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cells.length}/9 hücre</div>
       </div>
-      ${isClient()?'':`<div style="display:flex;gap:8px">
+      ${!canEdit()?'':`<div style="display:flex;gap:8px">
         <button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
         <button class="btn amber" onclick="openIGCellModal('${f.id}','${b.id}')">+ İçerik Ekle</button>
       </div>`}
@@ -1106,7 +1191,7 @@ async function renderIG(){
           <span class="badge b-gry">${pending} bekliyor</span>
           <span class="badge b-er">${cells.filter(c=>c.approved===false).length} reddedildi</span>
         </div>
-        <div style="font-size:10px;color:var(--t3);margin-top:8px">${isClient()?'Tıkla → detay':'Tıkla → detay · Boş hücre → içerik ekle'}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:8px">${!canEdit()?'Tıkla → detay':'Tıkla → detay · Boş hücre → içerik ekle'}</div>
       </div>
       <div>
         <div class="ig-phone" style="width:100%;margin-bottom:10px">
@@ -1154,7 +1239,7 @@ function openIGCell(fid,bid,cid){
         ${cell.hashtags?`<div style="font-size:11px;color:var(--t3);margin-top:6px">${cell.hashtags}</div>`:''}
       </div>
       <div>
-        ${isClient()?`
+        ${!canEdit()?`
           <div style="margin-bottom:8px">
             <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Yayın Tarihi</div>
             <div style="font-size:12px">${cell.publishDate?fmtDate(cell.publishDate):'—'}</div>
@@ -1178,7 +1263,7 @@ function openIGCell(fid,bid,cid){
     </div>
     ${mFt(
       `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
-      ...isClient()?[]:[`<button class="btn amber" onclick="saveIGCell('${fid}','${bid}','${cid}')">Kaydet</button>`]
+      ...!canEdit()?[]:[`<button class="btn amber" onclick="saveIGCell('${fid}','${bid}','${cid}')">Kaydet</button>`]
     )}`);
 }
 
@@ -1432,70 +1517,37 @@ async function _doMyTask(fid,bid,tid,t,status){
 async function markMyTaskDone(bid,tid){return submitMyTask(bid,tid,'DONE');}
 
 // ── PAGE: MÜŞTERI PORTALI ─────────────────────────────────
-let _custFilter='all'; // 'all'|'review'|'approved'|'rejected'
+let _custTab='mb'; // 'mb'|'kamp'|'ig'
 
 async function renderCust(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-cust').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
-  if(!b._igCards){
-    try{b._igCards=await api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`);}
-    catch{b._igCards=[];}
-  }
-  const allCards=b._igCards||[];
-  // Exclude PENDING from client view — they haven't been sent for review yet
-  const viewable=allCards.filter(c=>c.status!=='PENDING');
-  const reviewCards=viewable.filter(c=>c.status==='REVIEW');
-  const approvedCards=viewable.filter(c=>c.status==='APPROVED');
-  const rejectedCards=viewable.filter(c=>c.status==='REJECTED');
+  // Load all three content types in parallel
+  await Promise.all([
+    !b._igCards&&api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=IG`).then(d=>{b._igCards=d;}).catch(()=>{b._igCards=[];}),
+    !b._kampCards&&api(`/api/firms/${f.id}/briefs/${b.id}/cards?which=KAMP`).then(d=>{b._kampCards=d;}).catch(()=>{b._kampCards=[];}),
+    !b.igCells&&api(`/api/firms/${f.id}/briefs/${b.id}/ig`).then(d=>{b.igCells=d;}).catch(()=>{b.igCells=[];})
+  ].filter(Boolean));
 
-  const filtered=_custFilter==='all'?viewable
-    :_custFilter==='review'?reviewCards
-    :_custFilter==='approved'?approvedCards
-    :rejectedCards;
+  const igCards=(b._igCards||[]).filter(c=>c.status!=='PENDING');
+  const kampCards=(b._kampCards||[]).filter(c=>c.status!=='PENDING');
+  const cells=b.igCells||[];
+
+  const igReview=igCards.filter(c=>c.status==='REVIEW').length;
+  const kampReview=kampCards.filter(c=>c.status==='REVIEW').length;
+  const cellPending=cells.filter(c=>c.approved==null).length;
+  const totalPending=igReview+kampReview+cellPending;
 
   const stsCls={REVIEW:'b-wt',APPROVED:'b-ok',REJECTED:'b-er'};
   const stsLbl={REVIEW:'İnceleme Bekliyor',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
-  document.getElementById('page-cust').innerHTML=`
-    <!-- Black header banner -->
-    <div style="background:var(--blk);border-radius:var(--r2);padding:20px 24px;color:#fff;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
-      <div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-          <div style="font-size:20px;font-weight:700">${f.name}</div>
-          <span class="badge" style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;border:1px solid rgba(255,255,255,.25)">Müşteri Görünümü</span>
-        </div>
-        <div style="font-size:12px;opacity:.7">${briefTitle(b)} · ${viewable.length} içerik</div>
-        <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;opacity:.8">
-          <span>✓ ${approvedCards.length} onaylı</span>
-          <span>⏳ ${reviewCards.length} bekliyor</span>
-          <span>✕ ${rejectedCards.length} reddedildi</span>
-        </div>
-      </div>
-      ${reviewCards.length?`<button class="btn amber sm" onclick="approveAllCards('${f.id}','${b.id}')">✓ Tümünü Onayla (${reviewCards.length})</button>`:''}
-    </div>
-
-    <!-- Info block -->
-    ${reviewCards.length?`<div class="info wt" style="margin-bottom:16px">
-      <span class="info-ico">ℹ</span>
-      <div><strong>${reviewCards.length} içerik onayınızı bekliyor.</strong> Onaylamak için her kartın altındaki "Onayla" butonuna basın. Revize istemek için "Reddet" seçeneğini kullanın.</div>
-    </div>`:''}
-    ${rejectedCards.length?`<div class="info er" style="margin-bottom:16px">
-      <span class="info-ico">⚠</span>
-      <div><strong>${rejectedCards.length} içerik reddedildi.</strong> Ekibimiz revize notlarınızı inceleyerek içerikleri güncelleyecektir.</div>
-    </div>`:''}
-
-    <!-- Filter tabs -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${[['all','Tümü',viewable.length],['review','Bekliyor',reviewCards.length],['approved','Onaylı',approvedCards.length],['rejected','Reddedildi',rejectedCards.length]].map(([k,l,n])=>
-          `<button class="tag${_custFilter===k?' on':''}" onclick="_custFilter='${k}';renderCust()">${l} <span style="opacity:.6">${n}</span></button>`
-        ).join('')}
-      </div>
-    </div>
-
-    ${filtered.length?`<div class="card-grid card-grid-3" style="gap:16px">
-      ${filtered.map(c=>{
+  // Render a section of MB/KAMP cards
+  const renderCardSection=(cards,which)=>{
+    const viewable=cards;
+    if(!viewable.length)return`<div class="empty" style="padding:20px">Onaylanacak içerik yok.</div>`;
+    return`<div class="card-grid card-grid-3" style="gap:14px">
+      ${viewable.map(c=>{
         const v0=c.versions?.at(-1)||c.versions?.[0];
         const thumb=v0?.mediaUrl||(v0?.videoUrl?ytThumb(v0.videoUrl):null);
         const isReview=c.status==='REVIEW';
@@ -1513,46 +1565,118 @@ async function renderCust(){
             ${isRejected&&v0?.desc?`<div style="font-size:11px;color:var(--er-c);margin-top:6px;padding:6px 8px;background:var(--er-bg);border-radius:4px">📝 ${v0.desc}</div>`:''}
           </div>
           ${isReview?`<div class="mb-actions">
-            <button class="btn ok xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',true)">✓ Onayla</button>
-            <button class="btn er xs" onclick="openCustReject('${f.id}','${b.id}','${c.id}')">✕ Reddet</button>
+            <button class="btn ok xs" onclick="custApprove('${f.id}','${b.id}','${c.id}',true,'${which}')">✓ Onayla</button>
+            <button class="btn er xs" onclick="openCustReject('${f.id}','${b.id}','${c.id}','${which}')">✕ Reddet</button>
           </div>`:isRejected?`<div class="mb-actions" style="justify-content:flex-start">
             <span style="font-size:10px;color:var(--er-c)">Revize bekleniyor</span>
           </div>`:''}
         </div>`;
       }).join('')}
-    </div>`:`<div class="empty">Bu kategoride içerik yok.</div>`}`;
+    </div>`;
+  };
+
+  // Render IG Grid cells section
+  const renderCellSection=()=>{
+    if(!cells.length)return`<div class="empty" style="padding:20px">IG Grid içeriği yok.</div>`;
+    const typeLbl={POST:'📷 Post',REELS:'🎬 Reels',CAROUSEL:'🎠 Carousel'};
+    return`<div style="display:flex;flex-direction:column;gap:8px">
+      ${cells.map(cell=>{
+        const thumb=cell.mediaUrl||(cell.videoUrl?ytThumb(cell.videoUrl):null);
+        const sts=cell.approved===true?'APPROVED':cell.approved===false?'REJECTED':'REVIEW';
+        const stsBadge=cell.approved===true?'b-ok':cell.approved===false?'b-er':'b-wt';
+        const stsText=cell.approved===true?'Onaylı':cell.approved===false?'Reddedildi':'İnceleme Bekliyor';
+        return`<div style="display:grid;grid-template-columns:48px 1fr auto auto;gap:10px;align-items:center;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
+          <div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:var(--gry2)">
+            ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:18px">📷</div>'}
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:500">${cell.caption?.slice(0,50)||'—'}</div>
+            <div style="font-size:10px;color:var(--t3)">${typeLbl[cell.type]||cell.type||'—'}${cell.publishDate?' · '+fmtDate(cell.publishDate):''}</div>
+          </div>
+          <span class="badge ${stsBadge}">${stsText}</span>
+          ${cell.approved!==true?`<div style="display:flex;gap:4px">
+            <button class="btn ok xs" onclick="custApproveCell('${f.id}','${b.id}','${cell.id}',true)">✓</button>
+            <button class="btn er xs" onclick="custApproveCell('${f.id}','${b.id}','${cell.id}',false)">✕</button>
+          </div>`:`<button class="btn surface xs" onclick="custApproveCell('${f.id}','${b.id}','${cell.id}',null)">Geri Al</button>`}
+        </div>`;
+      }).join('')}
+    </div>`;
+  };
+
+  const tabs=[['mb','🎨 Moodboard',igReview],['kamp','🎬 Kampanya',kampReview],['ig','📷 IG Grid',cellPending]];
+
+  document.getElementById('page-cust').innerHTML=`
+    <!-- Black header banner -->
+    <div style="background:var(--blk);border-radius:var(--r2);padding:20px 24px;color:#fff;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="font-size:20px;font-weight:700">${f.name}</div>
+          <span class="badge" style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;border:1px solid rgba(255,255,255,.25)">Müşteri Görünümü</span>
+        </div>
+        <div style="font-size:12px;opacity:.7">${briefTitle(b)}</div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;opacity:.8">
+          <span>🎨 ${igCards.length} moodboard</span>
+          <span>🎬 ${kampCards.length} kampanya</span>
+          <span>📷 ${cells.length} ig hücresi</span>
+        </div>
+      </div>
+      ${totalPending?`<span class="badge" style="background:var(--amb);color:#fff;font-size:12px;padding:6px 12px">${totalPending} bekliyor</span>`:'<span class="badge b-ok" style="font-size:11px">Tümü onaylandı ✓</span>'}
+    </div>
+
+    ${totalPending?`<div class="info wt" style="margin-bottom:16px">
+      <span class="info-ico">ℹ</span>
+      <div><strong>${totalPending} içerik onayınızı bekliyor.</strong> Aşağıdaki sekmelerde içerikleri inceleyip onaylayabilir veya revize talep edebilirsiniz.</div>
+    </div>`:''}
+
+    <!-- Section tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--bdr);padding-bottom:12px">
+      ${tabs.map(([k,l,n])=>`<button class="tag${_custTab===k?' on':''}" onclick="_custTab='${k}';renderCust()">${l}${n?` <span style="background:var(--amb);color:#fff;border-radius:999px;padding:1px 6px;font-size:9px;margin-left:3px">${n}</span>`:''}</button>`).join('')}
+    </div>
+
+    ${_custTab==='mb'?renderCardSection(igCards,'IG'):_custTab==='kamp'?renderCardSection(kampCards,'KAMP'):renderCellSection()}`;
 }
 
-function openCustReject(fid,bid,cid){
+async function custApproveCell(fid,bid,cid,val){
+  try{
+    const updated=await api(`/api/firms/${fid}/briefs/${bid}/ig/${cid}`,{method:'PUT',body:{approved:val}});
+    const b=gB(fid,bid);
+    if(b){const idx=(b.igCells||[]).findIndex(c=>c.id===cid);if(idx>=0)Object.assign(b.igCells[idx],updated);}
+    renderCust();toast(val===true?'Onaylandı ✓':val===false?'Reddedildi':'Onay geri alındı');
+  }catch(e){toast(e.message,'err');}
+}
+
+function openCustReject(fid,bid,cid,which='IG'){
   showModal(`${mHd('İçeriği Reddet')}
     <div class="info wt"><span class="info-ico">ℹ</span><div>Reddederken revize notunuzu ekleyebilirsiniz. Ekibimiz bu notlara göre içeriği güncelleyecektir.</div></div>
     ${fRow('Revize Notu (isteğe bağlı)',fTa('cr-note','Lütfen şunu değiştirin...'))}
     ${mFt(
       `<button class="btn surface" onclick="closeModal()">İptal</button>`,
-      `<button class="btn er" onclick="submitCustReject('${fid}','${bid}','${cid}')">✕ Reddet</button>`
+      `<button class="btn er" onclick="submitCustReject('${fid}','${bid}','${cid}','${which}')">✕ Reddet</button>`
     )}`);
 }
 
-async function submitCustReject(fid,bid,cid){
+async function submitCustReject(fid,bid,cid,which='IG'){
   const note=v('cr-note')||undefined;
-  // First update card status to REJECTED
-  await updateCard(fid,bid,'IG',cid,'REJECTED');
+  await updateCard(fid,bid,which,cid,'REJECTED');
   // If note provided, add as a version note
   if(note){
     try{
       await api(`/api/firms/${fid}/briefs/${bid}/cards/${cid}/versions`,
         {method:'POST',body:{note:'Müşteri Notu: '+note}});
       const b=gB(fid,bid);
-      if(b){const c=(b._igCards||[]).find(x=>x.id===cid);if(c){if(!c.versions)c.versions=[];c.versions.push({note:'Müşteri Notu: '+note,vNum:(c.versions.length+1),createdAt:new Date()});}}
+      if(b){
+        const arr=which==='KAMP'?(b._kampCards||[]):(b._igCards||[]);
+        const c=arr.find(x=>x.id===cid);
+        if(c){if(!c.versions)c.versions=[];c.versions.push({note:'Müşteri Notu: '+note,vNum:(c.versions.length+1),createdAt:new Date()});}
+      }
     }catch{}
   }
   closeModal();renderCust();toast('İçerik reddedildi');
 }
 
-async function custApprove(fid,bid,cid,approve){
-  const status=approve?'APPROVED':'REJECTED';
-  if(!approve){openCustReject(fid,bid,cid);return;}
-  await updateCard(fid,bid,'IG',cid,status);
+async function custApprove(fid,bid,cid,approve,which='IG'){
+  if(!approve){openCustReject(fid,bid,cid,which);return;}
+  await updateCard(fid,bid,which,cid,'APPROVED');
   renderCust();
 }
 
@@ -1590,7 +1714,7 @@ async function renderYayin(){
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)}</div>
       </div>
       <div style="display:flex;gap:8px">
-        ${isClient()?'':`<button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>`}
+        ${!canEdit()?'':`<button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>`}
         <button class="btn outline xs" onclick="window.print()">📄 PDF</button>
       </div>
     </div>
@@ -1616,7 +1740,7 @@ async function renderYayin(){
                 <div style="font-size:10px;color:var(--t3)">${typeLbl[cell.type]||cell.type} · ${fmtDate(cell.publishDate)}</div>
               </div>
               <span class="badge ${cell.approved?'b-ok':cell.approved===false?'b-er':'b-gry'}">${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</span>
-              ${isClient()?'':`<button class="btn ${cell.approved?'surface':'ok'} xs" onclick="toggleIGApprove('${f.id}','${b.id}','${cell.id}',${!cell.approved})">${cell.approved?'Geri Al':'Onayla'}</button>`}
+              ${!canEdit()?'':`<button class="btn ${cell.approved?'surface':'ok'} xs" onclick="toggleIGApprove('${f.id}','${b.id}','${cell.id}',${!cell.approved})">${cell.approved?'Geri Al':'Onayla'}</button>`}
             </div>`;
           }).join(''):`<div class="empty" style="padding:20px">Tarihli içerik yok. IG Grid'den tarih ekleyin.</div>`}
         </div>
