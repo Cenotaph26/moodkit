@@ -180,6 +180,7 @@ textarea.fld{min-height:80px;resize:vertical}
 .igcell:hover .igcell-ov{opacity:1}
 .igcell-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
 .igcell-idx{position:absolute;top:5px;left:6px;font-size:9px;font-weight:700;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));z-index:1}
+.no-pointer{cursor:default!important;pointer-events:none}
 .igcell-type{position:absolute;top:5px;right:6px;font-size:10px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:1}
 .igcell-appr{position:absolute;bottom:5px;right:5px;font-size:10px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));z-index:1}
 .igcell-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-size:20px;color:var(--gry3);gap:4px}
@@ -431,6 +432,9 @@ const STAGE_LABELS={home:'Ana Sayfa',brief:'Brief',mb:'IG Moodboard','mb-kamp':'
 const STATUS_CLS={PENDING:'b-gry',REVIEW:'b-rv',APPROVED:'b-ok',REJECTED:'b-er'};
 const STATUS_LBL={PENDING:'Bekliyor',REVIEW:'İncelemede',APPROVED:'Onaylandı',REJECTED:'Reddedildi'};
 
+// CLIENT role: can only approve/reject cards in cust portal; viewer elsewhere
+const isClient=()=>_me?.role==='CLIENT';
+
 // ── STATE ─────────────────────────────────────────────────
 let _me=null, _token=localStorage.getItem('mk_token');
 let firms=[], members=[], _myTasks=[];
@@ -588,8 +592,8 @@ function renderSB(){
         ${bs.map(b=>{
           const isOnFirm=_curBid===b.id&&_curFid===f.id;
           const activePg=isOnFirm?_curPage:null;
-          const subLinks=[['brief','📋'],['mb','🎨'],['mb-kamp','🎬'],['ig','📷'],['tasks','✓'],['cal','📅'],['yayin','🚀']];
-          const subLbls={brief:'Brief',mb:'IG MB','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',cal:'Takvim',yayin:'Yayın'};
+          const subLinks=isClient()?[['cust','👁']]:[['brief','📋'],['mb','🎨'],['mb-kamp','🎬'],['ig','📷'],['tasks','✓'],['cal','📅'],['yayin','🚀']];
+          const subLbls={brief:'Brief',mb:'IG MB','mb-kamp':'Kampanya MB',ig:'IG Grid',tasks:'Görevler',cal:'Takvim',yayin:'Yayın',cust:'Onay Portalı'};
           return`<div class="sub-lnk${isOnFirm?' on':''}" data-fid="${f.id}" data-bid="${b.id}" data-page="brief"
             onclick="nav('${f.id}','${b.id}','brief')" style="justify-content:space-between">
             <span style="display:flex;align-items:center;gap:6px"><span class="stage-dot"></span>${briefTitle(b)}</span>
@@ -766,15 +770,15 @@ function renderBrief(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
         <div style="font-size:18px;font-weight:700">${briefTitle(b)}</div>
-        <div style="font-size:12px;color:var(--t3)">${f.name} · Brief Formu</div>
+        <div style="font-size:12px;color:var(--t3)">${f.name} · Brief Formu${isClient()?' · <span style="color:var(--t3)">Salt Okunur</span>':''}</div>
       </div>
-      <div style="display:flex;gap:8px">
+      ${isClient()?'':`<div style="display:flex;gap:8px">
         ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openMemberModal('${f.id}')">+ Üye</button>`:''}
         <button class="btn amber" onclick="saveBrief('${f.id}','${b.id}')">💾 Kaydet</button>
-      </div>
+      </div>`}
     </div>
 
-    <div class="fld-grid fld-grid-2">
+    <div class="fld-grid fld-grid-2" style="${isClient()?'pointer-events:none;opacity:.85':''}">
       <div>
         <div class="card" style="margin-bottom:16px">
           <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Ürün & İçerik</div>
@@ -868,11 +872,11 @@ async function renderMB(){
             <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
           </div>
         </div>
-        <div class="mb-actions" onclick="event.stopPropagation()">
+        ${isClient()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
           ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','APPROVED')">✓ Onayla</button>`:''}
           ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','IG','${c.id}','REJECTED')">✕</button>`:''}
           <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','IG','${c.id}')">🗑</button>
-        </div>
+        </div>`}
       </div>`;
     }).join('')}
   </div>`:`<div class="empty">Henüz IG referansı eklenmedi.</div>`;
@@ -884,7 +888,7 @@ async function renderMB(){
         <div style="font-size:18px;font-weight:700">IG Moodboard</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} referans</div>
       </div>
-      <button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','IG')">+ Referans Ekle</button>
+      ${isClient()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','IG')">+ Referans Ekle</button>`}
     </div>
     ${cardsHtml}`;
 }
@@ -910,7 +914,7 @@ async function renderMBKamp(){
         <div style="font-size:18px;font-weight:700">Kampanya Moodboard</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cards.length} kart</div>
       </div>
-      <button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>
+      ${isClient()?'':`<button class="btn amber" onclick="openCardModal('${f.id}','${b.id}','KAMP')">+ Kart Ekle</button>`}
     </div>
     ${cards.length?`<div class="card-grid card-grid-3" style="gap:16px">
       ${cards.map(c=>{
@@ -927,11 +931,11 @@ async function renderMBKamp(){
               <span class="badge ${stsCls[c.status]||'b-gry'}">${stsLbl[c.status]||c.status}</span>
             </div>
           </div>
-          <div class="mb-actions" onclick="event.stopPropagation()">
+          ${isClient()?'':`<div class="mb-actions" onclick="event.stopPropagation()">
             ${c.status!=='APPROVED'?`<button class="btn ok xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','APPROVED')">✓ Onayla</button>`:''}
             ${c.status!=='REJECTED'?`<button class="btn er xs" onclick="updateCard('${f.id}','${b.id}','KAMP','${c.id}','REJECTED')">✕</button>`:''}
             <button class="btn surface xs ico" onclick="deleteCard('${f.id}','${b.id}','KAMP','${c.id}')">🗑</button>
-          </div>
+          </div>`}
         </div>`;
       }).join('')}
     </div>`:`<div class="empty">Henüz kampanya kartı eklenmedi.</div>`}`;
@@ -986,11 +990,14 @@ async function openCardDet(fid,bid,which,cid){
         ${v0?.desc?`<div class="info-block">${v0.desc}</div>`:''}
       </div>
       <div>
-        ${fRow('Durum',fSel('cd-status',[['PENDING','Bekliyor'],['REVIEW','İncelemede'],['APPROVED','Onaylandı'],['REJECTED','Reddedildi']],c.status))}
-        <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--t3)">Yeni Versiyon Ekle</div>
+        ${isClient()?
+          `<div style="margin-bottom:8px"><span class="badge ${STATUS_CLS[c.status]||'b-gry'}" style="font-size:12px">${STATUS_LBL[c.status]||c.status}</span></div>`
+          :fRow('Durum',fSel('cd-status',[['PENDING','Bekliyor'],['REVIEW','İncelemede'],['APPROVED','Onaylandı'],['REJECTED','Reddedildi']],c.status))}
+        ${isClient()?'':`<div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--t3)">Yeni Versiyon Ekle</div>
         ${fRow('Versiyon Notu',fInp('cd-vnote','text','v2 açıklaması...'))}
         ${fRow('Video URL',fInp('cd-vurl','url','https://youtube.com/...'))}
         ${fRow('Görsel URL',fInp('cd-vimg','url','https://...'))}
+        `}
         <div style="font-size:11px;font-weight:600;margin-bottom:6px;margin-top:12px;color:var(--t3)">Versiyon Geçmişi</div>
         <div style="max-height:100px;overflow-y:auto">
           ${(c.versions||[]).map(ver=>`<div style="padding:4px 0;border-bottom:1px solid var(--bdr);font-size:11px">
@@ -1001,8 +1008,10 @@ async function openCardDet(fid,bid,which,cid){
     </div>
     ${mFt(
       `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
-      `<button class="btn outline" onclick="addCardVersion('${fid}','${bid}','${cid}')">+ Versiyon</button>`,
-      `<button class="btn amber" onclick="saveCardStatus('${fid}','${bid}','${which}','${cid}')">Kaydet</button>`
+      ...isClient()?[]:[
+        `<button class="btn outline" onclick="addCardVersion('${fid}','${bid}','${cid}')">+ Versiyon</button>`,
+        `<button class="btn amber" onclick="saveCardStatus('${fid}','${bid}','${which}','${cid}')">Kaydet</button>`
+      ]
     )}`);
 }
 
@@ -1049,8 +1058,8 @@ async function renderIG(){
   const cellsHtml=Array.from({length:9},(_,i)=>{
     const cell=cells.find(c=>c.cellIndex===i);
     const thumb=cell?.mediaUrl||(cell?.videoUrl?ytThumb(cell.videoUrl):null);
-    return`<div class="igcell${cell?'':' empty'}" onclick="${cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:
-      `openIGCellModal('${f.id}','${b.id}',${i})`}">
+    const clickAct=cell?`openIGCell('${f.id}','${b.id}','${cell.id}')`:isClient()?'':(`openIGCellModal('${f.id}','${b.id}',${i})`);
+    return`<div class="igcell${cell?'':' empty'}${isClient()&&!cell?' no-pointer':''}" ${clickAct?`onclick="${clickAct}"`:''}>
       ${thumb?`<img src="${thumb}" onerror="this.parentElement.innerHTML='<div class=igcell-ph>📷<span>${i+1}</span></div>'">`:
         `<div class="igcell-ph">📷<span>${i+1}</span></div>`}
       ${cell?`<div class="igcell-ov">
@@ -1084,10 +1093,10 @@ async function renderIG(){
         <div style="font-size:18px;font-weight:700">IG Grid</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${cells.length}/9 hücre</div>
       </div>
-      <div style="display:flex;gap:8px">
+      ${isClient()?'':`<div style="display:flex;gap:8px">
         <button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
         <button class="btn amber" onclick="openIGCellModal('${f.id}','${b.id}')">+ İçerik Ekle</button>
-      </div>
+      </div>`}
     </div>
     <div class="ig-wrap">
       <div>
@@ -1097,7 +1106,7 @@ async function renderIG(){
           <span class="badge b-gry">${pending} bekliyor</span>
           <span class="badge b-er">${cells.filter(c=>c.approved===false).length} reddedildi</span>
         </div>
-        <div style="font-size:10px;color:var(--t3);margin-top:8px">Tıkla → detay · Boş hücre → içerik ekle</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:8px">${isClient()?'Tıkla → detay':'Tıkla → detay · Boş hücre → içerik ekle'}</div>
       </div>
       <div>
         <div class="ig-phone" style="width:100%;margin-bottom:10px">
@@ -1145,19 +1154,31 @@ function openIGCell(fid,bid,cid){
         ${cell.hashtags?`<div style="font-size:11px;color:var(--t3);margin-top:6px">${cell.hashtags}</div>`:''}
       </div>
       <div>
-        <div style="margin-bottom:8px">${fRow('Yayın Tarihi',fInp('ic-date','date','',cell.publishDate?.slice(0,10)||''))}</div>
-        <div style="margin-bottom:12px">${fRow('Altyazı',fTa('ic-cap','Altyazı...',cell.caption||''))}</div>
-        <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Durum: <strong>${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</strong></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn ok xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',true)">✓ Onayla</button>
-          <button class="btn er xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',false)">✕ Reddet</button>
-          <button class="btn surface xs ico" onclick="deleteIGCell('${fid}','${bid}','${cid}')">🗑</button>
-        </div>
+        ${isClient()?`
+          <div style="margin-bottom:8px">
+            <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Yayın Tarihi</div>
+            <div style="font-size:12px">${cell.publishDate?fmtDate(cell.publishDate):'—'}</div>
+          </div>
+          <div style="margin-bottom:8px">
+            <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Altyazı</div>
+            <div style="font-size:12px">${cell.caption||'—'}</div>
+          </div>
+          <div style="font-size:11px;color:var(--t3)">Durum: <strong>${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</strong></div>
+        `:`
+          <div style="margin-bottom:8px">${fRow('Yayın Tarihi',fInp('ic-date','date','',cell.publishDate?.slice(0,10)||''))}</div>
+          <div style="margin-bottom:12px">${fRow('Altyazı',fTa('ic-cap','Altyazı...',cell.caption||''))}</div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Durum: <strong>${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</strong></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn ok xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',true)">✓ Onayla</button>
+            <button class="btn er xs" onclick="toggleIGApprove('${fid}','${bid}','${cid}',false)">✕ Reddet</button>
+            <button class="btn surface xs ico" onclick="deleteIGCell('${fid}','${bid}','${cid}')">🗑</button>
+          </div>
+        `}
       </div>
     </div>
     ${mFt(
       `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
-      `<button class="btn amber" onclick="saveIGCell('${fid}','${bid}','${cid}')">Kaydet</button>`
+      ...isClient()?[]:[`<button class="btn amber" onclick="saveIGCell('${fid}','${bid}','${cid}')">Kaydet</button>`]
     )}`);
 }
 
@@ -1210,9 +1231,9 @@ async function renderTasks(){
   const kanban=cols.map(status=>{
     const colTasks=tasks.filter(t=>t.status===status);
     return`<div class="kb-col" data-status="${status}"
-      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ${isClient()?'':`ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
-      ondrop="dropTask(event,'${f.id}','${b.id}','${status}')">
+      ondrop="dropTask(event,'${f.id}','${b.id}','${status}')"`}>
       <div class="kb-col-hd">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="width:8px;height:8px;border-radius:50%;background:${colColors[status]}"></span>
@@ -1223,10 +1244,10 @@ async function renderTasks(){
       ${colTasks.map(t=>{
         const assignee=mem.find(m=>m.id===t.assigneeId)||t.assignee;
         const stripClr=status==='TODO'?'var(--gry2)':status==='DOING'?'var(--amb)':'var(--ok)';
-        return`<div class="tc" draggable="true" data-tid="${t.id}"
-          style="display:flex;gap:8px;padding:0;overflow:hidden"
+        return`<div class="tc" ${isClient()?'':`draggable="true" data-tid="${t.id}"
           ondragstart="this.classList.add('drg');event.dataTransfer.setData('text/plain','${t.id}')"
-          ondragend="this.classList.remove('drg')">
+          ondragend="this.classList.remove('drg')"`}
+          style="display:flex;gap:8px;padding:0;overflow:hidden${isClient()?';cursor:default':''}">
           <div class="tc-acc" style="background:${stripClr}"></div>
           <div class="tc-inner" style="padding:10px 10px 10px 0">
             <div class="tc-ref">${t.type} ${t.cardRef?'· '+t.cardRef:''}</div>
@@ -1236,10 +1257,10 @@ async function renderTasks(){
               ${assignee?`<span class="badge b-blk">${assignee.name||assignee.email||'?'}</span>`:''}
               ${t.format?`<span class="badge b-gry">${t.format}</span>`:''}
             </div>
-            <div class="tc-actions">
+            ${isClient()?'':`<div class="tc-actions">
               <button class="btn outline xs" onclick="cycleTask('${f.id}','${b.id}','${t.id}')">${nextStatus[t.status]} →</button>
               <button class="btn er xs ico" onclick="deleteTask('${f.id}','${b.id}','${t.id}')">🗑</button>
-            </div>
+            </div>`}
           </div>
         </div>`;
       }).join('')}
@@ -1253,7 +1274,7 @@ async function renderTasks(){
         <div style="font-size:18px;font-weight:700">Görevler</div>
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)} · ${tasks.length} görev</div>
       </div>
-      <button class="btn amber" onclick="openTaskModal('${f.id}','${b.id}')">+ Görev Ekle</button>
+      ${isClient()?'':`<button class="btn amber" onclick="openTaskModal('${f.id}','${b.id}')">+ Görev Ekle</button>`}
     </div>
     <div class="kb-wrap">${kanban}</div>`;
 }
@@ -1569,7 +1590,7 @@ async function renderYayin(){
         <div style="font-size:12px;color:var(--t3)">${f.name} · ${briefTitle(b)}</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>
+        ${isClient()?'':`<button class="btn ok xs" onclick="approveAllIG('${f.id}','${b.id}')">✓ Tümünü Onayla</button>`}
         <button class="btn outline xs" onclick="window.print()">📄 PDF</button>
       </div>
     </div>
@@ -1595,9 +1616,7 @@ async function renderYayin(){
                 <div style="font-size:10px;color:var(--t3)">${typeLbl[cell.type]||cell.type} · ${fmtDate(cell.publishDate)}</div>
               </div>
               <span class="badge ${cell.approved?'b-ok':cell.approved===false?'b-er':'b-gry'}">${cell.approved?'Onaylı':cell.approved===false?'Reddedildi':'Bekliyor'}</span>
-              <button class="btn ${cell.approved?'surface':'ok'} xs" onclick="toggleIGApprove('${f.id}','${b.id}','${cell.id}',${!cell.approved})">
-                ${cell.approved?'Geri Al':'Onayla'}
-              </button>
+              ${isClient()?'':`<button class="btn ${cell.approved?'surface':'ok'} xs" onclick="toggleIGApprove('${f.id}','${b.id}','${cell.id}',${!cell.approved})">${cell.approved?'Geri Al':'Onayla'}</button>`}
             </div>`;
           }).join(''):`<div class="empty" style="padding:20px">Tarihli içerik yok. IG Grid'den tarih ekleyin.</div>`}
         </div>
