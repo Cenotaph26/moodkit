@@ -841,7 +841,7 @@ function stageNav(f,b){
 }
 
 // ── PAGE: BRIEF ───────────────────────────────────────────
-function renderBrief(){
+async function renderBrief(){
   const f=gF(_curFid),b=gB(_curFid,_curBid);
   if(!f||!b){document.getElementById('page-brief').innerHTML='<div class="empty">Brief bulunamadı</div>';return;}
 
@@ -859,6 +859,7 @@ function renderBrief(){
       </div>
       ${!canEdit()?'':`<div style="display:flex;gap:8px">
         ${_me?.role==='ADMIN'?`<button class="btn outline xs" onclick="openMemberModal('${f.id}')">+ Üye</button>`:''}
+        ${canEdit()?`<button class="btn outline xs" onclick="saveBriefTemplate('${f.id}','${b.id}')">📋 Şablon Kaydet</button>`:''}
         <button class="btn amber" onclick="saveBrief('${f.id}','${b.id}')">💾 Kaydet</button>
       </div>`}
     </div>
@@ -895,7 +896,16 @@ function renderBrief(){
           ${fRow('Bütçe',fInp('bf-budget','text','50.000 TL',b.budget))}
         </div>
       </div>
-    </div>`;
+    </div>
+    <div class="sec-hd" style="margin-top:24px;margin-bottom:10px">
+      <div class="sec-ttl">Bütçe</div>
+      ${canEdit()?`<button class="btn outline xs" onclick="openBudgetItemModal('${f.id}','${b.id}')">+ Kalem Ekle</button>`:''}
+    </div>
+    <div id="budget-section">Yükleniyor...</div>
+    <div class="sec-hd" style="margin-top:20px;margin-bottom:10px"><div class="sec-ttl">Aktivite</div></div>
+    <div id="activity-section">Yükleniyor...</div>`;
+  loadBudgetSection(f.id,b.id);
+  loadActivitySection(f.id,b.id);
 }
 
 function toggleChip(el,val){el.classList.toggle('on');}
@@ -924,6 +934,121 @@ async function saveBrief(fid,bid){
     const b=gB(fid,bid);if(b)Object.assign(b,updated);
     toast('Brief kaydedildi ✓');
   }catch(e){toast(e.message,'err');}
+}
+
+async function saveBriefTemplate(fid,bid){
+  const name=prompt('Şablon adı:');if(!name)return;
+  const chips=[...document.querySelectorAll('.chip.on')].map(el=>el.dataset.val);
+  const body={name,firmId:fid,
+    products:v('bf-products')||undefined,tone:v('bf-tone')||undefined,
+    colorDir:v('bf-colorDir')||undefined,avoid:v('bf-avoid')||undefined,
+    platforms:chips,targetAudience:v('bf-audience')||undefined,notes:v('bf-notes')||undefined};
+  try{await api('/api/templates',{method:'POST',body});toast('Şablon kaydedildi ✓');}
+  catch(e){toast(e.message,'err');}
+}
+
+async function loadBudgetSection(fid,bid){
+  const el=document.getElementById('budget-section');if(!el)return;
+  try{
+    const {budgetTotal,budgetCurrency,items}=await api(`/api/firms/${fid}/briefs/${bid}/budget`);
+    const total=budgetTotal?parseFloat(budgetTotal):0;
+    const spent=items.reduce((s,i)=>s+parseFloat(i.amount),0);
+    const remaining=total-spent;
+    const catClr={Prodüksiyon:'b-blk',Reklam:'b-wt',Tasarım:'b-rv',Diğer:'b-gry'};
+    el.innerHTML=`
+      ${total?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        <div class="stat"><div class="stat-l">Toplam Bütçe</div><div class="stat-v" style="font-size:14px">${total.toLocaleString('tr-TR')} ${budgetCurrency}</div></div>
+        <div class="stat"><div class="stat-l">Harcanan</div><div class="stat-v" style="font-size:14px;color:var(--er-c)">${spent.toLocaleString('tr-TR')} ${budgetCurrency}</div></div>
+        <div class="stat"><div class="stat-l">Kalan</div><div class="stat-v" style="font-size:14px;color:${remaining>=0?'var(--ok)':'var(--er-c)'}">${remaining.toLocaleString('tr-TR')} ${budgetCurrency}</div></div>
+      </div>
+      <div class="prog-bar thick" style="margin-bottom:12px"><div class="prog-fill" style="width:${total?Math.min(spent/total*100,100):0}%;background:${remaining<0?'var(--er-c)':'var(--amb)'}"></div></div>`:''}
+      <div class="card" style="padding:0;overflow:hidden">
+        ${items.length?items.map(item=>`<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+          <div>
+            <div style="font-size:12px;font-weight:500">${item.label}</div>
+            ${item.note?`<div style="font-size:10px;color:var(--t3)">${item.note}</div>`:''}
+          </div>
+          <span class="badge ${catClr[item.category]||'b-gry'}">${item.category}</span>
+          <span style="font-size:12px;font-weight:600">${parseFloat(item.amount).toLocaleString('tr-TR')} ${budgetCurrency}</span>
+          ${canEdit()?`<button class="btn er xs ico" onclick="deleteBudgetItem('${fid}','${bid}','${item.id}')">🗑</button>`:''}
+        </div>`).join(''):`<div class="empty" style="padding:16px">Henüz bütçe kalemi yok.</div>`}
+      </div>
+      ${canEdit()&&!total?`<div style="margin-top:8px"><button class="btn outline xs" onclick="openSetBudgetModal('${fid}','${bid}')">Toplam Bütçe Belirle</button></div>`:''}`;
+  }catch{el.innerHTML='<div class="empty">Bütçe yüklenemedi</div>';}
+}
+
+function openBudgetItemModal(fid,bid){
+  const cats=['Prodüksiyon','Reklam','Tasarım','Diğer'];
+  showModal(`${mHd('Bütçe Kalemi Ekle')}
+    ${fRow('Açıklama *',fInp('bi-label','text','Çekim günü, reklam bütçesi...'))}
+    <div class="fld-grid fld-grid-2">
+      ${fRow('Tutar *',fInp('bi-amount','number','0'))}
+      ${fRow('Kategori',fSel('bi-cat',cats.map(c=>[c,c])))}
+    </div>
+    ${fRow('Not',fInp('bi-note','text',''))}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitBudgetItem('${fid}','${bid}')">Ekle</button>`
+    )}`);
+}
+
+async function submitBudgetItem(fid,bid){
+  const label=v('bi-label');const amount=parseFloat(v('bi-amount')||'0');
+  const category=v('bi-cat')||'Diğer';const note=v('bi-note')||undefined;
+  if(!label||!amount){toast('Açıklama ve tutar gerekli','err');return;}
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/budget/items`,{method:'POST',body:{label,amount,category,note}});
+    closeModal();loadBudgetSection(fid,bid);toast('Kalem eklendi ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function deleteBudgetItem(fid,bid,itemId){
+  if(!confirm('Kalemi silmek istiyor musunuz?'))return;
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/budget/items/${itemId}`,{method:'DELETE'});
+    loadBudgetSection(fid,bid);toast('Kalem silindi');
+  }catch(e){toast(e.message,'err');}
+}
+
+function openSetBudgetModal(fid,bid){
+  showModal(`${mHd('Toplam Bütçe Belirle')}
+    <div class="fld-grid fld-grid-2">
+      ${fRow('Tutar *',fInp('sb-total','number','100000'))}
+      ${fRow('Para Birimi',fSel('sb-cur',[['TRY','TRY (₺)'],['USD','USD ($)'],['EUR','EUR (€)']]))}
+    </div>
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">İptal</button>`,
+      `<button class="btn amber" onclick="submitSetBudget('${fid}','${bid}')">Kaydet</button>`
+    )}`);
+}
+
+async function submitSetBudget(fid,bid){
+  const budgetTotal=parseFloat(v('sb-total')||'0');
+  const budgetCurrency=v('sb-cur')||'TRY';
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/budget`,{method:'PUT',body:{budgetTotal,budgetCurrency}});
+    closeModal();loadBudgetSection(fid,bid);toast('Bütçe belirlendi ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function loadActivitySection(fid,bid){
+  const el=document.getElementById('activity-section');if(!el)return;
+  try{
+    const logs=await api(`/api/firms/${fid}/briefs/${bid}/activity?limit=20`);
+    const actLbl={'card.approved':'Kart onaylandı','card.rejected':'Kart reddedildi',
+      'task.status_changed':'Görev güncellendi','brief.stage_changed':'Aşama değişti',
+      'brief.updated':'Brief güncellendi'};
+    el.innerHTML=logs.length?`<div class="card" style="padding:0;overflow:hidden">
+      ${logs.map(l=>`<div style="display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--gry2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${(l.user?.name||'?')[0]}</div>
+        <div>
+          <div style="font-size:11px;font-weight:500">${l.user?.name||'—'}</div>
+          <div style="font-size:10px;color:var(--t3)">${actLbl[l.action]||l.action} · ${l.entity}</div>
+        </div>
+        <div style="font-size:10px;color:var(--t3);flex-shrink:0">${fmtDate(l.createdAt)}</div>
+      </div>`).join('')}
+    </div>`:'<div class="empty" style="padding:12px">Henüz aktivite yok</div>';
+  }catch{el.innerHTML='<div class="empty">Aktivite yüklenemedi</div>';}
 }
 
 // ── PAGE: IG MOODBOARD ────────────────────────────────────
@@ -1342,10 +1467,11 @@ async function renderTasks(){
               ${assignee?`<span class="badge b-blk">${assignee.name||assignee.email||'?'}</span>`:''}
               ${t.format?`<span class="badge b-gry">${t.format}</span>`:''}
             </div>
-            ${isClient()?'':`<div class="tc-actions">
+            ${!isClient()?`<div class="tc-actions">
+              ${canTask()?`<button class="btn surface xs" onclick="event.stopPropagation();openTimeModal('${f.id}','${b.id}','${t.id}')">⏱</button>`:''}
               <button class="btn outline xs" onclick="cycleTask('${f.id}','${b.id}','${t.id}')">${nextStatus[t.status]} →</button>
               <button class="btn er xs ico" onclick="deleteTask('${f.id}','${b.id}','${t.id}')">🗑</button>
-            </div>`}
+            </div>`:''}
           </div>
         </div>`;
       }).join('')}
@@ -1399,6 +1525,46 @@ async function dropTask(event,fid,bid,newStatus){
     renderTasks();
     const lbl={TODO:'Yapılacak',DOING:'Yapılıyor',DONE:'Tamamlandı'};
     toast(`${lbl[newStatus]} ✓`);
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── ZAMAN TAKİBİ ─────────────────────────────────────────
+async function openTimeModal(fid,bid,tid){
+  const b=gB(fid,bid);const t=(b?.tasks||[]).find(x=>x.id===tid);
+  let entries=[];
+  try{entries=await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/time`);}catch{}
+  const totalMin=entries.reduce((s,e)=>s+e.minutes,0);
+  const totalHr=Math.floor(totalMin/60),remMin=totalMin%60;
+  showModal(`${mHd('Süre Takibi'+(t?` — ${t.desc?.slice(0,30)||'Görev'}`:''))}
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div class="stat" style="flex:1"><div class="stat-l">Toplam Süre</div><div class="stat-v">${totalHr}sa ${remMin}dk</div></div>
+      <div class="stat" style="flex:1"><div class="stat-l">Giriş Sayısı</div><div class="stat-v">${entries.length}</div></div>
+    </div>
+    <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--t3)">Süre Ekle</div>
+    <div class="fld-grid fld-grid-2">
+      ${fRow('Dakika *',fInp('te-min','number','60'))}
+      ${fRow('Not',fInp('te-note','text','Ne yapıldı...'))}
+    </div>
+    ${entries.length?`<div style="font-size:11px;font-weight:600;margin:12px 0 6px;color:var(--t3)">Son Girişler</div>
+    <div style="max-height:120px;overflow-y:auto">
+      ${entries.slice(0,5).map(e=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bdr);font-size:11px">
+        <span>${e.user?.name||'—'}${e.note?' · '+e.note:''}</span>
+        <span style="color:var(--t3)">${e.minutes}dk</span>
+      </div>`).join('')}
+    </div>`:''}
+    ${mFt(
+      `<button class="btn surface" onclick="closeModal()">Kapat</button>`,
+      `<button class="btn amber" onclick="submitTimeEntry('${fid}','${bid}','${tid}')">Kaydet</button>`
+    )}`);
+}
+
+async function submitTimeEntry(fid,bid,tid){
+  const minutes=parseInt(v('te-min')||'0');
+  const note=v('te-note')||undefined;
+  if(!minutes||minutes<1){toast('Dakika giriniz','err');return;}
+  try{
+    await api(`/api/firms/${fid}/briefs/${bid}/tasks/${tid}/time`,{method:'POST',body:{minutes,note}});
+    closeModal();toast(`${minutes} dakika eklendi ✓`);
   }catch(e){toast(e.message,'err');}
 }
 
@@ -1891,7 +2057,17 @@ async function openBriefModal(fid){
   const f=firms.find(x=>x.id===fid);if(!f)return;
   const now=new Date();
   const monthOpts=MONTHS.map((m,i)=>[(i+1).toString(),m]);
+  // Load templates
+  let templates=[];
+  try{templates=await api('/api/templates');}catch{}
+  const tplOpts=templates.length?`<div id="bm-tpl-wrap" style="margin-bottom:12px">
+    ${fRow('Şablondan Yükle',`<select id="bm-tpl" class="fld" onchange="applyBriefTemplate(this.value)">
+      <option value="">— Şablon seçin —</option>
+      ${templates.map(t=>`<option value="${t.id}" data-tpl='${JSON.stringify(t)}'>${t.name}</option>`).join('')}
+    </select>`)}
+  </div>`:'';
   showModal(`${mHd(`"${f.name}" — Yeni Brief`)}
+    ${tplOpts}
     <div class="fld-grid fld-grid-2">
       <div>${fRow('Ay *',fSel('bm-month',monthOpts,(now.getMonth()+1).toString()))}</div>
       <div>${fRow('Yıl *',fInp('bm-year','number','2026',now.getFullYear().toString()))}</div>
@@ -1903,6 +2079,19 @@ async function openBriefModal(fid){
       `<button class="btn surface" onclick="closeModal()">İptal</button>`,
       `<button class="btn amber" onclick="submitBrief('${fid}')">Oluştur</button>`
     )}`);
+}
+
+function applyBriefTemplate(tplId){
+  if(!tplId)return;
+  const sel=document.getElementById('bm-tpl');
+  const opt=[...sel.options].find(o=>o.value===tplId);
+  if(!opt)return;
+  const t=JSON.parse(opt.dataset.tpl||'{}');
+  const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
+  set('bm-products',t.products);
+  set('bm-notes',t.notes);
+  if(t.tone){const el=document.getElementById('bm-tone');if(el)el.value=t.tone;}
+  toast('Şablon yüklendi ✓');
 }
 
 async function submitBrief(fid){
