@@ -620,6 +620,8 @@ function renderSB(){
 async function renderHome(){
   // PROD sees a task-focused home dashboard
   if(isProd()){await renderHomeProd();return;}
+  let _analytics=null;
+  try{const r=await fetch('/api/analytics/summary',{headers:authHdr()});if(r.ok)_analytics=await r.json();}catch{}
   const allBriefs=firms.flatMap(f=>f.briefs||[]);
   const allTasks=allBriefs.flatMap(b=>b.tasks||[]);
   const doneTasks=allTasks.filter(t=>t.status==='DONE').length;
@@ -737,17 +739,17 @@ async function renderHome(){
         </div>
         <div class="sec-hd" style="margin-bottom:10px"><div class="sec-ttl">Son Aktivite</div></div>
         <div style="display:flex;flex-direction:column;gap:0">
-          ${allBriefs.slice(0,3).map(b=>{
-            const fRef=gF(b.firmId);
-            const stg=STAGE_PAGES[b.stage]||'brief';
-            return`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr)">
+          ${(_analytics?.recentActivity||[]).slice(0,6).map(a=>{
+            const ts=new Date(a.createdAt);
+            const ago=((Date.now()-ts)/60000)<60?Math.round((Date.now()-ts)/60000)+'dk':Math.round((Date.now()-ts)/3600000)+'sa';
+            return`<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)">
               <div style="width:6px;height:6px;border-radius:50%;background:var(--amb);flex-shrink:0;margin-top:4px"></div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fRef?.name||'—'}</div>
-                <div style="font-size:10px;color:var(--t3)">${briefTitle(b)} · ${STAGE_LABELS[stg]||stg}</div>
+                <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.action||'—'}</div>
+                <div style="font-size:10px;color:var(--t3)">${a.user?.name||'—'} · ${ago} önce</div>
               </div>
             </div>`;
-          }).join('')||'<div style="font-size:11px;color:var(--t3)">Aktivite yok</div>'}
+          }).join('')||'<div style="font-size:11px;color:var(--t3);padding:8px 0">Aktivite yok</div>'}
         </div>
       </div>
     </div>`;
